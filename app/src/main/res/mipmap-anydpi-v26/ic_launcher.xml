@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Belsi.Монтаж — Adaptive Icon (API 26+)
+    Используем готовую PNG как foreground поверх Steel-фона.
+    Иконка уже содержит свой Steel-градиент → background = transparent crop fix.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/belsi_steel_deep" />
+    <foreground android:drawable="@mipmap/ic_launcher" />
+</adaptive-icon>

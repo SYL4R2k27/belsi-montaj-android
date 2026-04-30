@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Conversation shortcuts для MessagingStyle уведомлений -->
+    <!-- Динамические shortcuts публикуются через ShortcutManagerCompat в BelsiFirebaseMessagingService -->
+    <share-target android:targetClass="com.belsi.work.MainActivity">
+        <data android:mimeType="text/plain" />
+        <category android:name="com.belsi.work.category.MESSENGER_CONVERSATION" />
+    </share-target>
+</shortcuts>

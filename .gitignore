@@ -1,0 +1,38 @@
+# macOS
+.DS_Store
+
+# Claude Code local config
+.claude/
+
+# Gradle
+/.gradle/
+/build/
+/app/build/
+
+# Secrets & credentials
+*.jks
+*.keystore
+*.p12
+*.pfx
+local.properties
+
+# Firebase (contains API keys)
+app/google-services.json
+
+# IDE
+.idea/
+*.iml
+
+# Env files
+*.env
+!.env.example
+
+# Deployment
+deployment_package/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+backend/belsi-api/config/

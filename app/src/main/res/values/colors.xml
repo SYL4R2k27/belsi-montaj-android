@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand Colors -->
+    <color name="belsi_primary">#6B2FA6</color>
+    <color name="belsi_primary_variant">#4A1F73</color>
+
+    <!-- Background -->
+    <color name="belsi_background">#F7F7F9</color>
+    <color name="belsi_surface">#FFFFFF</color>
+
+    <!-- Text -->
+    <color name="belsi_text">#1E1E1E</color>
+
+    <!-- Status Colors -->
+    <color name="belsi_success">#00B35A</color>
+    <color name="belsi_warning">#FFC938</color>
+    <color name="belsi_error">#D92D20</color>
+
+    <!-- Base Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

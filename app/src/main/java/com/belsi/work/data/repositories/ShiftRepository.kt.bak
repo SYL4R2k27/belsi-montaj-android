@@ -1,0 +1,597 @@
+package com.belsi.work.data.repositories
+
+import com.belsi.work.data.local.database.dao.ShiftDao
+import com.belsi.work.data.local.database.entities.ShiftEntity
+import com.belsi.work.data.remote.api.ShiftApi
+import com.belsi.work.data.remote.dto.shift.StartShiftResponse
+import com.belsi.work.data.remote.dto.shift.UploadHourPhotoResponse
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Репозиторий для работы со сменами в BELSI API
+ *
+ * API эндпоинты:
+ * - POST /shifts/start - начать смену
+ * - POST /shift/hour/photo - загрузить почасовое фото
+ */
+interface ShiftRepository {
+    suspend fun startShift(): Result<ShiftData>
+    suspend fun endShift(shiftId: String): Result<ShiftData>
+    suspend fun uploadHourPhoto(
+        shiftId: String,
+        hourLabel: String,
+        photoFile: File
+    ): Result<PhotoUploadData>
+    suspend fun getShiftHistory(page: Int, limit: Int): Result<List<ShiftHistoryData>>
+    suspend fun getActiveShift(): Result<ShiftData?>
+    suspend fun getShiftDetails(shiftId: String): Result<ShiftDetailData>
+    suspend fun getShiftPhotos(shiftId: String): Result<List<ShiftPhotoData>>
+    suspend fun syncPhotosFromServer(shiftId: String): Result<Unit>
+
+    // Offline-first methods with Flow
+    fun observeActiveShift(): Flow<ShiftData?>
+    suspend fun syncPendingShifts(): Result<Unit>
+}
+
+/**
+ * Данные активной смены
+ */
+data class ShiftData(
+    val id: String,
+    val startAt: String,
+    val status: String
+)
+
+/**
+ * Данные загруженного фото
+ */
+data class PhotoUploadData(
+    val id: String,
+    val shiftId: String,
+    val hourLabel: String,
+    val status: String,
+    val photoUrl: String,
+    val comment: String?,
+    val createdAt: String
+)
+
+/**
+ * Данные истории смены
+ */
+data class ShiftHistoryData(
+    val id: String,
+    val startAt: String,
+    val endAt: String?,
+    val status: String,
+    val durationMinutes: Int?,
+    val earnings: Double?,
+    val photosCount: Int?
+)
+
+/**
+ * Детальные данные смены
+ */
+data class ShiftDetailData(
+    val id: String,
+    val userId: String,
+    val startAt: String,
+    val endAt: String?,
+    val status: String,
+    val location: String?,
+    val notes: String?
+)
+
+/**
+ * Данные фотографии смены
+ */
+data class ShiftPhotoData(
+    val id: String,
+    val shiftId: String,
+    val hourLabel: String?,
+    val status: String,
+    val comment: String?,
+    val photoUrl: String,
+    val createdAt: String
+)
+
+@Singleton
+class ShiftRepositoryImpl @Inject constructor(
+    private val shiftApi: ShiftApi,
+    private val shiftDao: ShiftDao
+) : ShiftRepository {
+
+    companion object {
+        private const val CACHE_VALIDITY_MS = 30_000L // 30 seconds
+    }
+
+    /**
+     * Начать смену
+     * POST /shifts/start
+     * Сохраняет в локальную БД для offline доступа
+     */
+    override suspend fun startShift(): Result<ShiftData> {
+        return try {
+            val response = shiftApi.startShift()
+
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                val shiftData = ShiftData(
+                    id = body.id,
+                    startAt = body.startAt,
+                    status = body.status
+                )
+
+                // Сохраняем в локальную БД
+                val entity = ShiftEntity(
+                    id = body.id,
+                    startAt = body.startAt,
+                    endAt = null,
+                    status = body.status,
+                    syncStatus = "synced",
+                    lastSyncAt = System.currentTimeMillis()
+                )
+                shiftDao.insertShift(entity)
+                android.util.Log.d("ShiftRepository", "✅ Shift cached locally: ${body.id}")
+
+                Result.success(shiftData)
+            } else {
+                val errorMsg = parseErrorMessage(response.code())
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Ошибка сети: ${e.message}", e))
+        }
+    }
+
+    /**
+     * Завершить смену
+     * POST /shifts/finish
+     * Обновляет локальную БД
+     */
+    override suspend fun endShift(shiftId: String): Result<ShiftData> {
+        return try {
+            if (shiftId.isBlank()) {
+                android.util.Log.e("ShiftRepository", "endShift called with blank shiftId")
+                return Result.failure(Exception("ID смены не может быть пустым"))
+            }
+
+            android.util.Log.d("ShiftRepository", "=== ENDING SHIFT ===")
+            android.util.Log.d("ShiftRepository", "ShiftId: $shiftId")
+
+            val request = com.belsi.work.data.remote.api.FinishShiftRequest(shiftId = shiftId)
+            android.util.Log.d("ShiftRepository", "Request payload: shift_id=$shiftId")
+
+            val response = shiftApi.finishShift(request)
+
+            android.util.Log.d("ShiftRepository", "Response Code: ${response.code()}")
+            android.util.Log.d("ShiftRepository", "Response Successful: ${response.isSuccessful}")
+            android.util.Log.d("ShiftRepository", "Response Headers: ${response.headers()}")
+
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                android.util.Log.d("ShiftRepository", "✅ Shift ended successfully!")
+                android.util.Log.d("ShiftRepository", "Response body: id=${body.id}, status=${body.status}, finishAt=${body.finishAt}")
+
+                val result = ShiftData(
+                    id = body.id,
+                    startAt = body.startAt,
+                    status = body.status
+                )
+
+                // Обновляем локальную БД
+                shiftDao.updateShiftStatus(shiftId, body.status)
+                shiftDao.updateShiftEndTime(shiftId, body.finishAt ?: "")
+                android.util.Log.d("ShiftRepository", "✅ Local cache updated")
+
+                // Дополнительная проверка статуса
+                if (body.status != "finished" && body.status != "completed") {
+                    android.util.Log.w("ShiftRepository", "⚠️ WARNING: Shift status is '${body.status}', expected 'finished' or 'completed'")
+                }
+
+                Result.success(result)
+            } else {
+                val errorBody = response.errorBody()?.string()
+                android.util.Log.e("ShiftRepository", "❌ Finish shift FAILED")
+                android.util.Log.e("ShiftRepository", "HTTP Code: ${response.code()}")
+                android.util.Log.e("ShiftRepository", "Error Body: $errorBody")
+                android.util.Log.e("ShiftRepository", "Raw Response: ${response.raw()}")
+
+                val errorMsg = parseErrorMessage(response.code(), errorBody)
+
+                // Если нет сети, помечаем как требующую синхронизации
+                if (e is java.net.UnknownHostException || e is java.io.IOException) {
+                    android.util.Log.d("ShiftRepository", "📱 Offline mode: marking shift for sync")
+                    shiftDao.updateSyncStatus(shiftId, "pending")
+                }
+
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            android.util.Log.e("ShiftRepository", "❌ Timeout while ending shift", e)
+            shiftDao.updateSyncStatus(shiftId, "pending")
+            Result.failure(Exception("Превышено время ожидания. Попробуйте ещё раз"))
+        } catch (e: java.net.UnknownHostException) {
+            android.util.Log.e("ShiftRepository", "❌ Network error - unknown host", e)
+            shiftDao.updateSyncStatus(shiftId, "pending")
+            Result.failure(Exception("Нет подключения к серверу. Проверьте интернет"))
+        } catch (e: java.io.IOException) {
+            android.util.Log.e("ShiftRepository", "❌ IO error while ending shift", e)
+            shiftDao.updateSyncStatus(shiftId, "pending")
+            Result.failure(Exception("Ошибка сети: ${e.message}"))
+        } catch (e: Exception) {
+            android.util.Log.e("ShiftRepository", "❌ Unexpected error while ending shift", e)
+            Result.failure(Exception("Ошибка завершения смены: ${e.message}", e))
+        }
+    }
+
+    /**
+     * Загрузить почасовое фото
+     * POST /shift/hour/photo
+     *
+     * Multipart с полями:
+     * - shift_id
+     * - hour_label
+     * - file (JPEG/PNG)
+     */
+    override suspend fun uploadHourPhoto(
+        shiftId: String,
+        hourLabel: String,
+        photoFile: File
+    ): Result<PhotoUploadData> {
+        return try {
+            // Валидация параметров
+            if (shiftId.isBlank()) {
+                return Result.failure(Exception("ID смены не может быть пустым"))
+            }
+
+            if (hourLabel.isBlank()) {
+                return Result.failure(Exception("Метка времени не может быть пустой"))
+            }
+
+            // Проверка файла
+            if (!photoFile.exists()) {
+                return Result.failure(Exception("Файл не найден"))
+            }
+
+            // Проверка размера файла (макс 10MB)
+            val maxSize = 10 * 1024 * 1024 // 10MB
+            if (photoFile.length() > maxSize) {
+                return Result.failure(Exception("Файл слишком большой (макс 10MB)"))
+            }
+
+            android.util.Log.d("ShiftRepository", "Uploading photo: shift=$shiftId, hour=$hourLabel, size=${photoFile.length()} bytes")
+
+            // Создаем multipart части
+            val shiftIdPart = shiftId.toRequestBody("text/plain".toMediaTypeOrNull())
+            val hourLabelPart = hourLabel.toRequestBody("text/plain".toMediaTypeOrNull())
+
+            val requestFile = photoFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
+            val photoPart = MultipartBody.Part.createFormData("photo", photoFile.name, requestFile)
+
+            // Отправка запроса
+            val response = shiftApi.uploadHourPhoto(
+                shiftId = shiftIdPart,
+                hourLabel = hourLabelPart,
+                photo = photoPart
+            )
+
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                android.util.Log.d("ShiftRepository", "Photo uploaded successfully: id=${body.id}, url=${body.photoUrl}")
+                Result.success(PhotoUploadData(
+                    id = body.id,
+                    shiftId = body.shiftId,
+                    hourLabel = body.hourLabel,
+                    status = body.status,
+                    photoUrl = body.photoUrl,
+                    comment = body.comment,
+                    createdAt = body.createdAt
+                ))
+            } else {
+                val errorBody = response.errorBody()?.string()
+                android.util.Log.e("ShiftRepository", "Upload failed: code=${response.code()}, error=$errorBody")
+                val errorMsg = parseErrorMessage(response.code(), errorBody)
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            android.util.Log.e("ShiftRepository", "Upload timeout", e)
+            Result.failure(Exception("Превышено время ожидания. Проверьте интернет-соединение"))
+        } catch (e: java.net.UnknownHostException) {
+            android.util.Log.e("ShiftRepository", "Network error - unknown host", e)
+            Result.failure(Exception("Нет подключения к серверу. Проверьте интернет"))
+        } catch (e: java.io.IOException) {
+            android.util.Log.e("ShiftRepository", "IO error during upload", e)
+            Result.failure(Exception("Ошибка сети: ${e.message}"))
+        } catch (e: Exception) {
+            android.util.Log.e("ShiftRepository", "Unexpected error during upload", e)
+            Result.failure(Exception("Ошибка загрузки фото: ${e.message}", e))
+        }
+    }
+
+    override suspend fun getShiftHistory(page: Int, limit: Int): Result<List<ShiftHistoryData>> {
+        return try {
+            val response = shiftApi.getShiftHistory(page, limit)
+
+            if (response.isSuccessful && response.body() != null) {
+                // Сервер возвращает { "items": [...] }
+                val shifts = response.body()!!.items.map { item ->
+                    ShiftHistoryData(
+                        id = item.id,
+                        startAt = item.start_at,
+                        endAt = item.end_at,
+                        status = item.status,
+                        durationMinutes = item.duration_minutes,
+                        earnings = item.earnings,
+                        photosCount = item.photos_count
+                    )
+                }
+                Result.success(shifts)
+            } else {
+                Result.failure(Exception(parseErrorMessage(response.code())))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Ошибка загрузки истории: ${e.message}", e))
+        }
+    }
+
+    /**
+     * Получить активную смену из GET /shifts
+     * Ищет смену со статусом "active"
+     * Использует offline-first подход: сначала проверяет кеш, затем API
+     */
+    override suspend fun getActiveShift(): Result<ShiftData?> {
+        return try {
+            android.util.Log.d("ShiftRepository", "=== GETTING ACTIVE SHIFT ===")
+
+            // Проверяем локальный кеш
+            val cachedShift = shiftDao.getActiveShift()
+            val now = System.currentTimeMillis()
+
+            if (cachedShift != null && (now - cachedShift.lastSyncAt) < CACHE_VALIDITY_MS) {
+                android.util.Log.d("ShiftRepository", "✅ Using cached active shift: ${cachedShift.id}")
+                return Result.success(ShiftData(
+                    id = cachedShift.id,
+                    startAt = cachedShift.startAt,
+                    status = cachedShift.status
+                ))
+            }
+
+            // Загружаем с API
+            val response = shiftApi.getShiftHistory(page = 1, limit = 50)
+
+            if (response.isSuccessful && response.body() != null) {
+                val allShifts = response.body()!!.items
+                android.util.Log.d("ShiftRepository", "Total shifts retrieved: ${allShifts.size}")
+
+                // Логируем все смены для отладки
+                allShifts.take(5).forEach { shift ->
+                    android.util.Log.d("ShiftRepository", "Shift: id=${shift.id.take(8)}, status=${shift.status}, start=${shift.start_at}")
+                }
+
+                // Ищем активную смену
+                val activeShift = allShifts.firstOrNull { it.status == "active" }
+
+                if (activeShift != null) {
+                    android.util.Log.d("ShiftRepository", "✅ Found active shift: id=${activeShift.id}")
+
+                    // Сохраняем в кеш
+                    val entity = ShiftEntity(
+                        id = activeShift.id,
+                        startAt = activeShift.start_at,
+                        endAt = activeShift.end_at,
+                        status = activeShift.status,
+                        syncStatus = "synced",
+                        lastSyncAt = now
+                    )
+                    shiftDao.insertShift(entity)
+
+                    Result.success(ShiftData(
+                        id = activeShift.id,
+                        startAt = activeShift.start_at,
+                        status = activeShift.status
+                    ))
+                } else {
+                    android.util.Log.d("ShiftRepository", "ℹ️ No active shift found (this is normal)")
+                    // Очищаем старые неактивные смены из кеша
+                    shiftDao.clearInactiveShifts()
+                    Result.success(null)
+                }
+            } else {
+                android.util.Log.e("ShiftRepository", "Failed to get shifts: code=${response.code()}")
+
+                // Если есть кеш (даже старый), возвращаем его
+                if (cachedShift != null) {
+                    android.util.Log.d("ShiftRepository", "⚠️ Using stale cache due to API error")
+                    return Result.success(ShiftData(
+                        id = cachedShift.id,
+                        startAt = cachedShift.startAt,
+                        status = cachedShift.status
+                    ))
+                }
+
+                Result.failure(Exception(parseErrorMessage(response.code())))
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("ShiftRepository", "Exception getting active shift", e)
+
+            // При сетевой ошибке возвращаем кеш если он есть
+            val cachedShift = shiftDao.getActiveShift()
+            if (cachedShift != null) {
+                android.util.Log.d("ShiftRepository", "📱 Offline mode: using cached shift")
+                return Result.success(ShiftData(
+                    id = cachedShift.id,
+                    startAt = cachedShift.startAt,
+                    status = cachedShift.status
+                ))
+            }
+
+            Result.failure(Exception("Ошибка получения активной смены: ${e.message}", e))
+        }
+    }
+
+    override suspend fun getShiftDetails(shiftId: String): Result<ShiftDetailData> {
+        return try {
+            val response = shiftApi.getShift(shiftId)
+
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                Result.success(ShiftDetailData(
+                    id = body.id,
+                    userId = body.user_id,
+                    startAt = body.start_at,
+                    endAt = body.end_at,
+                    status = body.status,
+                    location = body.location,
+                    notes = body.notes
+                ))
+            } else {
+                Result.failure(Exception(parseErrorMessage(response.code())))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Ошибка загрузки деталей смены: ${e.message}", e))
+        }
+    }
+
+    override suspend fun getShiftPhotos(shiftId: String): Result<List<ShiftPhotoData>> {
+        return try {
+            val response = shiftApi.getShiftPhotos(shiftId)
+
+            if (response.isSuccessful && response.body() != null) {
+                val photos = response.body()!!.map { photo ->
+                    ShiftPhotoData(
+                        id = photo.id,
+                        shiftId = photo.shift_id,
+                        hourLabel = photo.hour_label,
+                        status = photo.status,
+                        comment = photo.comment,
+                        photoUrl = photo.photo_url,
+                        createdAt = photo.created_at
+                    )
+                }
+                Result.success(photos)
+            } else {
+                Result.failure(Exception(parseErrorMessage(response.code())))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Ошибка загрузки фотографий: ${e.message}", e))
+        }
+    }
+
+    override suspend fun syncPhotosFromServer(shiftId: String): Result<Unit> {
+        return try {
+            android.util.Log.d("ShiftRepository", "syncPhotosFromServer called for shift: $shiftId")
+            // Просто загружаем фотографии с сервера, чтобы обновить кеш
+            getShiftPhotos(shiftId)
+            android.util.Log.d("ShiftRepository", "syncPhotosFromServer completed successfully")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            android.util.Log.e("ShiftRepository", "syncPhotosFromServer failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Наблюдать за активной сменой в реальном времени через Flow
+     * Возвращает данные из локальной БД с автоматическим обновлением
+     */
+    override fun observeActiveShift(): Flow<ShiftData?> {
+        return shiftDao.getActiveShiftFlow().map { entity ->
+            entity?.let {
+                ShiftData(
+                    id = it.id,
+                    startAt = it.startAt,
+                    status = it.status
+                )
+            }
+        }
+    }
+
+    /**
+     * Синхронизировать смены, ожидающие отправки на сервер
+     * Используется для отправки данных, созданных в offline режиме
+     */
+    override suspend fun syncPendingShifts(): Result<Unit> {
+        return try {
+            android.util.Log.d("ShiftRepository", "=== SYNCING PENDING SHIFTS ===")
+            val pendingShifts = shiftDao.getPendingShifts()
+
+            if (pendingShifts.isEmpty()) {
+                android.util.Log.d("ShiftRepository", "No pending shifts to sync")
+                return Result.success(Unit)
+            }
+
+            android.util.Log.d("ShiftRepository", "Found ${pendingShifts.size} pending shifts")
+
+            var successCount = 0
+            var errorCount = 0
+
+            pendingShifts.forEach { shift ->
+                try {
+                    // Пытаемся завершить смену на сервере
+                    val request = com.belsi.work.data.remote.api.FinishShiftRequest(shiftId = shift.id)
+                    val response = shiftApi.finishShift(request)
+
+                    if (response.isSuccessful) {
+                        // Помечаем как синхронизированную
+                        shiftDao.updateSyncStatus(shift.id, "synced")
+                        successCount++
+                        android.util.Log.d("ShiftRepository", "✅ Synced shift: ${shift.id}")
+                    } else {
+                        // Помечаем как ошибку
+                        shiftDao.updateSyncStatus(shift.id, "error")
+                        errorCount++
+                        android.util.Log.e("ShiftRepository", "❌ Failed to sync shift: ${shift.id}, code=${response.code()}")
+                    }
+                } catch (e: Exception) {
+                    shiftDao.updateSyncStatus(shift.id, "error")
+                    errorCount++
+                    android.util.Log.e("ShiftRepository", "❌ Exception syncing shift: ${shift.id}", e)
+                }
+            }
+
+            android.util.Log.d("ShiftRepository", "Sync complete: success=$successCount, errors=$errorCount")
+
+            if (errorCount > 0) {
+                Result.failure(Exception("Синхронизировано $successCount из ${pendingShifts.size} смен"))
+            } else {
+                Result.success(Unit)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("ShiftRepository", "syncPendingShifts failed", e)
+            Result.failure(e)
+        }
+    }
+
+    private fun parseErrorMessage(code: Int, errorBody: String? = null): String {
+        val baseMessage = when (code) {
+            400 -> "Неверный формат данных"
+            401 -> "Требуется авторизация. Войдите заново"
+            403 -> "Доступ запрещен. Проверьте права доступа"
+            404 -> "Ресурс не найден"
+            408 -> "Превышено время ожидания. Попробуйте снова"
+            413 -> "Файл слишком большой"
+            422 -> "Неверные данные запроса"
+            429 -> "Слишком много запросов. Подождите немного"
+            500 -> "Внутренняя ошибка сервера"
+            502 -> "Сервер недоступен"
+            503 -> "Сервис временно недоступен"
+            504 -> "Превышено время ответа сервера"
+            else -> "Ошибка сети (код: $code)"
+        }
+
+        // Добавляем детали ошибки если есть
+        return if (!errorBody.isNullOrBlank() && errorBody.length < 200) {
+            "$baseMessage: $errorBody"
+        } else {
+            baseMessage
+        }
+    }
+}
