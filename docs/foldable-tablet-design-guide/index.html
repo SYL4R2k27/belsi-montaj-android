@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BELSI · Foldable & Tablet Design Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --indigo-50:#EEF2FF; --indigo-100:#E0E7FF; --indigo-200:#C7D2FE;
+    --indigo-300:#A5B4FC; --indigo-400:#818CF8; --indigo-500:#6366F1;
+    --indigo-600:#4F46E5; --indigo-700:#4338CA; --indigo-800:#3730A3;
+    --indigo-900:#312E81; --indigo-950:#1E1B4B;
+
+    --slate-50:#F8FAFC; --slate-100:#F1F5F9; --slate-200:#E2E8F0;
+    --slate-300:#CBD5E1; --slate-400:#94A3B8; --slate-500:#64748B;
+    --slate-600:#475569; --slate-700:#334155; --slate-800:#1E293B;
+    --slate-900:#0F172A; --slate-950:#020617;
+
+    --emerald:#10B981; --rose:#F43F5E; --amber:#F59E0B;
+    --sky:#0EA5E9; --violet:#8B5CF6; --pink:#EC4899;
+
+    --bg: var(--slate-50);
+    --surface: #FFFFFF;
+    --border: var(--slate-200);
+    --text: var(--slate-900);
+    --text-secondary: var(--slate-600);
+    --text-muted: var(--slate-400);
+
+    --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-xl:24px; --radius-2xl:32px;
+    --shadow-md: 0 4px 6px -1px rgba(15,23,42,.07), 0 2px 4px -2px rgba(15,23,42,.05);
+    --shadow-lg: 0 12px 24px -8px rgba(15,23,42,.12), 0 6px 10px -6px rgba(15,23,42,.06);
+    --shadow-xl: 0 24px 48px -12px rgba(15,23,42,.16);
+  }
+
+  *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+  html { scroll-behavior:smooth; }
+  body {
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--bg); color:var(--text);
+    -webkit-font-smoothing:antialiased; line-height:1.55;
+  }
+  code,kbd,pre { font-family:'JetBrains Mono',Menlo,monospace; font-size:.85em; }
+
+  .app { display:flex; min-height:100vh; }
+  .sidebar {
+    width:260px; background:var(--surface); border-right:1px solid var(--border);
+    padding:32px 18px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .logo-mark { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .logo-mark .dot {
+    width:32px; height:32px; border-radius:9px;
+    background:linear-gradient(135deg,var(--indigo-500),var(--indigo-700));
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:800; font-size:.9rem;
+  }
+  .logo-mark h1 { font-size:1rem; font-weight:800; }
+  .sidebar .sub { font-size:.74rem; color:var(--text-muted); margin-bottom:28px; }
+  .sidebar nav { display:flex; flex-direction:column; gap:2px; }
+  .sidebar nav a {
+    color:var(--text-secondary); text-decoration:none; padding:7px 12px;
+    border-radius:var(--radius-sm); font-size:.84rem; transition:.15s;
+  }
+  .sidebar nav a:hover { background:var(--slate-100); color:var(--text); }
+  .sidebar nav a.section {
+    font-weight:700; color:var(--indigo-700); margin-top:16px;
+    font-size:.68rem; text-transform:uppercase; letter-spacing:.08em;
+    padding-left:8px; cursor:default;
+  }
+  .sidebar nav a.section:hover { background:transparent; }
+
+  main { flex:1; padding:56px 48px; max-width:1200px; }
+  section { margin-bottom:80px; }
+  section h2 {
+    font-size:2.3rem; font-weight:900; letter-spacing:-.025em;
+    margin-bottom:12px; line-height:1.1;
+  }
+  section h2 .num { color:var(--indigo-300); font-weight:700; margin-right:12px; }
+  section h3 { font-size:1.3rem; font-weight:700; margin:28px 0 10px; letter-spacing:-.01em; }
+  section h4 { font-size:1rem; font-weight:700; margin:18px 0 6px; }
+  section .lead { color:var(--text-secondary); font-size:1.05rem; max-width:760px; margin-bottom:20px; }
+  section p { color:var(--text-secondary); margin-bottom:10px; }
+  section p strong { color:var(--text); font-weight:600; }
+  section ul,section ol { margin:6px 0 14px 22px; color:var(--text-secondary); }
+  section li { margin-bottom:5px; }
+  section li strong { color:var(--text); }
+
+  .hero {
+    padding:64px 48px;
+    border-radius:var(--radius-2xl);
+    background: radial-gradient(circle at 90% 10%, rgba(99,102,241,.18) 0, transparent 45%),
+                linear-gradient(135deg,var(--slate-900) 0%, var(--slate-800) 50%, var(--indigo-950) 100%);
+    color:#fff;
+    box-shadow:var(--shadow-xl);
+    margin-bottom:64px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero .eyebrow {
+    display:inline-flex; gap:8px; align-items:center;
+    padding:6px 14px; border-radius:99px;
+    background:rgba(99,102,241,.2); color:var(--indigo-300);
+    font-size:.74rem; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; margin-bottom:18px;
+    border:1px solid rgba(99,102,241,.4);
+  }
+  .hero h1 {
+    font-size:3.4rem; font-weight:900;
+    letter-spacing:-.03em; line-height:1.05; margin-bottom:16px;
+  }
+  .hero .accent { color:var(--indigo-400); }
+  .hero .tagline {
+    font-size:1.15rem; color:rgba(255,255,255,.78); max-width:680px;
+    line-height:1.55;
+  }
+  .hero .meta {
+    display:flex; gap:36px; padding-top:24px; margin-top:24px;
+    border-top:1px solid rgba(255,255,255,.1);
+    font-size:.78rem; color:rgba(255,255,255,.6); flex-wrap:wrap;
+  }
+  .hero .meta strong { color:#fff; display:block; font-size:1.4rem; font-weight:800; }
+
+  /* Cards */
+  .card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:24px;
+    margin-bottom:16px; box-shadow:var(--shadow-md);
+  }
+  .card.accent { border-left:4px solid var(--indigo-500); }
+  .card.warn { border-left:4px solid var(--amber); background:#FFFBEB; }
+  .card.success { border-left:4px solid var(--emerald); background:#ECFDF5; }
+  .card.rose { border-left:4px solid var(--rose); background:#FFF1F2; }
+
+  /* Tables */
+  table.matrix {
+    width:100%; border-collapse:collapse;
+    background:var(--surface); border-radius:var(--radius-md);
+    overflow:hidden; box-shadow:var(--shadow-md); margin:14px 0;
+    font-size:.86rem;
+  }
+  table.matrix th, table.matrix td {
+    padding:11px 14px; text-align:left;
+    border-bottom:1px solid var(--border);
+  }
+  table.matrix th {
+    background:var(--slate-100); font-weight:700; font-size:.78rem;
+    color:var(--text); text-transform:uppercase; letter-spacing:.04em;
+  }
+  table.matrix tr:last-child td { border-bottom:none; }
+  table.matrix tbody tr:hover { background:var(--slate-50); }
+  table.matrix td code { background:var(--slate-100); padding:2px 6px; border-radius:4px; }
+  table.matrix .row-section td {
+    background:var(--indigo-50); font-weight:700;
+    color:var(--indigo-800); font-size:.78rem;
+    text-transform:uppercase; letter-spacing:.05em;
+  }
+
+  /* Badges */
+  .badge {
+    display:inline-block; padding:2px 8px; border-radius:99px;
+    font-size:.72rem; font-weight:700; letter-spacing:.02em;
+  }
+  .badge.compact { background:var(--rose); color:#fff; }
+  .badge.medium  { background:var(--amber); color:#fff; }
+  .badge.expanded { background:var(--emerald); color:#fff; }
+  .badge.xlarge { background:var(--indigo-600); color:#fff; }
+
+  /* WSC visualizer */
+  .wsc-chart {
+    display:grid; gap:8px;
+    grid-template-columns:repeat(4,1fr);
+    margin:16px 0;
+  }
+  .wsc-chart .col {
+    padding:16px; border-radius:var(--radius-md);
+    border:2px solid; text-align:center; min-height:140px;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .wsc-chart .col.c1 { background:#FFF1F2; border-color:var(--rose); }
+  .wsc-chart .col.c2 { background:#FFFBEB; border-color:var(--amber); }
+  .wsc-chart .col.c3 { background:#ECFDF5; border-color:var(--emerald); }
+  .wsc-chart .col.c4 { background:#EEF2FF; border-color:var(--indigo-600); }
+  .wsc-chart .col .label {
+    font-size:.7rem; font-weight:800; letter-spacing:.06em;
+    text-transform:uppercase; opacity:.7; margin-bottom:6px;
+  }
+  .wsc-chart .col .range {
+    font-size:1.3rem; font-weight:900; letter-spacing:-.02em; margin-bottom:6px;
+  }
+  .wsc-chart .col .pattern { font-size:.78rem; color:var(--slate-700); }
+
+  /* Layout mocks (схематичные блоки) */
+  .mock {
+    border:2px solid var(--slate-300); border-radius:8px;
+    background:var(--slate-50); display:flex;
+    overflow:hidden; margin:8px 0;
+  }
+  .mock .rail { background:var(--indigo-100); border-right:1px solid var(--indigo-300); }
+  .mock .pane { background:var(--surface); border-right:1px solid var(--border); padding:8px; }
+  .mock .pane:last-child { border-right:none; }
+  .mock .pane-title {
+    font-size:.7rem; font-weight:700; color:var(--text-muted);
+    text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px;
+  }
+  .mock-line {
+    height:4px; background:var(--slate-300); border-radius:2px;
+    margin-bottom:4px;
+  }
+  .mock-line.accent { background:var(--indigo-400); }
+  .mock-line.short { width:60%; }
+  .mock-line.medium { width:80%; }
+  .mock-card {
+    border:1px solid var(--border); border-radius:4px;
+    padding:6px; margin-bottom:4px; background:#FFFFFF;
+  }
+
+  /* Posture diagrams */
+  .postures { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:16px 0; }
+  .posture {
+    padding:16px; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-md); text-align:center;
+  }
+  .posture .icon { font-size:2.4rem; margin-bottom:8px; }
+  .posture .name { font-weight:700; font-size:.86rem; margin-bottom:4px; }
+  .posture .desc { font-size:.74rem; color:var(--text-muted); }
+
+  /* Device card */
+  .device {
+    border:1px solid var(--border); border-radius:var(--radius-md);
+    padding:14px; background:var(--surface); margin-bottom:10px;
+  }
+  .device-name { font-weight:700; font-size:.95rem; margin-bottom:6px; }
+  .device-meta {
+    display:flex; gap:18px; flex-wrap:wrap;
+    font-size:.78rem; color:var(--text-muted);
+  }
+  .device-meta strong { color:var(--text); }
+
+  /* Inline notes */
+  .note {
+    padding:14px 18px; background:var(--indigo-50);
+    border-left:4px solid var(--indigo-500);
+    border-radius:0 var(--radius-md) var(--radius-md) 0;
+    margin:14px 0; font-size:.9rem; color:var(--text);
+  }
+  .note.warn { background:#FFFBEB; border-color:var(--amber); }
+  .note.danger { background:#FFF1F2; border-color:var(--rose); }
+
+  pre.code {
+    background:var(--slate-900); color:#E2E8F0;
+    padding:16px 20px; border-radius:var(--radius-md);
+    overflow-x:auto; font-size:.82rem; line-height:1.6; margin:12px 0;
+  }
+  pre.code .kw { color:#F472B6; }
+  pre.code .fn { color:#60A5FA; }
+  pre.code .str { color:#A7F3D0; }
+  pre.code .cm { color:#64748B; font-style:italic; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="logo-mark">
+    <div class="dot">A</div>
+    <h1>Adaptive UI</h1>
+  </div>
+  <div class="sub">Foldable & Tablet Design Guide<br>BELSI · v1.0 · 2026-05-11</div>
+  <nav>
+    <a href="#cover">Обложка</a>
+    <a class="section">Основа</a>
+    <a href="#principles">1 · Принципы</a>
+    <a href="#wsc">2 · Window Size Classes</a>
+    <a href="#postures">3 · Postures (положения)</a>
+    <a class="section">Устройства</a>
+    <a href="#galaxy-fold">4 · Samsung Z Fold</a>
+    <a href="#galaxy-flip">5 · Samsung Z Flip</a>
+    <a href="#pixel-fold">6 · Pixel Fold</a>
+    <a href="#chinese-folds">7 · Honor / Xiaomi / Huawei / OnePlus / Vivo</a>
+    <a href="#tablets-samsung">8 · Планшеты Samsung</a>
+    <a href="#tablets-others">9 · Планшеты Xiaomi / Lenovo / Honor / Huawei</a>
+    <a class="section">Паттерны</a>
+    <a href="#layouts">10 · Layout patterns</a>
+    <a href="#components">11 · Компоненты</a>
+    <a href="#typography">12 · Типографика</a>
+    <a class="section">BELSI</a>
+    <a href="#belsi-shift">13 · ShiftScreen</a>
+    <a href="#belsi-curator">14 · CuratorMainScreen</a>
+    <a href="#belsi-foreman">15 · ForemanMainScreen</a>
+    <a href="#belsi-other">16 · Остальные экраны</a>
+    <a class="section">Реализация</a>
+    <a href="#impl">17 · ResponsiveUtils.kt</a>
+    <a href="#testing">18 · Тестирование</a>
+    <a href="#anti-patterns">19 · Анти-паттерны</a>
+  </nav>
+</aside>
+
+<main>
+
+<!-- COVER -->
+<section id="cover">
+  <div class="hero">
+    <span class="eyebrow">Adaptive UI Guide · v1.0 · 2026-05-11</span>
+    <h1>Foldable<br>&amp; Tablet<span class="accent">.</span></h1>
+    <p class="tagline">Полный справочник адаптивного интерфейса BELSI. Реальные размеры всех актуальных foldable и планшетов, паттерны раскладки, привязка к экранам приложения. Один источник правды для дизайнеров и разработчиков.</p>
+    <a href="./mockups.html" style="display:inline-block;margin-top:18px;padding:12px 22px;background:var(--indigo-500);color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:.95rem;box-shadow:0 6px 16px rgba(99,102,241,.4);">
+      🖼 Открыть интерактивные мокапы →
+    </a>
+    <div class="meta">
+      <span><strong>4</strong> Window Size Classes</span>
+      <span><strong>28</strong> устройств в матрице</span>
+      <span><strong>5</strong> layout-паттернов</span>
+      <span><strong>13</strong> BELSI-экранов</span>
+    </div>
+  </div>
+</section>
+
+<!-- 1 · PRINCIPLES -->
+<section id="principles">
+  <h2><span class="num">01</span>Принципы адаптивности</h2>
+  <p class="lead">5 правил, которые определяют как BELSI должен выглядеть на любом Android-устройстве — от Z Flip closed до Tab S10 Ultra.</p>
+
+  <div class="card accent">
+    <h4>1. Думаем «классами окон», а не «моделями устройств»</h4>
+    <p>Один и тот же телефон в портрете и ландшафте — два разных размера. Z Fold открытый ≈ маленький планшет, закрытый ≈ узкий телефон. Привязываемся к <strong>Material 3 Window Size Class</strong> (COMPACT / MEDIUM / EXPANDED) — а не к Build.MODEL.</p>
+  </div>
+
+  <div class="card accent">
+    <h4>2. Контент не растягивается бесконтрольно</h4>
+    <p>На EXPANDED (≥840dp) одноколонный текст превращается в нечитаемое полотно. Решение — <code>widthIn(max = 900.dp)</code> с центрированием для контента-чтения, или multi-pane (list-detail) для управленческих экранов.</p>
+  </div>
+
+  <div class="card accent">
+    <h4>3. Навигация переезжает: Bottom → Rail → Drawer</h4>
+    <p>COMPACT — BottomNavigation внизу. MEDIUM/EXPANDED — NavigationRail слева. На очень больших планшетах (≥1240dp) — постоянный NavigationDrawer. <strong>Material 3 <code>NavigationSuiteScaffold</code></strong> делает это автоматически.</p>
+  </div>
+
+  <div class="card accent">
+    <h4>4. Foldable — это не только размер, но и поза</h4>
+    <p>Z Fold можно держать как книгу (вертикальная складка), на столе как ноутбук (TableTop posture), полусогнутым. API <code>WindowInfoTracker</code> сообщает позу — для фото-камеры BELSI используем TableTop (телефон на столе, экран как монитор).</p>
+  </div>
+
+  <div class="card accent">
+    <h4>5. Тестируем на эмуляторах из списка ниже, не «на своем телефоне»</h4>
+    <p>Если разработчик тестирует только на Pixel 7 — Z Fold open и Tab S9 у него никогда не работают. Минимальный набор для CI/тест-чек-листа — 6 эмуляторов: phone-compact / phone-landscape / fold-closed / fold-open / tab-medium / tab-large.</p>
+  </div>
+</section>
+
+<!-- 2 · WINDOW SIZE CLASSES -->
+<section id="wsc">
+  <h2><span class="num">02</span>Window Size Classes</h2>
+  <p class="lead">Material 3 делит ширины на 3 класса, мы добавляем 4-й (extra-large) для очень крупных планшетов. dp — не пиксели; зависит от density устройства.</p>
+
+  <div class="wsc-chart">
+    <div class="col c1">
+      <div class="label">Compact</div>
+      <div class="range">&lt; 600 dp</div>
+      <div class="pattern">Одна колонка<br>BottomNav</div>
+    </div>
+    <div class="col c2">
+      <div class="label">Medium</div>
+      <div class="range">600–839 dp</div>
+      <div class="pattern">NavRail + 1 pane<br>или list (small)</div>
+    </div>
+    <div class="col c3">
+      <div class="label">Expanded</div>
+      <div class="range">840–1239 dp</div>
+      <div class="pattern">NavRail + list-detail<br>(2 pane)</div>
+    </div>
+    <div class="col c4">
+      <div class="label">XLarge</div>
+      <div class="range">≥ 1240 dp</div>
+      <div class="pattern">Drawer + 3 pane<br>или maxWidth ограничение</div>
+    </div>
+  </div>
+
+  <h3>Соответствие реальным устройствам (по ширине в dp)</h3>
+
+  <table class="matrix">
+    <thead>
+      <tr><th>Категория</th><th>Узкое</th><th>Среднее</th><th>Широкое</th><th>Очень широкое</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Phone portrait</strong></td>
+        <td>320–411 dp <span class="badge compact">Compact</span></td>
+        <td>—</td><td>—</td><td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Phone landscape</strong></td>
+        <td>—</td>
+        <td>640–720 dp <span class="badge medium">Medium</span></td>
+        <td>—</td><td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Z Fold closed (cover)</strong></td>
+        <td>340–374 dp <span class="badge compact">Compact</span></td>
+        <td>—</td><td>—</td><td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Z Fold open (book)</strong></td>
+        <td>—</td>
+        <td>673–768 dp <span class="badge medium">Medium</span> (portrait)</td>
+        <td>884–968 dp <span class="badge expanded">Expanded</span> (landscape)</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Z Flip closed (cover)</strong></td>
+        <td>240–340 dp <span class="badge compact">Compact</span></td>
+        <td>—</td><td>—</td><td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Z Flip open</strong></td>
+        <td>380–411 dp <span class="badge compact">Compact</span></td>
+        <td>—</td><td>—</td><td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Tablet 11"</strong></td>
+        <td>—</td>
+        <td>800 dp <span class="badge medium">Medium</span> (portrait)</td>
+        <td>933–1066 dp <span class="badge expanded">Expanded</span> (landscape)</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Tablet 12.4"</strong></td>
+        <td>—</td>
+        <td>—</td>
+        <td>1054–1070 dp <span class="badge expanded">Expanded</span></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Tablet 13"+</strong></td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>1240–1280+ dp <span class="badge xlarge">XLarge</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 3 · POSTURES -->
+<section id="postures">
+  <h2><span class="num">03</span>Postures (положения foldable)</h2>
+  <p class="lead">API <code>androidx.window.layout.FoldingFeature</code> сообщает положение шарнира. Используется когда поведение зависит не только от размера, но и от того <em>как</em> устройство сложено.</p>
+
+  <div class="postures">
+    <div class="posture">
+      <div class="icon">📱</div>
+      <div class="name">Closed</div>
+      <div class="desc">Полностью сложено, активен только cover-экран</div>
+    </div>
+    <div class="posture">
+      <div class="icon">📖</div>
+      <div class="name">Book (Flat)</div>
+      <div class="desc">Полностью разложено, шарнир вертикально</div>
+    </div>
+    <div class="posture">
+      <div class="icon">💻</div>
+      <div class="name">TableTop</div>
+      <div class="desc">Горизонтальная складка ~90°, верх как монитор</div>
+    </div>
+    <div class="posture">
+      <div class="icon">📐</div>
+      <div class="name">HalfOpened</div>
+      <div class="desc">~90° по любой оси, переходное состояние</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h4>Применение в BELSI</h4>
+    <ul>
+      <li><strong>CameraScreen</strong>: при TableTop posture (горизонтальная складка) — верхняя половина экрана = превью камеры, нижняя половина = кнопки. Удобно когда телефон стоит на объекте как штатив.</li>
+      <li><strong>ShiftScreen</strong>: при Book (Flat, ширина ≥ 840dp) — две колонки (статус + фото-лента).</li>
+      <li><strong>CuratorPhotosScreen</strong>: при Book — list-detail (грид + preview).</li>
+      <li><strong>Closed</strong>: cover-экран Z Fold ≈ обычный compact phone — отдельный UX не нужен, работает стандартный.</li>
+    </ul>
+  </div>
+
+  <div class="note warn">
+    <strong>WindowInfoTracker</strong> требует <code>androidx.window:window:1.3.0+</code>. Сейчас BELSI <code>1.2.0</code> — нужно бампнуть для polnoponi posture-API.
+  </div>
+</section>
+
+<!-- 4 · GALAXY Z FOLD -->
+<section id="galaxy-fold">
+  <h2><span class="num">04</span>Samsung Galaxy Z Fold (2-7)</h2>
+  <p class="lead">Флагман book-style foldable в РФ. Все Z Fold имеют 2 экрана: cover (узкий phone) и main (почти квадратный планшет). Главное правило — рисовать оба сценария.</p>
+
+  <table class="matrix">
+    <thead>
+      <tr><th>Модель</th><th>Год</th><th>Cover px / dp</th><th>Main px / dp</th><th>Density</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Z Fold 7</strong></td>
+        <td>2025</td>
+        <td>2520×1080<br>360×840 dp <span class="badge compact">C</span></td>
+        <td>2184×1968<br>884×796 dp <span class="badge expanded">E</span></td>
+        <td>~400 / ~380 dpi</td>
+      </tr>
+      <tr>
+        <td><strong>Z Fold 6</strong></td>
+        <td>2024</td>
+        <td>2376×968<br>374×768 dp <span class="badge compact">C</span></td>
+        <td>2160×1856<br>968×768 dp <span class="badge expanded">E</span></td>
+        <td>410 / 374 dpi</td>
+      </tr>
+      <tr>
+        <td><strong>Z Fold 5</strong></td>
+        <td>2023</td>
+        <td>2316×904<br>374×768 dp <span class="badge compact">C</span></td>
+        <td>2176×1812<br>884×673 dp <span class="badge expanded">E</span></td>
+        <td>402 / 374 dpi</td>
+      </tr>
+      <tr>
+        <td><strong>Z Fold 4</strong></td>
+        <td>2022</td>
+        <td>2316×904<br>374×768 dp <span class="badge compact">C</span></td>
+        <td>2176×1812<br>884×673 dp <span class="badge expanded">E</span></td>
+        <td>402 / 374 dpi</td>
+      </tr>
+      <tr>
+        <td><strong>Z Fold 3</strong></td>
+        <td>2021</td>
+        <td>2268×832<br>387×768 dp <span class="badge compact">C</span></td>
+        <td>2208×1768<br>884×673 dp <span class="badge expanded">E</span></td>
+        <td>387 / 374 dpi</td>
+      </tr>
+      <tr>
+        <td><strong>Z Fold 2</strong></td>
+        <td>2020</td>
+        <td>2260×816<br>411×768 dp <span class="badge compact">C</span></td>
+        <td>2208×1768<br>884×673 dp <span class="badge expanded">E</span></td>
+        <td>386 / 374 dpi</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    Все Z Fold 2–6 в open mode → <strong>884 dp ширины</strong> (landscape) или <strong>673–768 dp</strong> (portrait, когда юзер крутит). Это попадает в <strong>EXPANDED</strong>. Один паттерн раскладки покроет все 6 поколений.
+  </div>
+
+  <h3>Раскладки для Z Fold</h3>
+
+  <h4>Closed (374×768 dp, compact)</h4>
+  <div class="mock" style="height:120px;">
+    <div class="pane" style="width:100%;">
+      <div class="pane-title">BottomNav · 1 pane</div>
+      <div class="mock-line accent"></div>
+      <div class="mock-line"></div>
+      <div class="mock-line short"></div>
+      <div class="mock-line medium"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:24px;background:var(--indigo-100);"></div>
+    </div>
+  </div>
+
+  <h4>Open landscape (884×673 dp, expanded)</h4>
+  <div class="mock" style="height:140px;">
+    <div class="rail" style="width:80px;">
+      <div style="padding:6px 4px;text-align:center;font-size:9px;color:var(--indigo-700);font-weight:700;">RAIL</div>
+    </div>
+    <div class="pane" style="width:40%;">
+      <div class="pane-title">List</div>
+      <div class="mock-card"><div class="mock-line short" style="margin:0;"></div></div>
+      <div class="mock-card"><div class="mock-line short" style="margin:0;"></div></div>
+      <div class="mock-card"><div class="mock-line short" style="margin:0;"></div></div>
+    </div>
+    <div class="pane" style="width:60%;">
+      <div class="pane-title">Detail</div>
+      <div class="mock-line accent"></div>
+      <div class="mock-line"></div>
+      <div class="mock-line medium"></div>
+      <div class="mock-line short"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · GALAXY Z FLIP -->
+<section id="galaxy-flip">
+  <h2><span class="num">05</span>Samsung Galaxy Z Flip (3-7)</h2>
+  <p class="lead">Clamshell-foldable. Открытый — это обычный узкий phone в portrait. Cover (внешний) — маленький экран для быстрых действий, разрешение зависит от модели. Для BELSI cover-экран НЕ целевой (наши экраны слишком сложные).</p>
+
+  <table class="matrix">
+    <thead>
+      <tr><th>Модель</th><th>Год</th><th>Cover px / dp</th><th>Main px / dp</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Z Flip 7</strong></td><td>2025</td><td>1048×948 / ~340×340 dp <span class="badge compact">C</span></td><td>2520×1080 / 411×917 dp <span class="badge compact">C</span></td></tr>
+      <tr><td><strong>Z Flip 6</strong></td><td>2024</td><td>968×720 / ~340×280 dp <span class="badge compact">C</span></td><td>2640×1080 / 411×926 dp <span class="badge compact">C</span></td></tr>
+      <tr><td><strong>Z Flip 5</strong></td><td>2023</td><td>720×748 / ~330×340 dp <span class="badge compact">C</span></td><td>2640×1080 / 380×745 dp <span class="badge compact">C</span></td></tr>
+      <tr><td><strong>Z Flip 4</strong></td><td>2022</td><td>512×260 / ~260×130 dp <span class="badge compact">C</span></td><td>2640×1080 / 380×745 dp <span class="badge compact">C</span></td></tr>
+      <tr><td><strong>Z Flip 3</strong></td><td>2021</td><td>512×260 / ~260×130 dp <span class="badge compact">C</span></td><td>2640×1080 / 380×745 dp <span class="badge compact">C</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="note warn">
+    Z Flip в открытом виде — обычный узкий phone (compact). Никаких специальных раскладок не требует. <strong>На cover-экране</strong> Android запускает приложения в режиме "App Continuity" или вообще не запускает (зависит от настройки) — наши экраны там показывать не имеет смысла.
+  </div>
+</section>
+
+<!-- 6 · PIXEL FOLD -->
+<section id="pixel-fold">
+  <h2><span class="num">06</span>Google Pixel Fold</h2>
+  <p class="lead">Google book-style foldable. Менее распространён в РФ (серый импорт), но активно используется тестировщиками — это reference-устройство для Android team.</p>
+
+  <table class="matrix">
+    <thead>
+      <tr><th>Модель</th><th>Год</th><th>Cover px / dp</th><th>Main px / dp</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Pixel 9 Pro Fold</strong></td><td>2024</td><td>2424×1080 / 412×882 dp <span class="badge compact">C</span></td><td>2076×2152 / 838×868 dp <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Pixel Fold (1st gen)</strong></td><td>2023</td><td>2092×1080 / 408×839 dp <span class="badge compact">C</span></td><td>2208×1840 / 884×667 dp <span class="badge expanded">E</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    Pixel Fold open <strong>почти квадратный</strong> (884×667 или 838×868), что делает list-detail layout идеальным — обе панели получают по ~440 dp ширины.
+  </div>
+</section>
+
+<!-- 7 · CHINESE FOLDS -->
+<section id="chinese-folds">
+  <h2><span class="num">07</span>Honor / Xiaomi / Huawei / OnePlus / Vivo</h2>
+  <p class="lead">Китайские foldable активны на РФ-рынке (серый импорт, реселлеры). Все book-style. У большинства похожая ширина в open mode (~884 dp).</p>
+
+  <table class="matrix">
+    <thead>
+      <tr><th>Модель</th><th>Год</th><th>Cover dp</th><th>Open dp</th></tr>
+    </thead>
+    <tbody>
+      <tr class="row-section"><td colspan="4">Honor (HMS / Google services)</td></tr>
+      <tr><td><strong>Honor Magic V3</strong></td><td>2024</td><td>404×900 <span class="badge compact">C</span></td><td>884×844 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Honor Magic V2</strong></td><td>2023</td><td>404×900 <span class="badge compact">C</span></td><td>884×796 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Honor Magic Vs2</strong></td><td>2024</td><td>404×898 <span class="badge compact">C</span></td><td>884×868 <span class="badge expanded">E</span></td></tr>
+
+      <tr class="row-section"><td colspan="4">Xiaomi</td></tr>
+      <tr><td><strong>Xiaomi Mix Fold 4</strong></td><td>2024</td><td>409×905 <span class="badge compact">C</span></td><td>884×819 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Xiaomi Mix Fold 3</strong></td><td>2023</td><td>406×916 <span class="badge compact">C</span></td><td>884×768 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Xiaomi Mix Fold 2</strong></td><td>2022</td><td>411×919 <span class="badge compact">C</span></td><td>884×742 <span class="badge expanded">E</span></td></tr>
+
+      <tr class="row-section"><td colspan="4">Huawei (без Google Play, HMS)</td></tr>
+      <tr><td><strong>Huawei Mate XT</strong> (3-fold)</td><td>2024</td><td>374×880 <span class="badge compact">C</span> (1-fold)</td><td>1244×868 <span class="badge xlarge">XL</span> (3-fold)</td></tr>
+      <tr><td><strong>Huawei Mate X6</strong></td><td>2024</td><td>411×918 <span class="badge compact">C</span></td><td>884×819 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Huawei Mate X5</strong></td><td>2023</td><td>411×919 <span class="badge compact">C</span></td><td>884×819 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Huawei Mate X3</strong></td><td>2023</td><td>411×917 <span class="badge compact">C</span></td><td>884×768 <span class="badge expanded">E</span></td></tr>
+
+      <tr class="row-section"><td colspan="4">OnePlus / OPPO</td></tr>
+      <tr><td><strong>OnePlus Open</strong> = <strong>OPPO Find N3</strong></td><td>2023</td><td>411×891 <span class="badge compact">C</span></td><td>884×819 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>OPPO Find N5</strong></td><td>2025</td><td>411×881 <span class="badge compact">C</span></td><td>884×844 <span class="badge expanded">E</span></td></tr>
+
+      <tr class="row-section"><td colspan="4">Vivo</td></tr>
+      <tr><td><strong>Vivo X Fold 3 Pro</strong></td><td>2024</td><td>411×908 <span class="badge compact">C</span></td><td>884×819 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Vivo X Fold 2</strong></td><td>2023</td><td>411×919 <span class="badge compact">C</span></td><td>884×796 <span class="badge expanded">E</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>Главный вывод</strong>: все китайские book-foldables в open mode попадают в <strong>EXPANDED</strong> с шириной 884 dp (один и тот же расчёт у Samsung, Google, Honor, Xiaomi, Huawei, OnePlus, Vivo). <strong>Один паттерн раскладки покрывает всех</strong>.
+  </div>
+
+  <div class="note warn">
+    Huawei Mate XT — единственное <strong>3-fold</strong> устройство, выходит до 1244 dp (XLarge). На нём нужна особая раскладка с 3 панелями или max-width контейнером.
+  </div>
+</section>
+
+<!-- 8 · SAMSUNG TABLETS -->
+<section id="tablets-samsung">
+  <h2><span class="num">08</span>Планшеты Samsung Galaxy Tab</h2>
+  <p class="lead">Официально продаются в РФ. Linchpin рынка корпоративных планшетов. Поддержка S Pen, Samsung DeX (десктоп-режим).</p>
+
+  <table class="matrix">
+    <thead>
+      <tr><th>Модель</th><th>Диагональ</th><th>Разрешение</th><th>dp (landscape)</th></tr>
+    </thead>
+    <tbody>
+      <tr class="row-section"><td colspan="4">2024-2025 поколение</td></tr>
+      <tr><td><strong>Galaxy Tab S10 Ultra</strong></td><td>14.6"</td><td>2960×1848</td><td>1232×768 <span class="badge xlarge">XL</span></td></tr>
+      <tr><td><strong>Galaxy Tab S10+</strong></td><td>12.4"</td><td>2800×1752</td><td>1054×659 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Galaxy Tab S10 (FE)</strong></td><td>11"</td><td>2560×1600</td><td>933×583 <span class="badge expanded">E</span></td></tr>
+
+      <tr class="row-section"><td colspan="4">2023 поколение</td></tr>
+      <tr><td><strong>Galaxy Tab S9 Ultra</strong></td><td>14.6"</td><td>2960×1848</td><td>1232×768 <span class="badge xlarge">XL</span></td></tr>
+      <tr><td><strong>Galaxy Tab S9+</strong></td><td>12.4"</td><td>2800×1752</td><td>1054×659 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Galaxy Tab S9</strong></td><td>11"</td><td>2560×1600</td><td>933×583 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Galaxy Tab S9 FE+</strong></td><td>12.4"</td><td>2560×1600</td><td>965×603 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Galaxy Tab S9 FE</strong></td><td>10.9"</td><td>2304×1440</td><td>876×547 <span class="badge expanded">E</span></td></tr>
+
+      <tr class="row-section"><td colspan="4">2022 и старше</td></tr>
+      <tr><td><strong>Galaxy Tab S8 Ultra</strong></td><td>14.6"</td><td>2960×1848</td><td>1232×768 <span class="badge xlarge">XL</span></td></tr>
+      <tr><td><strong>Galaxy Tab S8+</strong></td><td>12.4"</td><td>2800×1752</td><td>1054×659 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Galaxy Tab S8</strong></td><td>11"</td><td>2560×1600</td><td>933×583 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Galaxy Tab S7 / S7 FE</strong></td><td>11"-12.4"</td><td>2560×1600</td><td>933 / 1054 dp <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Galaxy Tab S6 Lite (2024)</strong></td><td>10.4"</td><td>2000×1200</td><td>800×480 <span class="badge medium">M</span> (portrait)<br>966×600 dp landscape <span class="badge expanded">E</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>Tab S6 Lite</strong> на portrait — единственный планшет Samsung который попадает в <strong>MEDIUM</strong> (800 dp), все остальные начинаются с 933 dp. Если приоритет — учёт всех Samsung-планшетов, NavRail включать с 600 dp.
+  </div>
+</section>
+
+<!-- 9 · OTHER TABLETS -->
+<section id="tablets-others">
+  <h2><span class="num">09</span>Xiaomi · Lenovo · Honor · Huawei</h2>
+  <p class="lead">Альтернативы Samsung. Honor и Xiaomi активно продвигаются в РФ через М.Видео / Эльдорадо. Huawei — без Google services, через HMS.</p>
+
+  <table class="matrix">
+    <thead>
+      <tr><th>Модель</th><th>Диагональ</th><th>Разрешение</th><th>dp (landscape)</th></tr>
+    </thead>
+    <tbody>
+      <tr class="row-section"><td colspan="4">Xiaomi</td></tr>
+      <tr><td><strong>Xiaomi Pad 7 Pro</strong></td><td>11.2"</td><td>3200×2136</td><td>1066×711 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Xiaomi Pad 7</strong></td><td>11.2"</td><td>3200×2136</td><td>1066×711 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Xiaomi Pad 6S Pro</strong></td><td>12.4"</td><td>3048×2032</td><td>1070×713 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Xiaomi Pad 6 / 6 Pro</strong></td><td>11"</td><td>2880×1800</td><td>1066×667 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Xiaomi Pad 5 / Pad 5 Pro</strong></td><td>11"</td><td>2560×1600</td><td>1066×667 <span class="badge expanded">E</span></td></tr>
+
+      <tr class="row-section"><td colspan="4">Lenovo</td></tr>
+      <tr><td><strong>Lenovo Tab P12 Pro</strong></td><td>12.6"</td><td>2560×1600</td><td>1066×667 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Lenovo Tab P12</strong></td><td>12.7"</td><td>2944×1840</td><td>1227×767 <span class="badge xlarge">XL</span></td></tr>
+      <tr><td><strong>Lenovo Tab P11 Plus</strong></td><td>11"</td><td>2000×1200</td><td>900×540 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Lenovo Tab M11</strong></td><td>11"</td><td>1920×1200</td><td>800×500 <span class="badge medium">M</span></td></tr>
+
+      <tr class="row-section"><td colspan="4">Honor</td></tr>
+      <tr><td><strong>HONOR MagicPad 2</strong></td><td>12.3"</td><td>3000×1920</td><td>1071×686 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>HONOR Pad V9</strong></td><td>11.5"</td><td>2800×1840</td><td>1067×700 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>HONOR Pad 9</strong></td><td>12.1"</td><td>2560×1600</td><td>1066×667 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>HONOR Pad 8</strong></td><td>12"</td><td>2000×1200</td><td>900×540 <span class="badge expanded">E</span></td></tr>
+
+      <tr class="row-section"><td colspan="4">Huawei (HMS, без Google Play)</td></tr>
+      <tr><td><strong>Huawei MatePad Pro 13.2"</strong></td><td>13.2"</td><td>2880×1920</td><td>1097×731 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Huawei MatePad Pro 12.6"</strong></td><td>12.6"</td><td>2560×1600</td><td>1066×667 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Huawei MatePad 11.5"</strong></td><td>11.5"</td><td>2200×1440</td><td>1000×655 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>Huawei MatePad 11"</strong></td><td>10.95"</td><td>2560×1600</td><td>933×583 <span class="badge expanded">E</span></td></tr>
+
+      <tr class="row-section"><td colspan="4">OnePlus</td></tr>
+      <tr><td><strong>OnePlus Pad 2</strong></td><td>12.1"</td><td>3000×2000</td><td>1071×714 <span class="badge expanded">E</span></td></tr>
+      <tr><td><strong>OnePlus Pad</strong></td><td>11.6"</td><td>2800×2000</td><td>1000×714 <span class="badge expanded">E</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>Большинство 11–12.6" планшетов</strong> в landscape попадают в <strong>EXPANDED</strong> (900–1100 dp). <strong>14.6" Samsung Tab S Ultra</strong> и <strong>13.2" Huawei MatePad Pro</strong> — на грани XLarge (≥1232 dp). Для них стоит делать 3-pane layout или max-width центрирование.
+  </div>
+</section>
+
+<!-- 10 · LAYOUT PATTERNS -->
+<section id="layouts">
+  <h2><span class="num">10</span>Layout patterns</h2>
+  <p class="lead">5 шаблонов раскладки, которые покрывают все BELSI-сценарии. Каждый паттерн привязан к конкретному WSC.</p>
+
+  <h3>A. One Pane (compact)</h3>
+  <div class="mock" style="height:160px;">
+    <div class="pane" style="width:100%;">
+      <div class="pane-title">Single column</div>
+      <div class="mock-line accent"></div>
+      <div class="mock-line"></div>
+      <div class="mock-line medium"></div>
+      <div class="mock-line short"></div>
+      <div class="mock-line"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:40px;background:var(--indigo-100);display:flex;justify-content:space-around;align-items:center;">
+        <div style="width:24px;height:24px;background:var(--indigo-500);border-radius:6px;"></div>
+        <div style="width:24px;height:24px;background:var(--slate-300);border-radius:6px;"></div>
+        <div style="width:24px;height:24px;background:var(--slate-300);border-radius:6px;"></div>
+        <div style="width:24px;height:24px;background:var(--slate-300);border-radius:6px;"></div>
+      </div>
+    </div>
+  </div>
+  <p>Для: телефон portrait, Z Fold closed, Z Flip open. Навигация — BottomNavigation. Контент — одной колонкой во всю ширину.</p>
+
+  <h3>B. NavRail + One Pane (medium / phone landscape)</h3>
+  <div class="mock" style="height:160px;">
+    <div class="rail" style="width:80px;">
+      <div style="padding:10px 4px;text-align:center;font-size:9px;color:var(--indigo-700);font-weight:700;">RAIL</div>
+    </div>
+    <div class="pane" style="width:100%;">
+      <div class="pane-title">Single column</div>
+      <div class="mock-line accent"></div>
+      <div class="mock-line"></div>
+      <div class="mock-line medium"></div>
+      <div class="mock-line short"></div>
+    </div>
+  </div>
+  <p>Для: Tab S6 Lite portrait, phone landscape, Z Fold open portrait. Боковая навигация + одна колонка. Используется когда у нас 4+ табов навигации.</p>
+
+  <h3>C. List–Detail (expanded)</h3>
+  <div class="mock" style="height:180px;">
+    <div class="rail" style="width:80px;">
+      <div style="padding:10px 4px;text-align:center;font-size:9px;color:var(--indigo-700);font-weight:700;">RAIL</div>
+    </div>
+    <div class="pane" style="width:35%;">
+      <div class="pane-title">List</div>
+      <div class="mock-card"><div class="mock-line short" style="margin:0;"></div></div>
+      <div class="mock-card" style="background:var(--indigo-100);border-color:var(--indigo-300);"><div class="mock-line short" style="margin:0;"></div></div>
+      <div class="mock-card"><div class="mock-line short" style="margin:0;"></div></div>
+      <div class="mock-card"><div class="mock-line short" style="margin:0;"></div></div>
+    </div>
+    <div class="pane" style="width:65%;">
+      <div class="pane-title">Detail (выбранный элемент)</div>
+      <div class="mock-line accent"></div>
+      <div class="mock-line"></div>
+      <div class="mock-line medium"></div>
+      <div class="mock-line short"></div>
+      <div class="mock-line"></div>
+    </div>
+  </div>
+  <p>Для: Z Fold open landscape, 11" планшеты landscape. Idiomatic для управленческих экранов: список слева, детали выбранного справа. <strong>BELSI: CuratorMainScreen Tab «Тикеты», «Фото», «Бригады», «Люди»</strong>.</p>
+
+  <h3>D. Three Pane (xlarge)</h3>
+  <div class="mock" style="height:180px;">
+    <div class="rail" style="width:80px;">
+      <div style="padding:10px 4px;text-align:center;font-size:9px;color:var(--indigo-700);font-weight:700;">DRAWER</div>
+    </div>
+    <div class="pane" style="width:30%;">
+      <div class="pane-title">List</div>
+      <div class="mock-card"><div class="mock-line short" style="margin:0;"></div></div>
+      <div class="mock-card"><div class="mock-line short" style="margin:0;"></div></div>
+    </div>
+    <div class="pane" style="width:35%;">
+      <div class="pane-title">Detail</div>
+      <div class="mock-line accent"></div>
+      <div class="mock-line short"></div>
+    </div>
+    <div class="pane" style="width:35%;">
+      <div class="pane-title">Inspector / actions</div>
+      <div class="mock-line"></div>
+      <div class="mock-line medium"></div>
+    </div>
+  </div>
+  <p>Для: 13"+ планшеты (Tab S Ultra, MatePad Pro 13.2"). Список + детали + панель действий/инспектора. <strong>BELSI: куратор-аналитика с charts</strong>.</p>
+
+  <h3>E. Centered max-width (любой expanded для контента-чтения)</h3>
+  <div class="mock" style="height:160px;">
+    <div class="pane" style="width:18%; background:transparent;"></div>
+    <div class="pane" style="width:64%; border-left:1px dashed var(--slate-400); border-right:1px dashed var(--slate-400);">
+      <div class="pane-title">Контент max 720 dp по центру</div>
+      <div class="mock-line accent"></div>
+      <div class="mock-line"></div>
+      <div class="mock-line medium"></div>
+    </div>
+    <div class="pane" style="width:18%; background:transparent;"></div>
+  </div>
+  <p>Для: формы регистрации, Update Gate, About, Privacy/TOS. Колонка контента ограничена 720 dp и центрирована — текст читается комфортно даже на 1232 dp Tab S10 Ultra.</p>
+</section>
+
+<!-- 11 · COMPONENTS -->
+<section id="components">
+  <h2><span class="num">11</span>Компоненты — что меняется по WSC</h2>
+
+  <table class="matrix">
+    <thead>
+      <tr><th>Компонент</th><th>Compact</th><th>Medium</th><th>Expanded</th><th>XLarge</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Navigation</strong></td>
+        <td>BottomNavigation</td>
+        <td>NavigationRail</td>
+        <td>NavigationRail (raised)</td>
+        <td>NavigationDrawer (persistent)</td>
+      </tr>
+      <tr>
+        <td><strong>Top bar</strong></td>
+        <td>TopAppBar (компактный, 1 action + overflow)</td>
+        <td>TopAppBar (2-3 action)</td>
+        <td>TopAppBar (4 action visible)</td>
+        <td>TopAppBar (все actions visible)</td>
+      </tr>
+      <tr>
+        <td><strong>FAB</strong></td>
+        <td>FAB внизу справа</td>
+        <td>FAB внизу справа</td>
+        <td>Extended FAB или встроенная primary-кнопка</td>
+        <td>Встроенная primary-кнопка в toolbar</td>
+      </tr>
+      <tr>
+        <td><strong>Dialog</strong></td>
+        <td>Full-screen или 90% width</td>
+        <td>Compact dialog 560 dp</td>
+        <td>Compact dialog 560 dp</td>
+        <td>Compact dialog 560 dp</td>
+      </tr>
+      <tr>
+        <td><strong>BottomSheet</strong></td>
+        <td>Full-width modal</td>
+        <td>Side sheet ИЛИ bottom 60% width</td>
+        <td>Side sheet (right) 360-400 dp</td>
+        <td>Side sheet (right) 360-400 dp</td>
+      </tr>
+      <tr>
+        <td><strong>List item</strong></td>
+        <td>Полная ширина, 2 строки</td>
+        <td>Полная ширина, 2 строки</td>
+        <td>Список в pane 35-40%</td>
+        <td>Список в pane 30%</td>
+      </tr>
+      <tr>
+        <td><strong>Cards grid</strong></td>
+        <td>1 столбец</td>
+        <td>2 столбца</td>
+        <td>3 столбца ИЛИ 2 крупных</td>
+        <td>4 столбца ИЛИ 3 крупных</td>
+      </tr>
+      <tr>
+        <td><strong>Forms</strong></td>
+        <td>1 колонка, лейблы сверху</td>
+        <td>1 колонка max 560 dp</td>
+        <td>2 колонки по 320 dp</td>
+        <td>2 колонки max 720 dp</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 12 · TYPOGRAPHY -->
+<section id="typography">
+  <h2><span class="num">12</span>Типографика</h2>
+  <p class="lead">На широких экранах текст не должен растягиваться на 1000 dp в одну строку. Ограничение длины строки + увеличение размеров шрифта.</p>
+
+  <table class="matrix">
+    <thead>
+      <tr><th>Стиль</th><th>Compact</th><th>Medium</th><th>Expanded+</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Display large</td><td>32 sp</td><td>40 sp</td><td>48 sp</td></tr>
+      <tr><td>Headline large</td><td>24 sp</td><td>28 sp</td><td>32 sp</td></tr>
+      <tr><td>Title medium (заголовок карточки)</td><td>16 sp</td><td>16 sp</td><td>18 sp</td></tr>
+      <tr><td>Body medium</td><td>14 sp</td><td>14 sp</td><td>15 sp</td></tr>
+      <tr><td>Label small</td><td>11 sp</td><td>11 sp</td><td>12 sp</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>Length cap</strong>: одна строка текста-абзаца не должна быть шире <strong>72ch</strong> (~ 720 dp при body medium). Чтение страдает после этой границы.
+  </div>
+</section>
+
+<!-- 13 · SHIFTSCREEN -->
+<section id="belsi-shift">
+  <h2><span class="num">13</span>BELSI · ShiftScreen (монтажник)</h2>
+  <p class="lead">Главный рабочий экран монтажника. Сейчас — single column. На expanded — растягивается уродливо.</p>
+
+  <h3>Compact (закрытый Fold, обычный phone)</h3>
+  <div class="mock" style="height:240px;">
+    <div class="pane" style="width:100%;">
+      <div class="pane-title">Status + Photo slots (вертикально)</div>
+      <div class="mock-card" style="padding:8px;">
+        <div class="pane-title">Смена / Timer</div>
+        <div class="mock-line accent"></div>
+        <div class="mock-line"></div>
+      </div>
+      <div class="mock-card" style="padding:8px;">
+        <div class="pane-title">Photo slot 1</div>
+        <div class="mock-line"></div>
+      </div>
+      <div class="mock-card" style="padding:8px;">
+        <div class="pane-title">Photo slot 2</div>
+        <div class="mock-line"></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Medium (Z Fold open portrait, Tab S6 portrait)</h3>
+  <p>Single column + <strong>max-width 720 dp</strong> + центрирование. Контент не растягивается.</p>
+
+  <h3>Expanded (Z Fold open landscape, 11" tablet)</h3>
+  <div class="mock" style="height:200px;">
+    <div class="pane" style="width:45%;">
+      <div class="pane-title">Левая колонка: Shift status</div>
+      <div class="mock-card" style="padding:8px;">
+        <div class="pane-title">Timer · Пауза · Кнопки</div>
+        <div class="mock-line accent"></div>
+        <div class="mock-line"></div>
+        <div class="mock-line medium"></div>
+      </div>
+      <div class="mock-card" style="padding:8px;">
+        <div class="pane-title">Объект</div>
+        <div class="mock-line"></div>
+      </div>
+    </div>
+    <div class="pane" style="width:55%;">
+      <div class="pane-title">Правая колонка: Photo slots grid</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+        <div class="mock-card" style="padding:6px; height:30px;"><div class="mock-line short" style="margin:0;"></div></div>
+        <div class="mock-card" style="padding:6px; height:30px;"><div class="mock-line short" style="margin:0;"></div></div>
+        <div class="mock-card" style="padding:6px; height:30px;"><div class="mock-line short" style="margin:0;"></div></div>
+        <div class="mock-card" style="padding:6px; height:30px;"><div class="mock-line short" style="margin:0;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Действия для реализации</strong>:
+    <ol>
+      <li>Обернуть текущий <code>ActiveShiftView</code> в <code>BoxWithConstraints</code></li>
+      <li>На <code>maxWidth &gt;= 840.dp</code> — переключиться на Row { ShiftStatusColumn(modifier=Modifier.weight(0.45f)); PhotoSlotsGrid(modifier=Modifier.weight(0.55f)) }</li>
+      <li>На <code>maxWidth &lt; 840.dp</code> — оставить текущий Column</li>
+      <li>На любом expanded — обернуть в <code>widthIn(max = 1200.dp).align(Center)</code> чтобы на 14.6" Tab S Ultra не растягивалось до 1232 dp</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 14 · CURATOR -->
+<section id="belsi-curator">
+  <h2><span class="num">14</span>BELSI · CuratorMainScreen</h2>
+  <p class="lead">8 управленческих табов. Сейчас на expanded работает только NavRail — контент таба остаётся одноколонным и тратит ширину впустую.</p>
+
+  <h3>Что меняется по табам</h3>
+
+  <table class="matrix">
+    <thead>
+      <tr><th>Tab</th><th>Compact</th><th>Medium</th><th>Expanded (список-детали)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>0 · Обзор</strong></td><td>Грид 2 столбца</td><td>Грид 3 столбца</td><td>Грид 4 столбца + max-width 1200 dp</td></tr>
+      <tr><td><strong>1 · Бригады</strong></td><td>Список во всю ширину</td><td>Список max 720</td><td>Список 35% / детали бригады 65%</td></tr>
+      <tr><td><strong>2 · Люди</strong></td><td>Список + filter chips сверху</td><td>То же, NavRail слева</td><td>Список 30% / профиль юзера 70%</td></tr>
+      <tr><td><strong>3 · Объекты</strong></td><td>Список</td><td>Список max 720</td><td>Список 40% / карта/детали 60%</td></tr>
+      <tr><td><strong>4 · Задачи</strong></td><td>Список</td><td>Список</td><td>Колонки kanban: backlog / in progress / done</td></tr>
+      <tr><td><strong>5 · Фото</strong></td><td>Грид 2</td><td>Грид 3</td><td>Грид 3-4 + preview pane справа (40%)</td></tr>
+      <tr><td><strong>6 · Тикеты</strong></td><td>Список</td><td>Список</td><td>Список 35% / conversation 65%</td></tr>
+      <tr><td><strong>7 · Чат</strong></td><td>Список тредов → conversation (push)</td><td>То же</td><td>Список тредов 30% / conversation 70%</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>Приоритет реализации</strong>: 6 (Тикеты) и 5 (Фото) — самые частые для куратора. Сначала их.
+  </div>
+</section>
+
+<!-- 15 · FOREMAN -->
+<section id="belsi-foreman">
+  <h2><span class="num">15</span>BELSI · ForemanMainScreen</h2>
+  <p class="lead">Использует Material 3 <code>NavigationSuiteScaffold</code> — sам автоматически переключается между BottomNav и NavRail. На expanded остаётся проблема — контент колонкой по 884 dp.</p>
+
+  <div class="card success">
+    <h4>✅ Что уже работает</h4>
+    <ul>
+      <li>NavigationSuiteScaffold ведёт навигацию автоматически</li>
+      <li>На compact — BottomNavigation</li>
+      <li>На medium — NavRail</li>
+      <li>На expanded — NavRail (вынесен слева)</li>
+    </ul>
+  </div>
+
+  <div class="card warn">
+    <h4>⚠ Что нужно доделать</h4>
+    <ul>
+      <li>Tab «Команда» — на expanded list-detail (список монтажников 35% / детали 65%)</li>
+      <li>Tab «Фото» — на expanded грид 3 + preview pane</li>
+      <li>Tab «Профиль» — max-width 720 dp + центрирование</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 16 · OTHER SCREENS -->
+<section id="belsi-other">
+  <h2><span class="num">16</span>Остальные экраны</h2>
+
+  <table class="matrix">
+    <thead>
+      <tr><th>Экран</th><th>Сейчас</th><th>Должно быть на expanded</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>AuthPhone / Login</td><td>Полная ширина</td><td>max-width 480 dp, центр</td></tr>
+      <tr><td>TermsScreen</td><td>Колонка во всю ширину</td><td>max-width 720 dp + scroll</td></tr>
+      <tr><td>UpdateGateDialog (Compose Dialog)</td><td>0.96f fillMaxWidth — растягивается</td><td>max-width 720 dp + центрирование</td></tr>
+      <tr><td>ProfileScreen</td><td>1 колонка</td><td>2 колонки: аватар+ФИО слева, статистика справа</td></tr>
+      <tr><td>EditProfileScreen</td><td>1 колонка, поля во всю ширину</td><td>Поля по 320 dp в 2 колонки</td></tr>
+      <tr><td>CameraScreen</td><td>Превью на весь экран</td><td>Превью 60% + чек-лист/комментарий 40% (на expanded)</td></tr>
+      <tr><td>PhotoGalleryScreen</td><td>Грид 3</td><td>Грид 5-6 на expanded</td></tr>
+      <tr><td>ShiftHistoryScreen</td><td>Список</td><td>Список 35% / детали смены 65%</td></tr>
+      <tr><td>Settings</td><td>Список во всю</td><td>max-width 720 dp</td></tr>
+      <tr><td>AiPhotoSearchScreen</td><td>Грид + search bar</td><td>Search bar max 720, грид 4-5 ширина 100%</td></tr>
+      <tr><td>BatchScreens (партии)</td><td>Список + Form</td><td>Список 40% / details/timeline 60%</td></tr>
+      <tr><td>Messenger conversation</td><td>Полный экран</td><td>На expanded — встроенный в Tab «Чат» куратора как right pane</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 17 · IMPLEMENTATION -->
+<section id="impl">
+  <h2><span class="num">17</span>Реализация · ResponsiveUtils.kt</h2>
+  <p class="lead">Уже есть в проекте: <code>app/src/main/java/com/belsi/work/presentation/utils/ResponsiveUtils.kt</code>. Достаточно использовать существующие функции.</p>
+
+  <h3>API</h3>
+<pre class="code"><span class="cm">// Класс окна</span>
+<span class="kw">val</span> windowSize = <span class="fn">rememberWindowSizeClass</span>()
+<span class="kw">when</span> (windowSize) {
+    WindowWidthSizeClass.COMPACT  -> <span class="cm">// &lt; 600 dp</span>
+    WindowWidthSizeClass.MEDIUM   -> <span class="cm">// 600 - 839 dp</span>
+    WindowWidthSizeClass.EXPANDED -> <span class="cm">// &gt;= 840 dp</span>
+}
+
+<span class="cm">// Удобные хелперы</span>
+<span class="kw">val</span> isExpanded = <span class="fn">isExpandedScreen</span>()
+<span class="kw">val</span> useRail   = <span class="fn">shouldUseNavigationRail</span>()
+<span class="kw">val</span> maxW      = <span class="fn">adaptiveMaxWidth</span>()  <span class="cm">// 720dp / 900dp</span>
+<span class="kw">val</span> padding   = <span class="fn">adaptiveContentPadding</span>()
+<span class="kw">val</span> cols      = <span class="fn">statCardsPerRow</span>()  <span class="cm">// 2 / 3 / 4 / 6</span></pre>
+
+  <h3>Минимальная типовая обёртка контента</h3>
+<pre class="code"><span class="kw">Box</span>(modifier = Modifier.<span class="fn">fillMaxSize</span>()) {
+    <span class="kw">Column</span>(
+        modifier = Modifier
+            .<span class="fn">widthIn</span>(max = <span class="fn">adaptiveMaxWidth</span>())
+            .<span class="fn">align</span>(Alignment.TopCenter)
+            .<span class="fn">verticalScroll</span>(<span class="fn">rememberScrollState</span>())
+    ) {
+        <span class="cm">// content</span>
+    }
+}</pre>
+
+  <h3>List-detail через NavigationSuiteScaffold + Adaptive (Material 3)</h3>
+<pre class="code"><span class="cm">// Material 3 adaptive (требует androidx.compose.material3.adaptive:adaptive-navigation)</span>
+<span class="fn">NavigableListDetailPaneScaffold</span>(
+    navigator = <span class="fn">rememberListDetailPaneScaffoldNavigator</span>&lt;ItemId&gt;(),
+    listPane = { <span class="cm">/* список */</span> },
+    detailPane = { <span class="cm">/* детали */</span> },
+)
+<span class="cm">// Сам понимает WSC, на compact показывает только одну панель.</span></pre>
+
+  <div class="note">
+    Зависимость: <code>androidx.compose.material3.adaptive:adaptive-navigation:1.0.0</code> + <code>adaptive-layout:1.0.0</code>. Сейчас в BELSI нет — добавить в <code>app/build.gradle.kts</code>.
+  </div>
+</section>
+
+<!-- 18 · TESTING -->
+<section id="testing">
+  <h2><span class="num">18</span>Тестирование</h2>
+  <p class="lead">6 минимальных конфигураций для Android emulator, покрывающих все WSC и folding.</p>
+
+  <table class="matrix">
+    <thead>
+      <tr><th>Конфигурация</th><th>API</th><th>Размер</th><th>WSC</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>1 · Pixel 7</strong></td><td>33</td><td>411×914 dp</td><td><span class="badge compact">Compact</span></td></tr>
+      <tr><td><strong>2 · Pixel 7 landscape</strong></td><td>33</td><td>914×411 dp</td><td><span class="badge medium">Medium</span></td></tr>
+      <tr><td><strong>3 · Resizable (cover)</strong></td><td>34</td><td>374×768 dp</td><td><span class="badge compact">Compact</span> (Z Fold closed)</td></tr>
+      <tr><td><strong>4 · Resizable (book)</strong></td><td>34</td><td>884×673 dp</td><td><span class="badge expanded">Expanded</span> (Z Fold open)</td></tr>
+      <tr><td><strong>5 · Pixel Tablet</strong></td><td>34</td><td>1280×800 dp</td><td><span class="badge expanded">Expanded</span></td></tr>
+      <tr><td><strong>6 · Tab S Ultra preset</strong></td><td>34</td><td>1232×768 dp</td><td><span class="badge xlarge">XLarge</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Чек-лист для каждого экрана</h3>
+  <ul>
+    <li>☐ На compact — BottomNav, всё видно без overflow</li>
+    <li>☐ На medium — NavRail (если есть навигация), контент не растягивается за 720 dp</li>
+    <li>☐ На expanded landscape — list-detail (если применимо) или max-width</li>
+    <li>☐ На xlarge — нет одиночной колонки на 1200 dp без обрамления</li>
+    <li>☐ Z Fold open → закрытие → открытие = state сохраняется</li>
+    <li>☐ Поворот экрана с заполненной формой = state сохраняется</li>
+  </ul>
+</section>
+
+<!-- 19 · ANTI-PATTERNS -->
+<section id="anti-patterns">
+  <h2><span class="num">19</span>Анти-паттерны</h2>
+  <p class="lead">Что НЕ делать — типичные ошибки которые ломают адаптив.</p>
+
+  <div class="card rose">
+    <h4>❌ Hardcoded .width(400.dp) на основном контенте</h4>
+    <p>На Z Flip cover (340 dp) контент выезжает; на Tab S Ultra — занимает 1/3 экрана с пустотой. <strong>Замена</strong>: <code>fillMaxWidth(0.7f)</code> или <code>widthIn(min=320.dp, max=720.dp)</code>.</p>
+  </div>
+
+  <div class="card rose">
+    <h4>❌ Проверка <code>Build.MODEL == "SM-F946B"</code></h4>
+    <p>Привязка к моделям ломается на новых девайсах и не работает в эмуляторе. <strong>Замена</strong>: WindowWidthSizeClass.</p>
+  </div>
+
+  <div class="card rose">
+    <h4>❌ Один абсолютный порог <code>screenWidthDp &gt;= 540</code></h4>
+    <p>540 dp выбран произвольно; на Tab S6 Lite (800 dp portrait) уже надо что-то делать, а 540 не срабатывает. <strong>Замена</strong>: три порога (600 / 840 / 1240) через <code>WindowWidthSizeClass</code>.</p>
+  </div>
+
+  <div class="card rose">
+    <h4>❌ Игнорирование landscape</h4>
+    <p>Если приложение работает только portrait — мобильные планшеты + Z Fold open landscape не получают своего UX. <strong>Замена</strong>: убрать <code>android:screenOrientation="portrait"</code> в манифесте, поддерживать landscape хотя бы для tablets.</p>
+  </div>
+
+  <div class="card rose">
+    <h4>❌ Текстовый абзац шириной 1200 dp</h4>
+    <p>Длинная строка нечитаема (глаз теряет место при возврате на новую строку). <strong>Замена</strong>: <code>widthIn(max = 720.dp)</code> для текстовых блоков.</p>
+  </div>
+
+  <div class="card rose">
+    <h4>❌ Dialog с <code>usePlatformDefaultWidth = false</code> и <code>fillMaxWidth()</code></h4>
+    <p>На широком экране — диалог во всю ширину 1232 dp. <strong>Замена</strong>: <code>widthIn(max = 560.dp)</code> (Material 3 maximum для диалогов).</p>
+  </div>
+
+  <div class="card rose">
+    <h4>❌ Грид с <code>GridCells.Fixed(2)</code></h4>
+    <p>На Tab S Ultra (1232 dp) 2 столбца — каждый по 600 dp, нечитаемо. <strong>Замена</strong>: <code>GridCells.Adaptive(minSize = 320.dp)</code> — сам подберёт количество.</p>
+  </div>
+</section>
+
+</main>
+</div>
+</body>
+</html>

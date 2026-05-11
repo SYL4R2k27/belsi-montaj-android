@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    FIX(2026-05-03): debug-overlay для нового имени.
+
+    Эти строки переопределяют main/res/values/strings.xml ТОЛЬКО для debug-сборки.
+    Release-вариант получает обычное "Belsi.Монтаж".
+
+    Назначение:
+      - На устройстве debug-APK (com.belsi.work.debug) показывается имя "BELSI.Команда"
+      - Прод-релиз (com.belsi.work) остаётся "Belsi.Монтаж"
+      - Имя не утверждено окончательно — это рабочее название
+-->
+<resources>
+    <string name="app_name">BELSI.Команда</string>
+</resources>

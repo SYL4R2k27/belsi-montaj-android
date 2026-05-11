@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Belsi.Монтаж</string>
+    
+    <!-- Auth -->
+    <string name="enter_phone">Введите номер телефона</string>
+    <string name="get_code">Получить код</string>
+    <string name="enter_code">Введите код из SMS</string>
+    <string name="verify">Подтвердить</string>
+    <string name="resend_code">Отправить код повторно</string>
+    
+    <!-- Roles -->
+    <string name="select_role">Выберите роль</string>
+    <string name="role_installer">Монтажник</string>
+    <string name="role_foreman">Бригадир</string>
+    <string name="role_curator">Куратор</string>
+    
+    <!-- Shift -->
+    <string name="start_shift">Начать смену</string>
+    <string name="end_shift">Завершить смену</string>
+    <string name="pause_shift">Приостановить</string>
+    <string name="resume_shift">Продолжить</string>
+    <string name="shift_in_progress">Смена идёт</string>
+    <string name="shift_paused">Смена приостановлена</string>
+    
+    <!-- Photos -->
+    <string name="take_photo">Сделать фото</string>
+    <string name="photo_required">Требуется фото</string>
+    <string name="upload_photo">Загрузить фото</string>
+    <string name="photo_uploaded">Фото загружено</string>
+    
+    <!-- Common -->
+    <string name="ok">ОК</string>
+    <string name="cancel">Отмена</string>
+    <string name="save">Сохранить</string>
+    <string name="delete">Удалить</string>
+    <string name="edit">Редактировать</string>
+    <string name="back">Назад</string>
+    <string name="next">Далее</string>
+    <string name="loading">Загрузка...</string>
+    <string name="error">Ошибка</string>
+    <string name="success">Успешно</string>
+    
+    <!-- Errors -->
+    <string name="error_network">Ошибка сети</string>
+    <string name="error_unknown">Неизвестная ошибка</string>
+    <string name="error_invalid_phone">Неверный номер телефона</string>
+    <string name="error_invalid_code">Неверный код</string>
+</resources>

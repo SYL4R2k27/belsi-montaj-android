@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BELSI.Команда 1.3.0 — на согласование</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAF9; --surface:#FFFFFF; --border:#E7E5E4;
+    --text:#1C1917; --muted:#57534E; --soft:#A8A29E;
+    --installation:#4F46E5; --logistics:#0EA5E9;
+    --production:#D97706; --observer:#8B5CF6;
+    --emerald:#10B981; --rose:#F43F5E; --amber:#F59E0B;
+    --warm-50:#FAFAF9; --warm-100:#F5F5F4; --warm-200:#E7E5E4;
+    --warm-800:#292524; --warm-900:#1C1917;
+  }
+  *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Inter',-apple-system,sans-serif; background:var(--bg); color:var(--text); line-height:1.65; -webkit-font-smoothing:antialiased; }
+
+  .container { max-width:920px; margin:0 auto; padding:48px 28px 80px; }
+
+  /* Cover */
+  .hero {
+    background:linear-gradient(135deg,#1C1917 0%,#292524 50%,#1C1917 100%);
+    color:#fff; padding:64px 48px; border-radius:24px; margin-bottom:48px;
+    box-shadow:0 24px 48px -12px rgba(28,25,23,.16);
+    position:relative; overflow:hidden;
+  }
+  .hero::before {
+    content:''; position:absolute; top:-100px; right:-100px; width:400px; height:400px;
+    background:radial-gradient(circle, rgba(217,119,6,.15) 0, transparent 70%);
+  }
+  .hero .label {
+    display:inline-block; padding:6px 16px; border-radius:99px;
+    background:rgba(217,119,6,.2); color:#FCD34D; font-size:.75rem; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase; margin-bottom:24px;
+    border:1px solid rgba(217,119,6,.4);
+  }
+  .hero h1 { font-size:2.8rem; font-weight:900; letter-spacing:-.025em; line-height:1.1; margin-bottom:16px; }
+  .hero h1 .accent { color:#FBBF24; }
+  .hero .lead { font-size:1.2rem; color:rgba(255,255,255,.8); max-width:620px; line-height:1.5; }
+  .hero .meta {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:24px;
+    margin-top:40px; padding-top:32px; border-top:1px solid rgba(255,255,255,.1);
+  }
+  .hero .meta .v { font-size:1.6rem; font-weight:800; color:#fff; line-height:1; margin-bottom:4px; }
+  .hero .meta .l { font-size:.8rem; color:rgba(255,255,255,.6); }
+
+  /* Sections */
+  section { margin-bottom:56px; }
+  h2 { font-size:1.9rem; font-weight:800; letter-spacing:-.02em; margin-bottom:8px; line-height:1.2; }
+  h2 .num { color:var(--soft); margin-right:14px; font-weight:600; }
+  h3 { font-size:1.25rem; font-weight:700; margin:32px 0 12px; }
+  h4 { font-size:1.05rem; font-weight:600; margin:18px 0 8px; }
+  p { margin-bottom:14px; color:var(--text); }
+  p strong { font-weight:600; }
+  .lead { color:var(--muted); font-size:1.05rem; max-width:780px; margin-bottom:24px; }
+  ul,ol { margin-left:24px; }
+  li { margin-bottom:6px; color:var(--text); }
+  li strong { font-weight:600; }
+
+  /* Cards */
+  .card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:24px; margin-bottom:14px;
+  }
+  .card.amber { background:#FEF3C7; border-color:#FDE68A; }
+  .card.green { background:#D1FAE5; border-color:#6EE7B7; }
+  .card.blue { background:#E0F2FE; border-color:#7DD3FC; }
+  .card.indigo { background:#EEF2FF; border-color:#C7D2FE; }
+  .card.violet { background:#EDE9FE; border-color:#C4B5FD; }
+  .card.warn { background:#FEE2E2; border-color:#FCA5A5; }
+
+  .grid-2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; }
+  .grid-3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+
+  /* Big numbers */
+  .stat-big {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:24px; text-align:center;
+  }
+  .stat-big .v { font-size:2.4rem; font-weight:900; line-height:1; margin-bottom:6px; }
+  .stat-big.amber .v { color:var(--production); }
+  .stat-big.green .v { color:var(--emerald); }
+  .stat-big.blue .v { color:var(--logistics); }
+  .stat-big.indigo .v { color:var(--installation); }
+  .stat-big.violet .v { color:var(--observer); }
+  .stat-big .l { font-size:.85rem; color:var(--muted); }
+
+  /* Timeline / pipeline */
+  .pipeline {
+    display:flex; gap:6px; align-items:stretch; overflow-x:auto;
+    margin:20px 0; padding:6px 0;
+  }
+  .pipeline .stage {
+    flex:1; min-width:140px; padding:14px 12px; border-radius:10px;
+    border:1px solid var(--border); text-align:center;
+  }
+  .pipeline .stage.production { background:#FEF3C7; border-color:#FDE68A; }
+  .pipeline .stage.logistics { background:#E0F2FE; border-color:#7DD3FC; }
+  .pipeline .stage.installation { background:#EEF2FF; border-color:#C7D2FE; }
+  .pipeline .stage h5 { font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; margin-bottom:6px; }
+  .pipeline .stage .ico { font-size:1.6rem; line-height:1; margin-bottom:4px; }
+  .pipeline .stage .who { font-size:.8rem; font-weight:600; }
+  .pipeline .arr { align-self:center; color:var(--soft); font-size:1.4rem; }
+
+  /* Compare table */
+  .compare {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; overflow:hidden; margin:16px 0;
+  }
+  .compare .row {
+    display:grid; grid-template-columns:2fr 1fr 1fr;
+    border-bottom:1px solid var(--border);
+  }
+  .compare .row:last-child { border-bottom:0; }
+  .compare .row.head { background:var(--warm-100); font-weight:700; font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .compare .cell { padding:14px 18px; font-size:.95rem; border-right:1px solid var(--border); }
+  .compare .cell:last-child { border-right:0; }
+  .compare .row.us .cell:last-child { background:#D1FAE5; font-weight:600; color:#065F46; }
+
+  /* Roles grid */
+  .roles {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    gap:12px; margin:20px 0;
+  }
+  .role {
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:18px;
+  }
+  .role .top {
+    display:flex; align-items:center; gap:10px; margin-bottom:8px;
+  }
+  .role .top .e { font-size:1.6rem; }
+  .role .top .name { font-weight:700; font-size:.95rem; }
+  .role .desc { font-size:.85rem; color:var(--muted); line-height:1.4; }
+  .role.installation { border-left:3px solid var(--installation); }
+  .role.logistics { border-left:3px solid var(--logistics); }
+  .role.production { border-left:3px solid var(--production); }
+  .role.observer { border-left:3px solid var(--observer); }
+
+  /* CTA */
+  .cta {
+    background:linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    border:1px solid #F59E0B; border-radius:16px; padding:32px;
+    margin:32px 0; text-align:center;
+  }
+  .cta h3 { margin:0 0 12px; font-size:1.4rem; color:#92400E; }
+  .cta p { margin:0 0 16px; color:#78350F; }
+  .cta .btn {
+    display:inline-block; padding:14px 28px; background:#1C1917; color:#fff;
+    border-radius:10px; font-weight:700; text-decoration:none;
+    margin:8px 4px;
+  }
+  .cta .btn.amber { background:#D97706; }
+  .cta .btn:hover { opacity:.9; }
+
+  /* Quote */
+  .quote {
+    border-left:4px solid var(--production); padding:20px 28px;
+    background:#FEF3C7; border-radius:0 14px 14px 0; margin:24px 0;
+  }
+  .quote p { font-size:1.1rem; color:#78350F; font-style:italic; line-height:1.5; margin:0; }
+
+  /* Pill */
+  .pill {
+    display:inline-block; padding:3px 10px; border-radius:99px;
+    font-size:.7rem; font-weight:700; letter-spacing:.04em;
+  }
+  .pill.green { background:#D1FAE5; color:#065F46; }
+  .pill.amber { background:#FEF3C7; color:#92400E; }
+  .pill.gray { background:#F1F5F9; color:#475569; }
+  .pill.red { background:#FEE2E2; color:#991B1B; }
+
+  /* Footer */
+  .footer { margin-top:80px; padding-top:32px; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
+  .footer a { color:var(--installation); text-decoration:none; }
+
+  /* Embedded */
+  .embed-list {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    overflow:hidden; margin:16px 0;
+  }
+  .embed-list .it {
+    padding:14px 20px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:14px;
+  }
+  .embed-list .it:last-child { border-bottom:0; }
+  .embed-list .it .ico { font-size:1.4rem; }
+  .embed-list .it .body { flex:1; }
+  .embed-list .it .body strong { display:block; font-size:.95rem; }
+  .embed-list .it .body span { font-size:.8rem; color:var(--muted); }
+  .embed-list .it a { color:var(--installation); text-decoration:none; font-weight:600; font-size:.85rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ─────────── COVER ─────────── -->
+<div class="hero">
+  <span class="label">📲 На согласование руководителю</span>
+  <h1>BELSI<span class="accent">.Команда</span> · 1.3.0</h1>
+  <p class="lead">Большое расширение приложения: добавили производство мебели, логистику, оффлайн-режим, самостоятельную регистрацию. Мы переходим от приложения для монтажа к экосистеме всего цикла — от фабрики до объекта.</p>
+  <div class="meta">
+    <div><div class="v">1.3.0</div><div class="l">Новая версия</div></div>
+    <div><div class="v">1.2.5</div><div class="l">Минимально-поддерживаемая (текущий прод)</div></div>
+    <div><div class="v">11</div><div class="l">ролей в одном приложении</div></div>
+    <div><div class="v">3</div><div class="l">домена работы</div></div>
+    <div><div class="v">22</div><div class="l">текущих пользователя</div></div>
+    <div><div class="v">5 мая 2026</div><div class="l">Дата сборки</div></div>
+  </div>
+</div>
+
+<!-- ─────────── ПОЗИЦИОНИРОВАНИЕ ─────────── -->
+<section>
+  <h2><span class="num">01</span>Что мы делаем</h2>
+  <p class="lead">Раньше BELSI было приложением для монтажников на стройке. Теперь это <strong>единая экосистема</strong> для всей цепочки: производство мебели на фабрике → доставка водителем → монтаж бригадой на объекте. Все участники в одном приложении видят свою часть пути.</p>
+
+  <div class="quote">
+    <p>«Партия рождается на фабрике в Угличе. Через двенадцать часов едет в кузове на школу в Коломенской 16. Там её разгружают и ставят бригадой. Между этими событиями — десятки людей, и теперь все они в одном приложении.»</p>
+  </div>
+
+  <h3>Три направления работы (домена)</h3>
+  <div class="grid-3">
+    <div class="card amber">
+      <h4 style="margin:0 0 6px">🏭 Производство</h4>
+      <p style="font-size:.88rem; margin:0">Углич и будущие фабрики. Делают мебель, формируют партии для отгрузки. <strong>5 ролей.</strong></p>
+    </div>
+    <div class="card blue">
+      <h4 style="margin:0 0 6px">🚛 Логистика</h4>
+      <p style="font-size:.88rem; margin:0">Логист собирает партии в маршруты, водитель везёт на объект. <strong>2 роли.</strong></p>
+    </div>
+    <div class="card indigo">
+      <h4 style="margin:0 0 6px">🔨 Монтаж</h4>
+      <p style="font-size:.88rem; margin:0">Существующий блок (как в 1.2.5). Бригадиры и монтажники на стройке. <strong>3 роли + куратор.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── ЧТО НОВОГО ─────────── -->
+<section>
+  <h2><span class="num">02</span>Главные нововведения</h2>
+
+  <h3>1. Производство мебели — целый новый блок</h3>
+  <p>Появилось <strong>5 ролей</strong> для людей которые работают на фабрике. У каждой свой главный экран:</p>
+  <div class="roles">
+    <div class="role production">
+      <div class="top"><span class="e">🏭</span><span class="name">Начальник производства</span></div>
+      <div class="desc">Главный на фабрике. Видит ленту смен, ставит задачи, формирует партии для отгрузки. Видит фото всех работников.</div>
+    </div>
+    <div class="role production">
+      <div class="top"><span class="e">👥</span><span class="name">Старший работник</span></div>
+      <div class="desc">Старший в группе. Аналог бригадира на стройке — ведёт группу, ставит задачи.</div>
+    </div>
+    <div class="role production">
+      <div class="top"><span class="e">👷</span><span class="name">Работник</span></div>
+      <div class="desc">Базовая роль на фабрике. Смена, фото, задачи. Привязан к одной фабрике (Углич).</div>
+    </div>
+    <div class="role production">
+      <div class="top"><span class="e">📦</span><span class="name">Комплектатор</span></div>
+      <div class="desc">Кладовщик. Выдаёт материалы и инструмент работникам, фиксирует выдачу с фото.</div>
+    </div>
+    <div class="role production">
+      <div class="top"><span class="e">📐</span><span class="name">Инженер</span></div>
+      <div class="desc">Готовит чертежи и тех.задачи. Может ставить задачи всем — Работникам, Старшим, Комплектатору.</div>
+    </div>
+  </div>
+
+  <h3>2. Партия — главная связующая сущность</h3>
+  <p>Партия — это, например, «20 подоконников для школы №7 на Коломенской 16». Её создаёт Начальник производства, и она проходит через все три домена в виде наглядной шкалы прогресса:</p>
+  <div class="pipeline">
+    <div class="stage production">
+      <h5>Шаг 1</h5>
+      <div class="ico">📝</div>
+      <div class="who">Создание</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="stage production">
+      <h5>Шаг 2</h5>
+      <div class="ico">🔨</div>
+      <div class="who">В работе</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="stage production">
+      <h5>Шаг 3</h5>
+      <div class="ico">📦</div>
+      <div class="who">Готова</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="stage logistics">
+      <h5>Шаг 4</h5>
+      <div class="ico">🚛</div>
+      <div class="who">В пути</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="stage logistics">
+      <h5>Шаг 5</h5>
+      <div class="ico">📍</div>
+      <div class="who">Доставлена</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="stage installation">
+      <h5>Шаг 6</h5>
+      <div class="ico">✅</div>
+      <div class="who">Смонтирована</div>
+    </div>
+  </div>
+  <p>Каждый шаг подсвечен цветом своего домена. Куратор и координатор объекта видят полную историю партии в одном месте — от создания на фабрике до сдачи на объекте.</p>
+
+  <h3>3. История объекта</h3>
+  <p>На каждом объекте (например «Школа №7 Коломенская 16») есть лента событий с подсветкой по доменам — кто что сделал и когда. Все партии, доставки, фото монтажа в одной хронологии. Координатор и куратор могут открыть объект и увидеть прогресс в любой момент.</p>
+
+  <h3>4. Один человек — до 3 ролей</h3>
+  <p>В реальности один работник часто и режет мебель, и развозит её, и помогает на монтаже. Раньше он бы заводил три приложения. Теперь <strong>одна учётная запись</strong>, переключатель ролей в шапке. Открыл утром «Работник в Угличе» → закрыл смену → переключился на «Водитель» → поехал по маршруту → переключился на «Монтажник» → помог бригаде.</p>
+  <p>Каждая роль — отдельная смена, отдельный отчёт. Часы и зарплата считаются по каждой роли раздельно.</p>
+
+  <h3>5. Раздельные перерывы и простои</h3>
+  <p>Раньше было одно понятие «пауза». Теперь <strong>четыре отдельных счётчика времени</strong>:</p>
+  <div class="grid-3">
+    <div class="card green"><strong>🟢 Работа</strong><br><small>Реальное рабочее время</small></div>
+    <div class="card amber"><strong>☕ Перекур</strong><br><small>Короткие перерывы</small></div>
+    <div class="card amber"><strong>🍱 Обед</strong><br><small>Один раз за смену</small></div>
+    <div class="card warn"><strong>⚠️ Простой</strong><br><small>С указанием причины</small></div>
+  </div>
+  <p>Для каждого домена свой список причин простоя. На производстве, например: «Жду материалы», «Поломка станка», «Жду чертежи от инженера». Всего 8 типовых причин для производства, 5 для монтажа, 5 для логистики.</p>
+
+  <h3>6. Простой = сигнал куратору</h3>
+  <p>Когда работник нажимает «Простой» — куратор автоматически получает уведомление. Это не контроль, а скорость реакции: руководитель сразу знает что нужна помощь, не дожидаясь отчёта.</p>
+
+  <h3>7. Самостоятельная регистрация</h3>
+  <p>Раньше каждого юзера приходилось регистрировать вручную (мы делаем это сами). Теперь работник может зарегистрироваться сам через приложение — телефон, пароль, ФИО, выбор роли. <strong>Уже работает на сервере.</strong></p>
+  <p>Открытые роли (монтажник, работник, водитель) — сразу. Закрытые (куратор, бригадир, начальник производства) — требуется одобрение куратора.</p>
+
+  <h3>8. Yandex авто-обогащение профиля</h3>
+  <p>Когда юзер заходит через «Войти через Яндекс», теперь автоматически подтягивается ФИО, e-mail, дата рождения, аватар, телефон. Юзеру не нужно ничего вводить вручную. <strong>В коде готово, ждёт деплоя.</strong></p>
+
+  <h3>9. Оффлайн-режим — для шатдаунов мобильного интернета в Москве</h3>
+  <div class="card warn">
+    <p style="margin:0"><strong>Главная проблема в Москве 2026:</strong> мобильный интернет в районе массовых событий и дронов выключают на 4-12 часов. Все обычные приложения в это время — мёртвые.</p>
+  </div>
+  <p>Теперь BELSI продолжает работать без интернета:</p>
+  <ul>
+    <li>Юзер открывает смену — записывается локально</li>
+    <li>Делает фото — сохраняется на телефон</li>
+    <li>Закрывает задачу — попадает в очередь</li>
+    <li>Указывает простой — попадает в очередь</li>
+  </ul>
+  <p>Когда интернет возвращается — приложение само отправляет всё накопленное на сервер. Юзер ничего не делает специально.</p>
+  <p>В шапке появляется иконка ☁️ с цифрой — сколько действий ждут отправки. <strong>Пока всё дошло — иконка не видна, интерфейс не меняется.</strong></p>
+
+  <h3>10. Адаптивный интерфейс</h3>
+  <p>На некоторых телефонах (особенно складных, узких, с большой клавиатурой) кнопки могли уходить за края экрана. Исправили — кнопки «Войти», «Продолжить», «Сохранить» всегда видны и доступны. Особенно важно на экране регистрации с 11 ролями.</p>
+</section>
+
+<!-- ─────────── ЧТО НЕ МЕНЯЕТСЯ ─────────── -->
+<section>
+  <h2><span class="num">03</span>Что НЕ меняется в работе монтажников</h2>
+  <div class="card green">
+    <p style="margin:0"><strong>Главный принцип всего обновления:</strong> монтажный блок 1.2.5 (которым пользуются 22 человека) — <strong>священная корова</strong>. Мы только расширяем, не переделываем.</p>
+  </div>
+  <h3>Юзер-монтажник в 1.3.0 видит:</h3>
+  <ul>
+    <li>Тот же главный экран смены — <strong>идентичен 1.2.5</strong></li>
+    <li>Те же кнопки «Старт», «Пауза», «Простой», «Закончить смену»</li>
+    <li>Те же часовые фото, те же отчёты</li>
+    <li>Тот же дизайн: цвета, шрифты, расположение</li>
+  </ul>
+  <h3>Что юзер-монтажник заметит дополнительно:</h3>
+  <ul>
+    <li>В шапке появится иконка <strong>☁️ с цифрой</strong> — но <strong>только если интернет упал и есть несохранённые действия</strong>. В обычной работе — иконки нет</li>
+    <li>На экране выбора роли (при регистрации/смене роли) — теперь все 11 ролей с прокруткой, кнопка «Продолжить» не пропадает</li>
+    <li>При входе через Яндекс — автоматически подтянется ФИО и аватар</li>
+  </ul>
+  <p style="font-style:italic; color:var(--muted);">Никаких других изменений в их рабочем потоке. Всё что работало в 1.2.5 — работает в 1.3.0 точно так же.</p>
+</section>
+
+<!-- ─────────── ТЕХНИЧЕСКИЕ ДОКУМЕНТЫ ─────────── -->
+<section>
+  <h2><span class="num">04</span>Полная документация</h2>
+  <p class="lead">Все детали для архитекторов, разработчиков и партнёров — в трёх отдельных документах с визуализацией.</p>
+
+  <div class="embed-list">
+    <div class="it">
+      <span class="ico">🎯</span>
+      <div class="body">
+        <strong>Позиционирование экосистемы</strong>
+        <span>1500 строк · 12 разделов · полный материал для презентаций партнёрам</span>
+      </div>
+      <a href="https://api.belsi.ru/static/docs/positioning/">открыть →</a>
+    </div>
+    <div class="it">
+      <span class="ico">📐</span>
+      <div class="body">
+        <strong>Brandbook экосистемы (полный)</strong>
+        <span>1569 строк · 15 разделов · детально каждая роль и каждый экран</span>
+      </div>
+      <a href="https://api.belsi.ru/static/docs/brandbook-ecosystem/">открыть →</a>
+    </div>
+    <div class="it">
+      <span class="ico">🏭</span>
+      <div class="body">
+        <strong>Brandbook BELSI.Команда</strong>
+        <span>849 строк · 13 разделов · маркетинговый под производство мебели</span>
+      </div>
+      <a href="https://api.belsi.ru/static/docs/brandbook-belsi-komanda/">открыть →</a>
+    </div>
+    <div class="it">
+      <span class="ico">📱</span>
+      <div class="body">
+        <strong>Виды интерфейса</strong>
+        <span>30+ экранов с phone-mock визуализацией</span>
+      </div>
+      <a href="https://api.belsi.ru/static/docs/ui-gallery/">открыть →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── СОСТОЯНИЕ ─────────── -->
+<section>
+  <h2><span class="num">05</span>Текущее состояние и пользователи</h2>
+  <div class="grid-3">
+    <div class="stat-big indigo"><div class="v">22</div><div class="l">пользователя на проде 1.2.5</div></div>
+    <div class="stat-big green"><div class="v">17</div><div class="l">обновились на 1.2.5</div></div>
+    <div class="stat-big amber"><div class="v">10</div><div class="l">новых регистраций за неделю</div></div>
+  </div>
+
+  <h3>Свежие регистрации (примеры)</h3>
+  <ul>
+    <li>Антоненкова Ольга · монтажник · вошла через 1.2.5</li>
+    <li>Игорь Павленко (ЗСО) · монтажник · вошёл, обновил профиль</li>
+    <li>Снежана Константиновна · монтажник · только что зарегистрирована</li>
+    <li>Седова Ирина Владимировна · монтажник · активна сегодня</li>
+    <li>Алексей Красавин, Михаил Г., Анна, и др. · все активны</li>
+  </ul>
+
+  <h3>Серверные ресурсы</h3>
+  <div class="grid-3">
+    <div class="stat-big green"><div class="v">34 ГБ</div><div class="l">свободно из 39 ГБ (87%)</div></div>
+    <div class="stat-big violet"><div class="v">~1 руб</div><div class="l">в месяц расходы на хранилище</div></div>
+    <div class="stat-big blue"><div class="v">5000+</div><div class="l">пользователей выдержит сервер</div></div>
+  </div>
+</section>
+
+<!-- ─────────── БЕЗОПАСНОСТЬ ─────────── -->
+<section>
+  <h2><span class="num">06</span>Что обеспечивает безопасность изменений</h2>
+
+  <h3>Принцип «Расширяем, не меняем»</h3>
+  <p>На всех существующих экранах монтажа мы добавляли только <strong>дополнения</strong>, никогда не переделывая базовый дизайн и поведение. Юзеры 1.2.5 при обновлении не должны почувствовать перемен в своей работе — только увидеть новые возможности там, где они нужны.</p>
+
+  <h3>Технические меры</h3>
+  <ul>
+    <li><strong>Версия 1.2.5</strong> остаётся <strong>минимально-поддерживаемой</strong> — старые приложения продолжат работать с сервером</li>
+    <li>Все изменения <strong>обратно-совместимы</strong>: старый клиент игнорирует новые поля в API</li>
+    <li>Новые серверные эндпоинты <strong>добавляются, не заменяют</strong> существующие</li>
+    <li>База данных: только новые колонки и таблицы, без удалений</li>
+  </ul>
+
+  <h3>Тестовая сборка отдельно от прода</h3>
+  <ul>
+    <li>Тестовый APK устанавливается <strong>рядом</strong> с основным приложением (как два разных приложения)</li>
+    <li>Если тестовое сломается — основное продолжает работать у юзеров</li>
+    <li>Откат: просто удалить тестовое</li>
+  </ul>
+</section>
+
+<!-- ─────────── ТЕСТИРОВАНИЕ ─────────── -->
+<section>
+  <h2><span class="num">07</span>Тестовый APK для согласования</h2>
+  <p class="lead">Версия 1.3.0 готова к тестированию. Можно установить на свой телефон, попробовать всё что описано выше, и согласовать дальнейшие шаги.</p>
+
+  <div class="cta">
+    <h3>📲 Скачать BELSI.Команда 1.3.0</h3>
+    <p>40 МБ · ставится рядом с прод-приложением, не перезаписывает</p>
+    <a href="https://api.belsi.ru/preview" class="btn amber">Скачать APK</a>
+    <a href="https://api.belsi.ru/static/preview/qr.png" class="btn">QR-код</a>
+  </div>
+
+  <h3>Что можно потрогать</h3>
+  <ul>
+    <li>Зайти под своей учёткой (всё работает на тех же серверах)</li>
+    <li>Покликать все экраны производства, посмотреть как выглядит партия</li>
+    <li>Посмотреть как работает «История объекта»</li>
+    <li>Проверить переключение ролей (если включена мульти-роль)</li>
+    <li>Открыть «Играть с ролями» через меню — все 11 ролей в одном месте</li>
+  </ul>
+</section>
+
+<!-- ─────────── ПЛАН ─────────── -->
+<section>
+  <h2><span class="num">08</span>План запуска (после согласования)</h2>
+
+  <h3>Шаг 1 — Согласование (сейчас)</h3>
+  <p>Прочитать этот документ, потрогать тестовый APK, задать вопросы. Утвердить или отметить что нужно доработать.</p>
+
+  <h3>Шаг 2 — Развёртывание серверной части</h3>
+  <p>Применить новые серверные эндпоинты (партии, перерывы, обогащение Яндекса). Это безопасно — все добавляются, не заменяют существующие. Прод 1.2.5 продолжает работать.</p>
+
+  <h3>Шаг 3 — Замена основного APK</h3>
+  <p>Подменить канонический файл приложения (тот что качают новые юзеры) на 1.3.0. Текущим юзерам прилетает уведомление об обновлении.</p>
+
+  <h3>Шаг 4 — Push-рассылка</h3>
+  <p>Отправляем всем 22 юзерам уведомление «Обновление готово». При тапе — открывается ссылка для скачивания (это новый функционал push, тоже в 1.3.0).</p>
+
+  <h3>Шаг 5 — Регистрация новых ролей</h3>
+  <p>Курсором/руководителем создаются учётки для производственных ролей в Угличе. Существующих юзеров переводим/расширяем по мере необходимости.</p>
+
+  <h3>Шаг 6 — Сбор обратной связи</h3>
+  <p>Первые 2 недели — внимательно следим за чатом, тикетами, поведением. При необходимости — быстрые правки без ожидания крупного апдейта.</p>
+</section>
+
+<!-- ─────────── ИТОГ ─────────── -->
+<section>
+  <h2><span class="num">09</span>Итог</h2>
+
+  <p>BELSI <strong>превращается из приложения для монтажа в экосистему всего цикла</strong> — от производства мебели до её установки на объекте. Это большой шаг, но мы делаем его аккуратно: монтажный блок 1.2.5 не трогаем, новые блоки добавляем сбоку. У юзеров есть гарантия что их рабочий поток не сломается.</p>
+
+  <p><strong>Что готово:</strong></p>
+  <ul>
+    <li>✅ Тестовая сборка 1.3.0 — собрана и доступна для скачивания</li>
+    <li>✅ Все экраны производства, логистики, оффлайн-режима — реализованы</li>
+    <li>✅ Серверная часть — написана, лежит у разработчика, готова к деплою</li>
+    <li>✅ Документация — 4 документа с подробными разъяснениями</li>
+    <li>✅ Регистрация новых пользователей — уже работает</li>
+  </ul>
+
+  <p><strong>Что ждёт согласования:</strong></p>
+  <ul>
+    <li>Утверждение функционала (этот документ)</li>
+    <li>Утверждение названия «BELSI.Команда»</li>
+    <li>Утверждение версии 1.3.0 как новый минимум</li>
+    <li>Утверждение даты массового обновления</li>
+  </ul>
+
+  <p>Прод 1.2.5 для всех 22 пользователей сейчас <strong>не тронут</strong>. Никаких внешних изменений до твоего «да». Тестовая сборка отдельно, доступна только по прямой ссылке.</p>
+</section>
+
+<!-- ─────────── FOOTER ─────────── -->
+<div class="footer">
+  <p>BELSI · Документ на согласование · версия 1.3.0 · 5 мая 2026</p>
+  <p>Все материалы:
+    <a href="https://api.belsi.ru/static/docs/positioning/">Позиционирование</a> ·
+    <a href="https://api.belsi.ru/static/docs/brandbook-ecosystem/">Brandbook экосистемы</a> ·
+    <a href="https://api.belsi.ru/static/docs/brandbook-belsi-komanda/">Brandbook Команда</a> ·
+    <a href="https://api.belsi.ru/static/docs/ui-gallery/">Виды интерфейса</a> ·
+    <a href="https://api.belsi.ru/preview">Скачать тест-APK</a>
+  </p>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+# macOS
+.DS_Store
+
+# Claude Code local config
+.claude/
+
+# Gradle
+/.gradle/
+/build/
+/app/build/
+
+# Secrets & credentials
+*.jks
+*.keystore
+*.p12
+*.pfx
+local.properties
+
+# Firebase (contains API keys)
+app/google-services.json
+
+# IDE
+.idea/
+*.iml
+
+# Env files
+*.env
+!.env.example
+
+# Deployment
+deployment_package/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+backend/belsi-api/config/
+
+# Release signing — NEVER commit
+keystore/
+keystore.properties
+*.jks
+*.keystore
+
+# Service tokens (keep secret!)
+.belsi-xerocode-token
+*.token
+
+# FIX(2026-05-11) Приватные документы — не пушить
+# CLAUDE.md — рабочая память Claude Code, не для git
+CLAUDE.md
+
+# Внутренние документы — хранить локально
+INTERNAL_*.md
+
+# Внутренняя AI-документация (детальная). Публичная версия — AI_INTEGRATION_PUBLIC.md
+backend/belsi-api/docs/AI_INTEGRATION.md

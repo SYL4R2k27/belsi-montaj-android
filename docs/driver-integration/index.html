@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BELSI · Brandbook & Driver Integration (рабочее имя BELSI.Команда)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ─── Design Tokens ─── */
+  :root {
+    /* Indigo — primary */
+    --indigo-50:#EEF2FF; --indigo-100:#E0E7FF; --indigo-200:#C7D2FE;
+    --indigo-300:#A5B4FC; --indigo-400:#818CF8; --indigo-500:#6366F1;
+    --indigo-600:#4F46E5; --indigo-700:#4338CA; --indigo-800:#3730A3;
+    --indigo-900:#312E81; --indigo-950:#1E1B4B;
+    /* Slate — neutrals */
+    --slate-50:#F8FAFC; --slate-100:#F1F5F9; --slate-200:#E2E8F0;
+    --slate-300:#CBD5E1; --slate-400:#94A3B8; --slate-500:#64748B;
+    --slate-600:#475569; --slate-700:#334155; --slate-800:#1E293B;
+    --slate-900:#0F172A; --slate-950:#020617;
+    /* Steel — brand */
+    --steel-top:#5A7186; --steel-mid:#3A5067; --steel-deep:#324859;
+    --hammer:#A0A8B0;
+    /* Semantic */
+    --emerald-500:#10B981; --emerald-600:#059669;
+    --amber-500:#F59E0B; --amber-600:#D97706;
+    --rose-500:#F43F5E; --rose-600:#E11D48;
+    --sky-500:#0EA5E9;
+    --violet-500:#8B5CF6; --violet-600:#7C3AED;
+
+    --primary: var(--indigo-600);
+    --bg: var(--slate-50);
+    --surface: #FFFFFF;
+    --border: var(--slate-200);
+    --text: var(--slate-900);
+    --text-secondary: var(--slate-600);
+    --text-muted: var(--slate-400);
+
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 20px; --radius-2xl: 24px;
+    --shadow-sm: 0 1px 2px rgba(15,23,42,.05);
+    --shadow-md: 0 4px 6px -1px rgba(15,23,42,.07), 0 2px 4px -2px rgba(15,23,42,.05);
+    --shadow-lg: 0 10px 15px -3px rgba(15,23,42,.08), 0 4px 6px -4px rgba(15,23,42,.05);
+    --shadow-xl: 0 20px 25px -5px rgba(15,23,42,.1), 0 8px 10px -6px rgba(15,23,42,.04);
+
+    --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+    --space-5:20px; --space-6:24px; --space-8:32px; --space-10:40px;
+    --space-12:48px; --space-16:64px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+    font-feature-settings: "cv02","cv03","cv04","cv11";
+  }
+
+  code, kbd, pre {
+    font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+    font-size: 0.9em;
+  }
+
+  /* ─── Layout ─── */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: var(--space-6) var(--space-4);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+    padding: 0 var(--space-2);
+  }
+  .sidebar-brand-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--steel-top), var(--steel-deep));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 700; font-size: 16px;
+  }
+  .sidebar-brand-text { font-weight: 700; font-size: 15px; }
+  .sidebar-brand-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+  .nav { display: flex; flex-direction: column; gap: 2px; }
+  .nav-section {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: var(--space-3) var(--space-2) var(--space-1);
+    margin-top: var(--space-3);
+  }
+  .nav-section:first-child { margin-top: 0; }
+  .nav a {
+    display: block;
+    padding: 7px var(--space-2);
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    transition: background .12s;
+  }
+  .nav a:hover { background: var(--slate-100); color: var(--text); }
+  .nav a.active { background: var(--indigo-50); color: var(--primary); font-weight: 600; }
+
+  .content {
+    flex: 1;
+    max-width: 1180px;
+    padding: var(--space-10) var(--space-12);
+  }
+
+  @media (max-width: 1024px) {
+    .sidebar { display: none; }
+    .content { padding: var(--space-6); }
+  }
+
+  /* ─── Hero ─── */
+  .hero {
+    background: linear-gradient(135deg, var(--indigo-600), var(--indigo-800));
+    color: white;
+    padding: var(--space-12) var(--space-10);
+    border-radius: var(--radius-2xl);
+    margin-bottom: var(--space-12);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%; right: -20%;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(255,255,255,.08), transparent 60%);
+  }
+  .hero-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.85;
+    margin-bottom: var(--space-3);
+  }
+  .hero h1 {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -1.2px;
+    margin-bottom: var(--space-4);
+    position: relative;
+  }
+  .hero p {
+    font-size: 17px;
+    line-height: 1.6;
+    opacity: 0.9;
+    max-width: 720px;
+    position: relative;
+  }
+  .hero-meta {
+    display: flex;
+    gap: var(--space-6);
+    margin-top: var(--space-8);
+    flex-wrap: wrap;
+    position: relative;
+  }
+  .hero-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .hero-meta-label { font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.6px; }
+  .hero-meta-value { font-size: 16px; font-weight: 600; }
+
+  /* ─── Sections ─── */
+  section { margin-bottom: var(--space-16); scroll-margin-top: var(--space-6); }
+  .section-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--primary);
+    margin-bottom: var(--space-3);
+  }
+  h2 {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.6px;
+    margin-bottom: var(--space-3);
+  }
+  h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+    margin: var(--space-10) 0 var(--space-4);
+  }
+  h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: var(--space-6) 0 var(--space-2);
+  }
+  .section-lead {
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-8);
+    max-width: 720px;
+  }
+
+  p { margin-bottom: var(--space-3); color: var(--text-secondary); }
+  p strong { color: var(--text); font-weight: 600; }
+
+  /* ─── Color swatches ─── */
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-3);
+    margin: var(--space-4) 0 var(--space-8);
+  }
+  .swatch {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: transform .12s, box-shadow .12s;
+  }
+  .swatch:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .swatch-color { height: 64px; border-bottom: 1px solid var(--border); }
+  .swatch-info { padding: var(--space-3); }
+  .swatch-name { font-size: 12px; font-weight: 600; }
+  .swatch-hex { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+  .swatch-token { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ─── Type specimen ─── */
+  .type-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: var(--space-6);
+    align-items: center;
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .type-row:last-child { border-bottom: 0; }
+  .type-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.6;
+  }
+  .type-meta strong { color: var(--text); font-family: inter, sans-serif; font-weight: 600; display: block; font-size: 13px; margin-bottom: 4px; }
+
+  .type-display { font-size: 56px; font-weight: 800; letter-spacing: -1.6px; line-height: 1.05; }
+  .type-headline { font-size: 32px; font-weight: 700; letter-spacing: -0.6px; }
+  .type-headline-sm { font-size: 24px; font-weight: 600; letter-spacing: -0.3px; }
+  .type-title { font-size: 20px; font-weight: 600; letter-spacing: -0.2px; }
+  .type-title-sm { font-size: 16px; font-weight: 600; letter-spacing: -0.1px; }
+  .type-body { font-size: 16px; }
+  .type-body-sm { font-size: 14px; }
+  .type-caption { font-size: 12px; color: var(--text-secondary); }
+  .type-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+
+  /* ─── Spacing scale ─── */
+  .spacing-scale {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: var(--space-3);
+  }
+  .spacing-item {
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+  }
+  .spacing-bar { background: var(--indigo-200); height: 8px; border-radius: 2px; margin: 0 auto var(--space-2); }
+  .spacing-name { font-size: 11px; font-weight: 600; }
+  .spacing-px { font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+  /* ─── Components ─── */
+  .demo {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    margin-bottom: var(--space-3);
+  }
+  .demo-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: center;
+  }
+
+  /* Buttons */
+  .btn {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all .15s;
+    display: inline-flex; align-items: center; gap: 6px;
+    line-height: 1.2;
+    letter-spacing: -0.1px;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--indigo-700); }
+  .btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
+  .btn-secondary:hover { background: var(--slate-50); border-color: var(--slate-300); }
+  .btn-tertiary { background: transparent; color: var(--primary); }
+  .btn-tertiary:hover { background: var(--indigo-50); }
+  .btn-destructive { background: var(--rose-500); color: white; }
+  .btn-destructive:hover { background: var(--rose-600); }
+  .btn-ghost { background: var(--slate-100); color: var(--text); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-lg { padding: 14px 22px; font-size: 16px; }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center;
+    gap: 4px;
+    font-size: 11px; font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 999px;
+    letter-spacing: 0.2px;
+    line-height: 1;
+  }
+  .badge-primary { background: var(--indigo-100); color: var(--indigo-700); }
+  .badge-success { background: #DCFCE7; color: #166534; }
+  .badge-warning { background: #FEF3C7; color: #92400E; }
+  .badge-danger { background: #FEE2E2; color: #991B1B; }
+  .badge-info { background: #DBEAFE; color: #1E40AF; }
+  .badge-neutral { background: var(--slate-100); color: var(--slate-700); }
+  .badge-violet { background: #EDE9FE; color: #5B21B6; }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+  }
+  .card-shadow { box-shadow: var(--shadow-sm); border-color: transparent; }
+
+  /* ─── Phone mockups ─── */
+  .phones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--space-6);
+    margin-top: var(--space-6);
+  }
+  .phone {
+    width: 360px;
+    max-width: 100%;
+    margin: 0 auto;
+    background: #000;
+    border-radius: 44px;
+    padding: 14px;
+    box-shadow: var(--shadow-xl);
+  }
+  .phone-screen {
+    background: var(--bg);
+    border-radius: 32px;
+    overflow: hidden;
+    aspect-ratio: 9/19.5;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-status {
+    background: var(--bg);
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .phone-status-icons { display: flex; gap: 5px; align-items: center; font-size: 11px; }
+
+  .app-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px 14px;
+    gap: 10px;
+  }
+  .toolbar-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+  .toolbar-role {
+    font-size: 11px; font-weight: 600;
+    color: var(--primary);
+    display: flex; align-items: center; gap: 4px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .toolbar-title { font-size: 18px; font-weight: 700; letter-spacing: -0.2px; line-height: 1.2; }
+  .toolbar-icons { display: flex; gap: 6px; }
+  .toolbar-btn {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--text-secondary);
+    position: relative;
+  }
+  .toolbar-btn .dot {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 8px; height: 8px;
+    background: var(--rose-500);
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+  }
+
+  .app-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* App-internal cards (reused inside phone screens) */
+  .a-card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 14px;
+    border: 1px solid var(--border);
+  }
+  .a-card-shadow { box-shadow: var(--shadow-sm); border-color: transparent; }
+  .a-card-active {
+    background: linear-gradient(135deg, var(--indigo-600), var(--indigo-800));
+    color: white;
+    border: none;
+  }
+  .a-card-active small { opacity: 0.85; }
+
+  .a-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .a-row:last-child { border-bottom: 0; }
+  .a-row-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--slate-100);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .a-row-content { flex: 1; min-width: 0; }
+  .a-row-title { font-size: 13px; font-weight: 600; line-height: 1.3; }
+  .a-row-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .a-row-end { font-size: 11px; color: var(--text-muted); }
+
+  .progress {
+    height: 6px;
+    background: rgba(255,255,255,.2);
+    border-radius: 99px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    background: white;
+    border-radius: 99px;
+  }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.15);
+    color: white;
+  }
+  .pill-light { background: var(--slate-100); color: var(--slate-700); }
+  .pill-success { background: #DCFCE7; color: #166534; }
+  .pill-warning { background: #FEF3C7; color: #92400E; }
+  .pill-danger { background: #FEE2E2; color: #991B1B; }
+
+  .a-btn {
+    background: white;
+    color: var(--primary);
+    border: none;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+  }
+  .a-btn-ghost {
+    background: rgba(255,255,255,.18);
+    color: white;
+    border: 1px solid rgba(255,255,255,.4);
+  }
+  .a-btn-row { display: flex; gap: 8px; margin-top: 10px; }
+
+  .phone-caption {
+    text-align: center;
+    margin-top: var(--space-3);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .phone-caption-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin: var(--space-4) 0;
+  }
+  th, td {
+    padding: var(--space-3) var(--space-4);
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  thead th {
+    background: var(--slate-50);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  tr:last-child td { border-bottom: 0; }
+  td.center, th.center { text-align: center; }
+  td .check { color: var(--emerald-600); font-weight: 700; }
+  td .cross { color: var(--rose-500); font-weight: 700; }
+  td .partial { color: var(--amber-600); font-size: 11px; }
+
+  /* Code blocks */
+  pre {
+    background: var(--slate-900);
+    color: var(--slate-100);
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.6;
+    margin: var(--space-3) 0;
+  }
+  code.inline {
+    background: var(--slate-100);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  /* Flow diagram */
+  .flow {
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr;
+    gap: var(--space-4);
+    align-items: center;
+    margin: var(--space-6) 0;
+  }
+  .flow-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+  }
+  .flow-arrow {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 24px;
+  }
+  .flow-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .flow-sub { font-size: 12px; color: var(--text-muted); }
+
+  /* Callouts */
+  .callout {
+    border-left: 3px solid var(--primary);
+    background: var(--indigo-50);
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    margin: var(--space-4) 0;
+  }
+  .callout-title { font-size: 12px; font-weight: 700; color: var(--indigo-700); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+  .callout p { color: var(--slate-700); font-size: 14px; margin: 0; }
+  .callout.warning { border-color: var(--amber-500); background: #FFFBEB; }
+  .callout.warning .callout-title { color: var(--amber-600); }
+  .callout.success { border-color: var(--emerald-500); background: #ECFDF5; }
+  .callout.success .callout-title { color: var(--emerald-600); }
+
+  /* Capabilities visualization */
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-4);
+  }
+  .cap-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    transition: all .12s;
+  }
+  .cap-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .cap-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-3); }
+  .cap-name { font-weight: 700; font-size: 16px; margin-bottom: 2px; }
+  .cap-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+  .role-pill {
+    font-size: 11px; font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    display: inline-flex; gap: 4px; align-items: center;
+  }
+  .role-installer { background: #FEE2E2; color: #991B1B; }
+  .role-driver { background: #DBEAFE; color: #1E40AF; }
+  .role-foreman { background: #FEF3C7; color: #92400E; }
+  .role-coord { background: #DCFCE7; color: #166534; }
+  .role-curator { background: #EDE9FE; color: #5B21B6; }
+  .role-logist { background: #E0F2FE; color: #075985; }
+
+  /* Sheet (bottom sheet mockup) */
+  .sheet {
+    background: var(--surface);
+    border-radius: 18px 18px 0 0;
+    padding: var(--space-5);
+    box-shadow: 0 -4px 16px rgba(0,0,0,.08);
+  }
+  .sheet-handle {
+    width: 36px; height: 4px;
+    background: var(--slate-300);
+    border-radius: 2px;
+    margin: 0 auto var(--space-4);
+  }
+  .sheet-title { font-weight: 700; font-size: 17px; text-align: center; margin-bottom: var(--space-4); }
+
+  /* Map mock */
+  .map-mock {
+    height: 140px;
+    background:
+      linear-gradient(135deg, rgba(79,70,229,.05), transparent 30%),
+      repeating-linear-gradient(0deg, var(--slate-100) 0 30px, transparent 30px 31px),
+      repeating-linear-gradient(90deg, var(--slate-100) 0 30px, transparent 30px 31px),
+      var(--slate-50);
+    border-radius: 12px;
+    position: relative;
+    border: 1px solid var(--border);
+  }
+  .map-pin {
+    position: absolute;
+    width: 24px; height: 24px;
+    background: var(--primary);
+    border-radius: 50%;
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    border: 2px solid white;
+    box-shadow: var(--shadow-md);
+  }
+  .map-pin.done { background: var(--emerald-500); }
+  .map-pin.next { background: var(--amber-500); animation: pulse 2s infinite; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.5); }
+    50% { box-shadow: 0 0 0 10px rgba(245,158,11,0); }
+  }
+  .map-route {
+    position: absolute;
+    border-top: 2px dashed var(--primary);
+  }
+
+  /* TOC */
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-4);
+  }
+  .toc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    text-decoration: none;
+    color: var(--text);
+    transition: all .15s;
+  }
+  .toc-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--indigo-200); }
+  .toc-card-num {
+    font-size: 11px; font-weight: 700; color: var(--primary);
+    letter-spacing: 0.6px; text-transform: uppercase;
+    margin-bottom: var(--space-2);
+  }
+  .toc-card-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .toc-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* Status bar mock */
+  .map-illustration {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    align-items: stretch;
+  }
+
+  /* History timeline */
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 9px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline-day {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin: 12px 0 6px -20px;
+  }
+  .timeline-day:first-child { margin-top: 0; }
+  .timeline-item {
+    position: relative;
+    padding: 8px 0 8px 12px;
+  }
+  .timeline-dot {
+    position: absolute;
+    left: -22px; top: 11px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--border);
+  }
+  .timeline-dot.success { background: var(--emerald-500); }
+  .timeline-dot.warning { background: var(--amber-500); }
+  .timeline-dot.info { background: var(--sky-500); }
+  .timeline-dot.violet { background: var(--violet-500); }
+  .timeline-time {
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .timeline-event { font-size: 13px; font-weight: 600; line-height: 1.3; margin-top: 2px; }
+  .timeline-detail { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* Notice */
+  .footer-meta {
+    margin-top: var(--space-16);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-icon">B</div>
+    <div>
+      <div class="sidebar-brand-text">BELSI · Команда*</div>
+      <div class="sidebar-brand-sub">Brandbook · Driver v0.1</div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section">Старт</div>
+    <a href="#overview">Обзор</a>
+    <a href="#decisions">Решения по дизайну</a>
+    <a href="#capabilities">Роли и capabilities</a>
+
+    <div class="nav-section">Brand</div>
+    <a href="#colors">Цвета</a>
+    <a href="#typography">Типографика</a>
+    <a href="#spacing">Spacing &amp; Radii</a>
+    <a href="#components">Компоненты</a>
+
+    <div class="nav-section">Архитектура</div>
+    <a href="#flow">Поток заявка→маршрут</a>
+    <a href="#switching">Смена ролей</a>
+    <a href="#permissions">Матрица прав</a>
+
+    <div class="nav-section">Driver — экраны</div>
+    <a href="#driver-home">Driver Home</a>
+    <a href="#driver-route">Active Route</a>
+    <a href="#driver-point">Point Detail</a>
+    <a href="#driver-camera">Camera</a>
+    <a href="#driver-shift-photo">Shift Photo</a>
+
+    <div class="nav-section">Logistician — экраны</div>
+    <a href="#logist-home">Logistician Home</a>
+    <a href="#logist-create-route">Create Route</a>
+    <a href="#logist-drivers">Drivers Fleet</a>
+
+    <div class="nav-section">Coordinator/Foreman</div>
+    <a href="#coord-create-request">Create Request</a>
+    <a href="#requests-board">Requests Board</a>
+
+    <div class="nav-section">Cross-role</div>
+    <a href="#history">История объекта</a>
+    <a href="#switcher">Переключатель ролей</a>
+    <a href="#switch-dialog">Диалог смены роли</a>
+    <a href="#curator-caps">Управление capabilities</a>
+  </nav>
+</aside>
+
+<main class="content">
+
+<section class="hero" id="overview">
+  <div class="hero-eyebrow">Brandbook · v0.1 · Май 2026</div>
+  <h1>BELSI.Команда — единая система для стройки</h1>
+  <p>Единый дизайн и стек с BELSI.Монтаж. Driver и Logistician добавляются как новые роли через capabilities-модель: один аккаунт может работать в нескольких режимах с переключением в шапке. Документ описывает все экраны, дизайн-токены и архитектурные решения.</p>
+  <div class="hero-meta">
+    <div class="hero-meta-item"><span class="hero-meta-label">Стек</span><span class="hero-meta-value">Compose · Hilt · Retrofit</span></div>
+    <div class="hero-meta-item"><span class="hero-meta-label">Палитра</span><span class="hero-meta-value">Indigo + Slate</span></div>
+    <div class="hero-meta-item"><span class="hero-meta-label">Шрифт</span><span class="hero-meta-value">Inter Variable</span></div>
+    <div class="hero-meta-item"><span class="hero-meta-label">Брэнч</span><span class="hero-meta-value">feature/driver-integration</span></div>
+  </div>
+</section>
+
+<section id="decisions">
+  <div class="section-eyebrow">Контекст</div>
+  <h2>Зафиксированные решения</h2>
+  <p class="section-lead">Эти ответы получены в обсуждении и стали основой архитектуры. Решения отмеченные ⏳ ещё уточняются.</p>
+
+  <div class="cap-grid">
+    <div class="cap-card">
+      <div class="cap-name">✅ Capabilities-модель</div>
+      <div class="cap-desc">У пользователя есть базовая <code class="inline">role</code> и массив <code class="inline">capabilities[]</code>. До 2 capabilities на одного юзера. Сервер контролирует доступ к endpoint-ам по capability.</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-name">✅ Заявка → Маршрут</div>
+      <div class="cap-desc">Двухуровневая модель. Координатор/Бригадир создают заявки. Логист объединяет заявки в маршруты, назначает водителя. Куратор может всё.</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-name">✅ Переключатель в шапке (1.D)</div>
+      <div class="cap-desc">Через меню «⋮» с явным статусом текущей роли + бейджик-точка когда в фоне есть процесс другой роли + tutorial при первом запуске.</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-name">✅ Диалог при смене роли</div>
+      <div class="cap-desc">Переключение запрашивает подтверждение. Стратегия 3: умные дефолты (пауза/завершить/оставить) на основе контекста смены.</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-name">✅ Curator-Logistician — дуальный паттерн</div>
+      <div class="cap-desc">Точно как Driver-Installer. Куратор может иметь capability логиста и переключаться. Главный + диспетчер в маленькой компании.</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-name">✅ История объекта</div>
+      <div class="cap-desc">Единая лента всех событий объекта: создание, фото, смены, доставки, инструменты, задачи. Доступна всем ролям с фильтрами по роли.</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-name">✅ Logistician — отдельная роль</div>
+      <div class="cap-desc">Основная функция: контроль маршрута. Не управляет ролями (это куратор), не модерирует фото монтажа.</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-name">✅ Правка маршрута после старта</div>
+      <div class="cap-desc">Логист и куратор могут <strong>добавлять PENDING-точки</strong> в активный маршрут. Доставленные (DELIVERED) — нельзя править. Текущие (ARRIVED) — только куратор может отменить.</div>
+    </div>
+  </div>
+</section>
+
+<section id="capabilities">
+  <div class="section-eyebrow">Роли</div>
+  <h2>Все возможные конфигурации</h2>
+  <p class="section-lead">Один пользователь = один аккаунт = до 2 capabilities. Переключатель в шапке появляется только если capabilities.size &gt; 1.</p>
+
+  <div class="cap-grid">
+    <div class="cap-card">
+      <div class="cap-pills"><span class="role-pill role-installer">🔨 installer</span></div>
+      <div class="cap-name">Простой монтажник</div>
+      <div class="cap-desc">Открывает смены, делает почасовые фото на объектах. Никаких водительских функций.</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-pills"><span class="role-pill role-foreman">🛠 foreman</span></div>
+      <div class="cap-name">Бригадир</div>
+      <div class="cap-desc">Управляет командой монтажников, модерирует фото, создаёт заявки на доставку, подтверждает приёмку.</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-pills"><span class="role-pill role-coord">📋 coordinator</span></div>
+      <div class="cap-name">Координатор объектов</div>
+      <div class="cap-desc">Создаёт объекты, ведёт документы по ним, подаёт заявки на доставку материалов.</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-pills"><span class="role-pill role-driver">💼 driver</span></div>
+      <div class="cap-name">Чистый водитель</div>
+      <div class="cap-desc">Получает маршруты от логиста, выполняет точки доставки/получения, делает фото.</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-pills"><span class="role-pill role-logist">🚛 logistician</span></div>
+      <div class="cap-name">Чистый логист</div>
+      <div class="cap-desc">Принимает заявки, формирует маршруты, назначает водителей, контролирует выполнение.</div>
+    </div>
+    <div class="cap-card">
+      <div class="cap-pills"><span class="role-pill role-curator">👑 curator</span></div>
+      <div class="cap-name">Куратор</div>
+      <div class="cap-desc">Управляет ролями, видит всё, имеет доступ ко всем действиям. По сути — администратор.</div>
+    </div>
+
+    <div class="cap-card" style="border-color: var(--indigo-200); background: linear-gradient(135deg, white, var(--indigo-50));">
+      <div class="cap-pills">
+        <span class="role-pill role-installer">🔨 installer</span>
+        <span class="role-pill role-driver">💼 driver</span>
+      </div>
+      <div class="cap-name">Универсал</div>
+      <div class="cap-desc">Монтажник со своей машиной. Возит материалы, потом сам их и монтирует. Главный кейс капабилити-системы.</div>
+    </div>
+    <div class="cap-card" style="border-color: var(--indigo-200); background: linear-gradient(135deg, white, var(--indigo-50));">
+      <div class="cap-pills">
+        <span class="role-pill role-foreman">🛠 foreman</span>
+        <span class="role-pill role-installer">🔨 installer</span>
+      </div>
+      <div class="cap-name">Бригадир-практик</div>
+      <div class="cap-desc">Сам работает с инструментом и руководит бригадой. Для маленьких команд из 2-3 человек.</div>
+    </div>
+    <div class="cap-card" style="border-color: var(--indigo-200); background: linear-gradient(135deg, white, var(--indigo-50));">
+      <div class="cap-pills">
+        <span class="role-pill role-coord">📋 coordinator</span>
+        <span class="role-pill role-logist">🚛 logistician</span>
+      </div>
+      <div class="cap-name">Координатор-диспетчер</div>
+      <div class="cap-desc">Сам ведёт объекты и сам же планирует доставки на них.</div>
+    </div>
+    <div class="cap-card" style="border-color: var(--indigo-200); background: linear-gradient(135deg, white, var(--indigo-50));">
+      <div class="cap-pills">
+        <span class="role-pill role-curator">👑 curator</span>
+        <span class="role-pill role-logist">🚛 logistician</span>
+      </div>
+      <div class="cap-name">Главный + диспетчер</div>
+      <div class="cap-desc">Универсал в маленькой компании. Может всё, ещё и маршруты сам формирует.</div>
+    </div>
+  </div>
+</section>
+
+<section id="colors">
+  <div class="section-eyebrow">Brand · Tokens</div>
+  <h2>Цветовая палитра</h2>
+  <p class="section-lead">Indigo 600 — primary brand. Slate — нейтрали. Steel — бренд-маркер (иконка/splash). Семантические цвета для статусов.</p>
+
+  <h3>Indigo · Primary</h3>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="swatch-color" style="background:#EEF2FF"></div><div class="swatch-info"><div class="swatch-name">indigo-50</div><div class="swatch-hex">#EEF2FF</div><div class="swatch-token">background tint</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#E0E7FF"></div><div class="swatch-info"><div class="swatch-name">indigo-100</div><div class="swatch-hex">#E0E7FF</div><div class="swatch-token">badge bg</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#A5B4FC"></div><div class="swatch-info"><div class="swatch-name">indigo-300</div><div class="swatch-hex">#A5B4FC</div><div class="swatch-token">secondary accent</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#6366F1"></div><div class="swatch-info"><div class="swatch-name">indigo-500</div><div class="swatch-hex">#6366F1</div><div class="swatch-token">hover</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#4F46E5; position: relative;"><span style="position:absolute;top:6px;right:6px;font-size:10px;background:white;color:#4F46E5;padding:2px 6px;border-radius:4px;font-weight:700">★</span></div><div class="swatch-info"><div class="swatch-name">indigo-600</div><div class="swatch-hex">#4F46E5</div><div class="swatch-token">PRIMARY · CTA</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#4338CA"></div><div class="swatch-info"><div class="swatch-name">indigo-700</div><div class="swatch-hex">#4338CA</div><div class="swatch-token">pressed</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#3730A3"></div><div class="swatch-info"><div class="swatch-name">indigo-800</div><div class="swatch-hex">#3730A3</div><div class="swatch-token">on-light</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#312E81"></div><div class="swatch-info"><div class="swatch-name">indigo-900</div><div class="swatch-hex">#312E81</div><div class="swatch-token">deep</div></div></div>
+  </div>
+
+  <h3>Slate · Neutrals</h3>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="swatch-color" style="background:#F8FAFC; border-bottom-color: var(--border)"></div><div class="swatch-info"><div class="swatch-name">slate-50</div><div class="swatch-hex">#F8FAFC</div><div class="swatch-token">background</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#F1F5F9"></div><div class="swatch-info"><div class="swatch-name">slate-100</div><div class="swatch-hex">#F1F5F9</div><div class="swatch-token">surface variant</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#E2E8F0"></div><div class="swatch-info"><div class="swatch-name">slate-200</div><div class="swatch-hex">#E2E8F0</div><div class="swatch-token">border</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#CBD5E1"></div><div class="swatch-info"><div class="swatch-name">slate-300</div><div class="swatch-hex">#CBD5E1</div><div class="swatch-token">divider</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#94A3B8"></div><div class="swatch-info"><div class="swatch-name">slate-400</div><div class="swatch-hex">#94A3B8</div><div class="swatch-token">muted text</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#64748B"></div><div class="swatch-info"><div class="swatch-name">slate-500</div><div class="swatch-hex">#64748B</div><div class="swatch-token">tertiary</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#475569"></div><div class="swatch-info"><div class="swatch-name">slate-600</div><div class="swatch-hex">#475569</div><div class="swatch-token">secondary text</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#0F172A"></div><div class="swatch-info"><div class="swatch-name">slate-900</div><div class="swatch-hex">#0F172A</div><div class="swatch-token">primary text</div></div></div>
+  </div>
+
+  <h3>Semantic</h3>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="swatch-color" style="background:#10B981"></div><div class="swatch-info"><div class="swatch-name">success</div><div class="swatch-hex">#10B981</div><div class="swatch-token">emerald-500</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#F59E0B"></div><div class="swatch-info"><div class="swatch-name">warning</div><div class="swatch-hex">#F59E0B</div><div class="swatch-token">amber-500</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#F43F5E"></div><div class="swatch-info"><div class="swatch-name">error</div><div class="swatch-hex">#F43F5E</div><div class="swatch-token">rose-500</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#0EA5E9"></div><div class="swatch-info"><div class="swatch-name">info</div><div class="swatch-hex">#0EA5E9</div><div class="swatch-token">sky-500</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#8B5CF6"></div><div class="swatch-info"><div class="swatch-name">ai / accent</div><div class="swatch-hex">#8B5CF6</div><div class="swatch-token">violet-500</div></div></div>
+  </div>
+
+  <h3>Steel · Brand mark gradient</h3>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="swatch-color" style="background: linear-gradient(135deg, #5A7186, #324859)"></div><div class="swatch-info"><div class="swatch-name">brand gradient</div><div class="swatch-hex">#5A7186 → #324859</div><div class="swatch-token">app icon · splash</div></div></div>
+  </div>
+</section>
+
+<section id="typography">
+  <div class="section-eyebrow">Brand · Tokens</div>
+  <h2>Типографика</h2>
+  <p class="section-lead">Inter Variable — тот же шрифт что используется в Linear, Stripe, Notion. Variable font: один TTF файл = все веса 100–900.</p>
+
+  <div class="card card-shadow" style="padding: var(--space-2) var(--space-6);">
+    <div class="type-row">
+      <div class="type-meta"><strong>Display Large</strong>56sp · 800 · −1.6</div>
+      <div class="type-display">Belsi 1.3</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>Headline Large</strong>32sp · 700 · −0.6</div>
+      <div class="type-headline">Активный маршрут</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>Headline Small</strong>24sp · 600 · −0.3</div>
+      <div class="type-headline-sm">Заявка #234</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>Title Large</strong>20sp · 600 · −0.2</div>
+      <div class="type-title">Коломенская набережная 16</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>Title Medium</strong>16sp · 600 · −0.1</div>
+      <div class="type-title-sm">12 окон + 3 поддона профиля</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>Body Large</strong>16sp · 400</div>
+      <div class="type-body">Привезти к 14:00. Бригадир Хрулёв подтвердит приёмку.</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>Body Medium</strong>14sp · 400</div>
+      <div class="type-body-sm">Статус заявки изменится автоматически после фотофиксации выгрузки</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>Body Small</strong>12sp · 400</div>
+      <div class="type-caption">Создано 03.05.2026 в 09:42 · координатор Сибилев</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>Label Large</strong>14sp · 600 · 0.1<br>UPPERCASE optional</div>
+      <div class="type-label">Активная роль</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Tabular nums</div>
+    <p>Для таймера, статистики и баланса используется <code class="inline">font-feature-settings: "tnum"</code> — числа одинаковой ширины не «прыгают» при обновлении.</p>
+  </div>
+</section>
+
+<section id="spacing">
+  <div class="section-eyebrow">Brand · Tokens</div>
+  <h2>Spacing &amp; Radii</h2>
+  <p class="section-lead">Шкала множителей по 4. Все отступы и радиусы — из неё. Никаких произвольных 7px / 13px.</p>
+
+  <h3>Spacing scale</h3>
+  <div class="spacing-scale">
+    <div class="spacing-item"><div class="spacing-bar" style="width:4px"></div><div class="spacing-name">space-1</div><div class="spacing-px">4px</div></div>
+    <div class="spacing-item"><div class="spacing-bar" style="width:8px"></div><div class="spacing-name">space-2</div><div class="spacing-px">8px</div></div>
+    <div class="spacing-item"><div class="spacing-bar" style="width:12px"></div><div class="spacing-name">space-3</div><div class="spacing-px">12px</div></div>
+    <div class="spacing-item"><div class="spacing-bar" style="width:16px"></div><div class="spacing-name">space-4</div><div class="spacing-px">16px</div></div>
+    <div class="spacing-item"><div class="spacing-bar" style="width:20px"></div><div class="spacing-name">space-5</div><div class="spacing-px">20px</div></div>
+    <div class="spacing-item"><div class="spacing-bar" style="width:24px"></div><div class="spacing-name">space-6</div><div class="spacing-px">24px</div></div>
+    <div class="spacing-item"><div class="spacing-bar" style="width:32px"></div><div class="spacing-name">space-8</div><div class="spacing-px">32px</div></div>
+    <div class="spacing-item"><div class="spacing-bar" style="width:48px"></div><div class="spacing-name">space-12</div><div class="spacing-px">48px</div></div>
+    <div class="spacing-item"><div class="spacing-bar" style="width:64px"></div><div class="spacing-name">space-16</div><div class="spacing-px">64px</div></div>
+  </div>
+
+  <h3>Radii</h3>
+  <div class="demo demo-bar">
+    <div style="width:64px;height:64px;background:var(--indigo-100);border-radius:8px;display:flex;align-items:end;justify-content:center;padding:6px;font-size:11px;font-weight:600;color:var(--indigo-700)">8</div>
+    <div style="width:64px;height:64px;background:var(--indigo-100);border-radius:12px;display:flex;align-items:end;justify-content:center;padding:6px;font-size:11px;font-weight:600;color:var(--indigo-700)">12</div>
+    <div style="width:64px;height:64px;background:var(--indigo-100);border-radius:16px;display:flex;align-items:end;justify-content:center;padding:6px;font-size:11px;font-weight:600;color:var(--indigo-700)">16</div>
+    <div style="width:64px;height:64px;background:var(--indigo-100);border-radius:20px;display:flex;align-items:end;justify-content:center;padding:6px;font-size:11px;font-weight:600;color:var(--indigo-700)">20</div>
+    <div style="width:64px;height:64px;background:var(--indigo-100);border-radius:24px;display:flex;align-items:end;justify-content:center;padding:6px;font-size:11px;font-weight:600;color:var(--indigo-700)">24</div>
+    <div style="width:64px;height:64px;background:var(--indigo-100);border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--indigo-700)">pill</div>
+  </div>
+
+  <h3>Shadows</h3>
+  <div class="demo demo-bar" style="background: var(--slate-50);">
+    <div style="width:120px;height:64px;background:white;border-radius:12px;box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">sm</div>
+    <div style="width:120px;height:64px;background:white;border-radius:12px;box-shadow:var(--shadow-md);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">md</div>
+    <div style="width:120px;height:64px;background:white;border-radius:12px;box-shadow:var(--shadow-lg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">lg</div>
+    <div style="width:120px;height:64px;background:white;border-radius:12px;box-shadow:var(--shadow-xl);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">xl</div>
+  </div>
+</section>
+
+<section id="components">
+  <div class="section-eyebrow">Brand · Library</div>
+  <h2>Компоненты</h2>
+  <p class="section-lead">Базовый набор. Кнопки, бейджи, карточки, ввод. Все используют только tokens — никакого hardcode.</p>
+
+  <h3>Buttons</h3>
+  <div class="demo demo-bar">
+    <button class="btn btn-primary">Primary</button>
+    <button class="btn btn-secondary">Secondary</button>
+    <button class="btn btn-tertiary">Tertiary</button>
+    <button class="btn btn-ghost">Ghost</button>
+    <button class="btn btn-destructive">Destructive</button>
+  </div>
+  <div class="demo demo-bar">
+    <button class="btn btn-primary btn-sm">Small</button>
+    <button class="btn btn-primary">Default</button>
+    <button class="btn btn-primary btn-lg">Large</button>
+    <button class="btn btn-primary"><span>Я приехал</span></button>
+    <button class="btn btn-secondary">Открыть в Картах</button>
+  </div>
+
+  <h3>Badges &amp; Pills</h3>
+  <div class="demo demo-bar">
+    <span class="badge badge-primary">PENDING</span>
+    <span class="badge badge-success">DELIVERED</span>
+    <span class="badge badge-warning">ARRIVED</span>
+    <span class="badge badge-danger">CANCELLED</span>
+    <span class="badge badge-info">IN PROGRESS</span>
+    <span class="badge badge-violet">AI VERIFIED</span>
+    <span class="badge badge-neutral">DRAFT</span>
+  </div>
+
+  <h3>Role pills</h3>
+  <div class="demo demo-bar">
+    <span class="role-pill role-installer">🔨 Монтажник</span>
+    <span class="role-pill role-foreman">🛠 Бригадир</span>
+    <span class="role-pill role-coord">📋 Координатор</span>
+    <span class="role-pill role-driver">💼 Водитель</span>
+    <span class="role-pill role-logist">🚛 Логист</span>
+    <span class="role-pill role-curator">👑 Куратор</span>
+  </div>
+
+  <h3>Toolbars</h3>
+  <p>Шапка приложения — три варианта: одна роль, дуальная роль (просто индикатор), дуальная с фоновым процессом (точка).</p>
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span class="phone-status-icons">5G · ⚡</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div class="toolbar-title">Рабочая смена</div>
+              <div style="font-size:11px;color:var(--text-muted)">3 мая 2026</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">⚙</div>
+            </div>
+          </div>
+          <div style="padding: 0 16px; color: var(--text-muted); font-size: 11px;">capabilities = ['installer']<br>Никакого переключателя — обычный монтажник.</div>
+        </div>
+      </div>
+      <div class="phone-caption">Одна роль<div class="phone-caption-sub">переключатель не нужен</div></div>
+    </div>
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span class="phone-status-icons">5G · ⚡</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div class="toolbar-role">💼 Водитель</div>
+              <div class="toolbar-title">Главная</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">⋮</div>
+            </div>
+          </div>
+          <div style="padding: 0 16px; color: var(--text-muted); font-size: 11px;">capabilities = ['driver', 'installer']<br>Видна текущая роль. Переключение через [⋮].</div>
+        </div>
+      </div>
+      <div class="phone-caption">Дуальная роль<div class="phone-caption-sub">статус роли + меню</div></div>
+    </div>
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span class="phone-status-icons">5G · ⚡</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div class="toolbar-role">💼 Водитель</div>
+              <div class="toolbar-title">Главная</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">⋮<div class="dot"></div></div>
+            </div>
+          </div>
+          <div style="padding: 0 16px; color: var(--text-muted); font-size: 11px;">У тебя в фоне открыта смена монтажника. Точка предупреждает.</div>
+        </div>
+      </div>
+      <div class="phone-caption">Дуальная + процесс в фоне<div class="phone-caption-sub">красная точка-индикатор</div></div>
+    </div>
+  </div>
+
+  <h3>Cards</h3>
+  <div class="demo">
+    <div class="card card-shadow" style="margin-bottom: 12px;">
+      <h4 style="margin: 0 0 6px;">Активная карточка действия</h4>
+      <p style="margin: 0; font-size: 13px;">Используется для главного действия экрана (напр. активный маршрут / открытая смена).</p>
+    </div>
+    <div class="card" style="background: linear-gradient(135deg, var(--indigo-600), var(--indigo-800)); color: white; border: none;">
+      <h4 style="margin: 0 0 4px; color: white;">🚛 Маршрут #234</h4>
+      <p style="margin: 0; color: rgba(255,255,255,.85); font-size: 13px;">1 из 4 точек выполнена. Следующая через 25 минут.</p>
+      <div class="progress" style="margin: 10px 0 0;"><div class="progress-fill" style="width: 25%"></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="flow">
+  <div class="section-eyebrow">Architecture</div>
+  <h2>Поток заявка → маршрут</h2>
+  <p class="section-lead">Двухуровневая модель. Координатор/Бригадир описывают потребность, не думая о водителях. Логист объединяет заявки в эффективные маршруты и назначает водителя.</p>
+
+  <div class="flow">
+    <div class="flow-box">
+      <div class="flow-title">📋 Координатор / Бригадир</div>
+      <div class="flow-sub">Создаёт <strong>заявку</strong>:<br>«Нужно X на объект Y к времени Z»</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <div class="flow-title">🚛 Логист</div>
+      <div class="flow-sub">Видит все pending-заявки. Объединяет в <strong>маршрут</strong>, назначает <strong>водителя</strong>.</div>
+    </div>
+  </div>
+  <div class="flow">
+    <div class="flow-box">
+      <div class="flow-title">💼 Водитель</div>
+      <div class="flow-sub">Получает push, открывает маршрут, едет по точкам PICKUP / DELIVERY / RETURN.</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <div class="flow-title">🛠 Бригадир на объекте</div>
+      <div class="flow-sub">Push «груз прибыл», подтверждает приёмку. Заявка получает финальный <strong>fulfilled</strong>.</div>
+    </div>
+  </div>
+
+  <h3>Связь данных</h3>
+<pre>delivery_request                    routes                    delivery_points
+├── id                              ├── id                    ├── id
+├── site_object_id ────FK──┐         ├── driver_id             ├── route_id ──FK──→
+├── created_by             │         ├── status               ├── sequence
+├── what (text)            │         └── scheduled_for         ├── point_type:
+├── needed_by (datetime)   │                                  │     PICKUP|DELIVERY
+├── status:                │                                  │     |TRANSIT|RETURN
+│     pending → assigned   │                                  ├── address
+│     → fulfilled          │                                  ├── site_object_id ──FK
+└── route_id ──FK──────────┘                                  ├── status: PENDING|ARRIVED|DELIVERED
+                                                              └── linked_request_id ──FK</pre>
+</section>
+
+<section id="switching">
+  <div class="section-eyebrow">UX · Critical flow</div>
+  <h2>Смена ролей</h2>
+  <p class="section-lead">Концепт: смена и маршрут — разные сущности. Переключение влияет только на <strong>смену</strong> (таймер). Маршрут — это чек-лист точек, между точками время не учитывается.</p>
+
+  <div class="callout success">
+    <div class="callout-title">Стратегия: умный диалог</div>
+    <p>При переключении из Installer → Driver система спрашивает что сделать с активной сменой: <strong>пауза</strong>, <strong>завершить</strong> или <strong>оставить активной</strong>. Радио-кнопка предзаполняется по эвристике (длительность смены, локация).</p>
+  </div>
+
+  <h3>Эвристика дефолтов</h3>
+  <table>
+    <thead><tr><th>Контекст</th><th>Дефолт</th></tr></thead>
+    <tbody>
+      <tr><td>Смена меньше 30 мин</td><td>Завершить (короткая операция)</td></tr>
+      <tr><td>Маршрут не на этом объекте</td><td>Пауза (уезжает не скоро)</td></tr>
+      <tr><td>Маршрут идёт <strong>на этот же объект</strong></td><td>Оставить активной (вернётся)</td></tr>
+      <tr><td>По умолчанию</td><td>Пауза</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="permissions">
+  <div class="section-eyebrow">Architecture</div>
+  <h2>Матрица прав</h2>
+  <p class="section-lead">Финальная версия. Curator = админ, может всё. Logistician — основная функция «контроль маршрута».</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Действие</th>
+        <th class="center">📋 Coordinator</th>
+        <th class="center">🛠 Foreman</th>
+        <th class="center">🚛 Logistician</th>
+        <th class="center">👑 Curator</th>
+        <th class="center">💼 Driver</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Создать <strong>заявку</strong></td><td class="center"><span class="check">✓</span><div class="partial">свои объекты</div></td><td class="center"><span class="check">✓</span><div class="partial">команда</div></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="cross">✕</span></td></tr>
+      <tr><td>Видеть <strong>все</strong> заявки</td><td class="center"><div class="partial">свои</div></td><td class="center"><div class="partial">свои</div></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="cross">✕</span></td></tr>
+      <tr><td>Создать <strong>маршрут</strong></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="cross">✕</span></td></tr>
+      <tr><td>Назначить водителя</td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="cross">✕</span></td></tr>
+      <tr><td>Видеть <strong>все маршруты</strong></td><td class="center"><div class="partial">связанные</div></td><td class="center"><div class="partial">команды</div></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="check">✓</span></td><td class="center"><div class="partial">свои</div></td></tr>
+      <tr><td>Добавить точку в активный маршрут</td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="cross">✕</span></td></tr>
+      <tr><td>Изменить PENDING-точку</td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="cross">✕</span></td></tr>
+      <tr><td>Отменить ARRIVED-точку</td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="cross">✕</span></td></tr>
+      <tr><td>Запустить / завершить маршрут</td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="check">✓</span><div class="partial">свой</div></td></tr>
+      <tr><td>Отметить точку DELIVERED</td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="check">✓</span></td></tr>
+      <tr><td>Подтвердить приёмку груза</td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="check">✓</span><div class="partial">свои объекты</div></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="cross">✕</span></td></tr>
+      <tr><td>Отменить маршрут целиком</td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="cross">✕</span></td><td class="center"><span class="check">✓</span><div class="partial">свой</div></td><td class="center"><span class="check">✓</span></td><td class="center"><span class="cross">✕</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ─────────── DRIVER SCREENS ─────────── -->
+
+<section id="driver-home">
+  <div class="section-eyebrow">Driver · Screens</div>
+  <h2>Driver Home</h2>
+  <p class="section-lead">Главный экран водителя. Видит активный маршрут, следующую точку и список точек.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span class="phone-status-icons">5G · 100%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div class="toolbar-role">💼 Водитель</div>
+              <div class="toolbar-title">Главная</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">📍</div>
+              <div class="toolbar-btn">⋮<div class="dot"></div></div>
+            </div>
+          </div>
+          <div class="app-body">
+            <div class="a-card a-card-active">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span class="pill">МАРШРУТ #234</span>
+                <span style="font-size:10px;opacity:0.85">03 мая</span>
+              </div>
+              <div style="font-size:14px;font-weight:600;margin-bottom:2px">1 из 4 точек</div>
+              <div class="progress"><div class="progress-fill" style="width:25%"></div></div>
+              <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.2)">
+                <div style="font-size:10px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Следующая точка</div>
+                <div style="font-size:15px;font-weight:600;margin-bottom:2px">📦↓ Шипиловский 23А</div>
+                <div style="font-size:11px;opacity:0.85">11:00 · 5 коробок саморезов</div>
+              </div>
+              <div class="a-btn-row">
+                <button class="a-btn a-btn-ghost">🗺 В Картах</button>
+                <button class="a-btn">Я приехал</button>
+              </div>
+            </div>
+
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);padding:0 4px">Точки маршрута</div>
+            <div class="a-card" style="padding:0">
+              <div class="a-row" style="padding:10px 12px"><div class="a-row-icon" style="background:#DCFCE7;color:#166534">✓</div><div class="a-row-content"><div class="a-row-title">Склад Белая дача</div><div class="a-row-sub">📦↑ Получено · 8 наименований</div></div><div class="a-row-end">08:00</div></div>
+              <div class="a-row" style="padding:10px 12px;background:var(--indigo-50)"><div class="a-row-icon" style="background:#FEF3C7;color:#92400E">→</div><div class="a-row-content"><div class="a-row-title" style="color:var(--indigo-700)">Шипиловский 23А</div><div class="a-row-sub">📦↓ Сдать · 5 коробок</div></div><div class="a-row-end" style="color:var(--indigo-700);font-weight:600">11:00</div></div>
+              <div class="a-row" style="padding:10px 12px"><div class="a-row-icon">⌛</div><div class="a-row-content"><div class="a-row-title">Годовикова 16А</div><div class="a-row-sub">📦↓ Сдать · 20 листов</div></div><div class="a-row-end">12:00</div></div>
+              <div class="a-row" style="padding:10px 12px"><div class="a-row-icon">⌛</div><div class="a-row-content"><div class="a-row-title">Коломенская набережная 16</div><div class="a-row-sub">📦↓ Сдать · 12 окон</div></div><div class="a-row-end">14:00</div></div>
+              <div class="a-row" style="padding:10px 12px"><div class="a-row-icon">↩</div><div class="a-row-content"><div class="a-row-title">Возврат на склад</div><div class="a-row-sub">↩ Упаковка / возвраты</div></div><div class="a-row-end">16:00</div></div>
+            </div>
+
+            <div class="a-card a-card-shadow">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:8px">Сегодня</div>
+              <div style="display:flex;justify-content:space-between">
+                <div><div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono', monospace;letter-spacing:-0.5px">23 км</div><div style="font-size:10px;color:var(--text-muted)">Пробег</div></div>
+                <div><div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono', monospace;letter-spacing:-0.5px">1:14</div><div style="font-size:10px;color:var(--text-muted)">В пути</div></div>
+                <div><div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono', monospace;letter-spacing:-0.5px">1/4</div><div style="font-size:10px;color:var(--text-muted)">Точек</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Driver Home<div class="phone-caption-sub">основной режим — активный маршрут</div></div>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span class="phone-status-icons">5G · 100%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div class="toolbar-role">💼 Водитель</div>
+              <div class="toolbar-title">Главная</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">⋮</div>
+            </div>
+          </div>
+          <div class="app-body" style="justify-content: center; align-items: center; text-align: center; gap: 16px;">
+            <div style="font-size:48px;opacity:0.3">🚛</div>
+            <div style="font-size:18px;font-weight:700">Маршрутов нет</div>
+            <div style="font-size:13px;color:var(--text-muted);max-width:240px;line-height:1.5">Логист пока не назначил вам маршрут на сегодня. Push-уведомление придёт когда появится новый.</div>
+            <button class="btn btn-secondary btn-sm" style="margin-top: 8px;">Свайп вниз для обновления</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Empty state<div class="phone-caption-sub">нет активного маршрута</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="driver-route">
+  <div class="section-eyebrow">Driver · Screens</div>
+  <h2>Active Route — карта</h2>
+  <p class="section-lead">Альтернативный вид: вместо списка — карта Яндекса с точками. Свайп между видами карта/список.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span class="phone-status-icons">5G · 100%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div class="toolbar-role">💼 Водитель</div>
+              <div class="toolbar-title">Маршрут #234</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">⋮</div>
+            </div>
+          </div>
+          <div class="app-body">
+            <div style="display:flex;background:var(--surface);border-radius:10px;padding:4px;border:1px solid var(--border)">
+              <button class="btn btn-sm" style="flex:1;background:var(--indigo-100);color:var(--indigo-700)">Карта</button>
+              <button class="btn btn-sm btn-tertiary" style="flex:1;background:transparent;color:var(--text-muted)">Список</button>
+            </div>
+            <div class="map-mock" style="height:280px">
+              <div class="map-pin done" style="top:30px;left:50px">1</div>
+              <div class="map-pin next" style="top:90px;left:120px">2</div>
+              <div class="map-pin" style="top:140px;left:180px">3</div>
+              <div class="map-pin" style="top:200px;left:240px">4</div>
+              <div class="map-pin" style="top:240px;left:60px">↩</div>
+              <div class="map-route" style="top:36px;left:60px;width:60px"></div>
+              <div class="map-route" style="top:96px;left:130px;width:50px"></div>
+              <div class="map-route" style="top:146px;left:190px;width:50px"></div>
+            </div>
+            <div class="a-card a-card-active">
+              <div style="font-size:10px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Точка 2 · следующая</div>
+              <div style="font-size:15px;font-weight:600;margin-bottom:2px">📦↓ Шипиловский 23А</div>
+              <div style="font-size:11px;opacity:0.85;margin-bottom:8px">11:00 · 5 коробок саморезов · 4.2 км</div>
+              <button class="a-btn">Я приехал</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Map view<div class="phone-caption-sub">визуализация маршрута</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="driver-point">
+  <div class="section-eyebrow">Driver · Screens</div>
+  <h2>Point Detail</h2>
+  <p class="section-lead">Карточка точки доставки. Адрес, контакт бригадира, что выгрузить, ход операций.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>11:02</span><span class="phone-status-icons">5G · 96%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div style="font-size:11px;color:var(--text-muted)">📦↓ DELIVERY</div>
+              <div class="toolbar-title">Шипиловский 23А</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">⌫</div>
+            </div>
+          </div>
+          <div class="app-body">
+            <div class="a-card a-card-shadow">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span class="pill pill-warning">🟡 ARRIVED</span>
+                <span style="font-size:11px;color:var(--text-muted)">приехал 11:02</span>
+              </div>
+              <div style="font-size:13px;line-height:1.5">
+                <strong style="font-size:14px;display:block;margin-bottom:6px">Принять на объекте</strong>
+                <div style="margin-bottom:6px">Объект: <strong>Шипиловский 23А</strong></div>
+                <div style="margin-bottom:6px">Бригадир: <strong>Хрулёв П. (+7 910 817-77-99)</strong></div>
+                <div style="margin-bottom:6px">К времени: <strong>11:00</strong></div>
+              </div>
+            </div>
+
+            <div class="a-card a-card-shadow">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:6px">Что выгрузить</div>
+              <div class="a-row" style="padding:6px 0;border:none"><div class="a-row-icon" style="background:#DBEAFE;color:#1E40AF">📦</div><div class="a-row-content"><div class="a-row-title">Саморезы 4×40</div><div class="a-row-sub">5 коробок (250 шт. в коробке)</div></div></div>
+            </div>
+
+            <div class="a-card a-card-shadow">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:8px">Действия</div>
+              <button class="a-btn" style="background:var(--indigo-600);color:white;margin-bottom:8px">📷 Фото выгрузки</button>
+              <button class="a-btn" style="background:var(--emerald-500);color:white">✓ Сдано бригадиру</button>
+              <div style="font-size:10px;color:var(--text-muted);margin-top:8px;text-align:center">Бригадир получит push для подтверждения приёмки</div>
+            </div>
+
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" style="flex:1">📞 Позвонить</button>
+              <button class="btn btn-secondary btn-sm" style="flex:1">🗺 В Картах</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Point Detail<div class="phone-caption-sub">водитель прибыл, начинает выгрузку</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="driver-camera">
+  <div class="section-eyebrow">Driver · Screens</div>
+  <h2>Photo capture</h2>
+  <p class="section-lead">Камера для фото груза при выгрузке. С GPS-фиксацией. Похоже на почасовое фото монтажника, но с другим лейблом.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen" style="background:#000">
+          <div class="phone-status" style="background:#000;color:white"><span>11:08</span><span class="phone-status-icons">5G · 95%</span></div>
+          <div style="position:relative;flex:1;background:linear-gradient(180deg, #2a2a3a, #1a1a25);display:flex;align-items:center;justify-content:center">
+            <div style="color:white;font-size:13px;opacity:0.5">камера</div>
+            <div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.5);color:white;padding:8px 12px;border-radius:8px;font-size:11px;backdrop-filter: blur(8px)">
+              <div style="font-weight:600;margin-bottom:2px">📦↓ Шипиловский 23А</div>
+              <div style="opacity:0.7;font-size:10px">📍 55.6238, 37.7321 · GPS точно</div>
+            </div>
+            <div style="position:absolute;bottom:90px;left:16px;right:16px;background:rgba(0,0,0,.6);color:white;padding:10px;border-radius:10px;font-size:11px;backdrop-filter: blur(8px)">
+              💡 Снимите груз в кузове перед выгрузкой
+            </div>
+            <div style="position:absolute;bottom:20px;left:0;right:0;display:flex;align-items:center;justify-content:space-around;padding:0 24px">
+              <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);color:white;display:flex;align-items:center;justify-content:center;font-size:14px">🖼</div>
+              <div style="width:64px;height:64px;border-radius:50%;background:white;border:4px solid rgba(255,255,255,.3);box-shadow:0 0 0 2px white"></div>
+              <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);color:white;display:flex;align-items:center;justify-content:center;font-size:14px">↻</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Photo capture<div class="phone-caption-sub">с GPS и контекстной подсказкой</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="driver-shift-photo">
+  <div class="section-eyebrow">Driver · Screens</div>
+  <h2>Shift Photo (старт / конец дня)</h2>
+  <p class="section-lead">В начале и в конце дня водитель делает фото машины — пробег на одометре, состояние кузова. Это аналог открытия / закрытия смены у монтажника.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>7:55</span><span class="phone-status-icons">5G · 100%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div class="toolbar-role">💼 Водитель</div>
+              <div class="toolbar-title">Начало смены</div>
+            </div>
+          </div>
+          <div class="app-body" style="text-align:center;justify-content:center">
+            <div style="font-size:64px">🚛</div>
+            <div style="font-size:18px;font-weight:700;margin-top:8px">Доброе утро!</div>
+            <div style="font-size:13px;color:var(--text-muted);max-width:260px;margin: 4px auto 16px;line-height:1.5">Сделайте фото одометра и общее фото машины перед выездом</div>
+            <button class="btn btn-primary btn-lg" style="width:100%">📷 Открыть камеру</button>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:12px">или <a href="#" style="color:var(--primary);font-weight:600">пропустить</a> (не рекомендуется)</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Открытие смены<div class="phone-caption-sub">водительская версия</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── LOGISTICIAN SCREENS ─────────── -->
+
+<section id="logist-home">
+  <div class="section-eyebrow">Logistician · Screens</div>
+  <h2>Logistician Home — доска</h2>
+  <p class="section-lead">Двухпанельный интерфейс. Слева — pending заявки от координаторов и бригадиров. Справа — активные маршруты водителей. Drag-n-drop заявки в маршрут.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>10:12</span><span class="phone-status-icons">WiFi · 100%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div class="toolbar-role">🚛 Логист</div>
+              <div class="toolbar-title">Дашборд</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">+</div>
+              <div class="toolbar-btn">⋮</div>
+            </div>
+          </div>
+          <div class="app-body">
+            <!-- KPI -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="a-card a-card-shadow"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px">Заявок открыто</div><div style="font-size:22px;font-weight:700;font-family:'JetBrains Mono', monospace;color:var(--amber-600)">7</div></div>
+              <div class="a-card a-card-shadow"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px">Маршрутов идёт</div><div style="font-size:22px;font-weight:700;font-family:'JetBrains Mono', monospace;color:var(--indigo-600)">3</div></div>
+            </div>
+
+            <!-- Pending requests -->
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);padding:0 4px;margin-top:4px">Открытые заявки</div>
+            <div class="a-card a-card-shadow" style="padding:0">
+              <div class="a-row" style="padding:10px 12px"><div class="a-row-icon" style="background:#FEF3C7;color:#92400E">📋</div><div class="a-row-content"><div class="a-row-title">Шипиловский 23А · к 11:00</div><div class="a-row-sub">5 коробок саморезов · от Сибилев</div></div><span class="pill pill-warning" style="font-size:9px">PENDING</span></div>
+              <div class="a-row" style="padding:10px 12px"><div class="a-row-icon" style="background:#FEF3C7;color:#92400E">📋</div><div class="a-row-content"><div class="a-row-title">Годовикова 16А · к 12:00</div><div class="a-row-sub">20 листов профиля · от Хрулёв</div></div><span class="pill pill-warning" style="font-size:9px">PENDING</span></div>
+              <div class="a-row" style="padding:10px 12px"><div class="a-row-icon" style="background:#FEF3C7;color:#92400E">📋</div><div class="a-row-content"><div class="a-row-title">Коломенская 16 · к 14:00</div><div class="a-row-sub">12 окон · от Сибилев</div></div><span class="pill pill-warning" style="font-size:9px">PENDING</span></div>
+            </div>
+
+            <!-- Active routes -->
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);padding:0 4px;margin-top:4px">Активные маршруты</div>
+            <div class="a-card" style="background: linear-gradient(135deg, var(--indigo-600), var(--indigo-800));color:white;border:none">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span class="pill">МАРШРУТ #234</span>
+                <span style="font-size:10px;opacity:0.85">Иванов</span>
+              </div>
+              <div style="font-size:13px;font-weight:600">1 / 4 точек · 25%</div>
+              <div class="progress" style="margin:8px 0"><div class="progress-fill" style="width:25%"></div></div>
+              <div style="font-size:11px;opacity:0.85">Сейчас: 📦↓ Шипиловский 23А</div>
+            </div>
+            <div class="a-card a-card-shadow">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span class="badge badge-info" style="font-size:9px">МАРШРУТ #235</span>
+                <span style="font-size:10px;color:var(--text-muted)">Петров</span>
+              </div>
+              <div style="font-size:13px;font-weight:600">3 / 5 точек · 60%</div>
+              <div style="height:6px;background:var(--slate-100);border-radius:99px;margin:8px 0;overflow:hidden"><div style="height:100%;background:var(--emerald-500);width:60%"></div></div>
+              <div style="font-size:11px;color:var(--text-muted)">Сейчас: 🚚 в пути на Стасова 5А</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Logistician Home<div class="phone-caption-sub">заявки + активные маршруты</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="logist-create-route">
+  <div class="section-eyebrow">Logistician · Screens</div>
+  <h2>Создание маршрута</h2>
+  <p class="section-lead">Логист выбирает водителя и собирает маршрут drag-n-drop из pending заявок. Маршрут получает порядковые точки PICKUP / DELIVERY / RETURN.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>10:18</span><span class="phone-status-icons">WiFi · 100%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div style="font-size:11px;color:var(--text-muted)">🚛 Логист</div>
+              <div class="toolbar-title">Новый маршрут</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">×</div>
+            </div>
+          </div>
+          <div class="app-body">
+            <div class="a-card a-card-shadow">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:6px">Водитель</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--indigo-50);border-radius:8px;border:1px solid var(--indigo-200)">
+                <div style="width:32px;height:32px;border-radius:50%;background:var(--indigo-600);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">ИВ</div>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">Иванов Сергей</div><div style="font-size:11px;color:var(--text-muted)">💼 Свободен · до 18:00</div></div>
+                <button class="btn btn-tertiary btn-sm">Сменить</button>
+              </div>
+            </div>
+
+            <div class="a-card a-card-shadow">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:6px">Точки маршрута</div>
+
+              <div style="background:var(--slate-100);padding:8px;border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:8px;border:1px dashed var(--slate-300)">
+                <div style="width:20px;height:20px;border-radius:50%;background:var(--slate-700);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">1</div>
+                <div style="flex:1;font-size:12px"><strong>Склад Белая дача</strong><div style="color:var(--text-muted);font-size:11px">📦↑ PICKUP · 08:00</div></div>
+                <span style="font-size:14px;color:var(--text-muted)">⋮⋮</span>
+              </div>
+              <div style="background:var(--slate-100);padding:8px;border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:8px;border:1px dashed var(--slate-300)">
+                <div style="width:20px;height:20px;border-radius:50%;background:var(--slate-700);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">2</div>
+                <div style="flex:1;font-size:12px"><strong>Шипиловский 23А</strong><div style="color:var(--text-muted);font-size:11px">📦↓ DELIVERY · 11:00</div></div>
+                <span style="font-size:14px;color:var(--text-muted)">⋮⋮</span>
+              </div>
+              <div style="background:var(--slate-100);padding:8px;border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:8px;border:1px dashed var(--slate-300)">
+                <div style="width:20px;height:20px;border-radius:50%;background:var(--slate-700);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">3</div>
+                <div style="flex:1;font-size:12px"><strong>Годовикова 16А</strong><div style="color:var(--text-muted);font-size:11px">📦↓ DELIVERY · 12:00</div></div>
+                <span style="font-size:14px;color:var(--text-muted)">⋮⋮</span>
+              </div>
+              <button class="btn btn-tertiary btn-sm" style="width:100%;border:1px dashed var(--indigo-300);background:var(--indigo-50);margin-top:6px">+ Добавить точку</button>
+            </div>
+
+            <div class="a-card a-card-shadow">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:6px">Свободные заявки</div>
+              <div class="a-row" style="padding:6px 0;border:none;cursor:pointer"><div class="a-row-icon" style="background:#FEF3C7;color:#92400E;font-size:11px">+</div><div class="a-row-content"><div class="a-row-title">Коломенская 16 · 14:00</div><div class="a-row-sub">12 окон · drag в маршрут</div></div></div>
+              <div class="a-row" style="padding:6px 0;border:none;cursor:pointer"><div class="a-row-icon" style="background:#FEF3C7;color:#92400E;font-size:11px">+</div><div class="a-row-content"><div class="a-row-title">Стасова 5А · 15:30</div><div class="a-row-sub">Профиль алюминий · drag</div></div></div>
+            </div>
+
+            <button class="btn btn-primary btn-lg" style="width:100%">Назначить маршрут</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Создание маршрута<div class="phone-caption-sub">drag-n-drop заявок</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="logist-drivers">
+  <div class="section-eyebrow">Logistician · Screens</div>
+  <h2>Водители</h2>
+  <p class="section-lead">Список всех водителей с онлайн-статусом и текущим маршрутом. Тап → детали водителя.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>10:25</span><span class="phone-status-icons">WiFi · 100%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div style="font-size:11px;color:var(--text-muted)">🚛 Логист</div>
+              <div class="toolbar-title">Водители</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">⌕</div>
+            </div>
+          </div>
+          <div class="app-body">
+            <div class="a-card a-card-shadow" style="padding:0">
+              <div class="a-row" style="padding:10px 12px"><div class="a-row-icon" style="background:#DBEAFE;color:#1E40AF;font-size:13px">ИВ</div><div class="a-row-content"><div class="a-row-title">Иванов Сергей</div><div class="a-row-sub">Маршрут #234 · 1/4 точек</div></div><span class="pill pill-success" style="font-size:9px">ACTIVE</span></div>
+              <div class="a-row" style="padding:10px 12px"><div class="a-row-icon" style="background:#DBEAFE;color:#1E40AF;font-size:13px">ПЕ</div><div class="a-row-content"><div class="a-row-title">Петров Алексей</div><div class="a-row-sub">Маршрут #235 · 3/5 точек</div></div><span class="pill pill-success" style="font-size:9px">ACTIVE</span></div>
+              <div class="a-row" style="padding:10px 12px"><div class="a-row-icon" style="background:#DCFCE7;color:#166534;font-size:13px">СИ</div><div class="a-row-content"><div class="a-row-title">Сидоров Михаил</div><div class="a-row-sub">Свободен · последняя поездка вчера</div></div><span class="pill pill-light" style="font-size:9px">FREE</span></div>
+              <div class="a-row" style="padding:10px 12px"><div class="a-row-icon" style="background:#DCFCE7;color:#166534;font-size:13px">КУ</div><div class="a-row-content"><div class="a-row-title">Кузнецов Иван</div><div class="a-row-sub">Свободен · в офисе</div></div><span class="pill pill-light" style="font-size:9px">FREE</span></div>
+              <div class="a-row" style="padding:10px 12px;opacity:0.6"><div class="a-row-icon" style="background:var(--slate-100);color:var(--slate-500);font-size:13px">ВО</div><div class="a-row-content"><div class="a-row-title">Волков Денис</div><div class="a-row-sub">Не на смене · последний онлайн вчера 18:00</div></div><span class="pill pill-light" style="font-size:9px;opacity:0.7">OFFLINE</span></div>
+            </div>
+
+            <div class="a-card a-card-shadow">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px">Сводка</div><div style="font-size:13px;font-weight:600;margin-top:4px">2 в работе · 2 свободны · 1 офлайн</div></div>
+                <button class="btn btn-tertiary btn-sm">Подробнее</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Drivers Fleet<div class="phone-caption-sub">статус и маршруты</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── COORDINATOR / FOREMAN SCREENS ─────────── -->
+
+<section id="coord-create-request">
+  <div class="section-eyebrow">Coordinator / Foreman</div>
+  <h2>Создание заявки на доставку</h2>
+  <p class="section-lead">Простая форма. Объект (предзаполнен из контекста), что нужно, к какому времени. Не думать о водителе — это работа логиста.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:00</span><span class="phone-status-icons">5G · 87%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div style="font-size:11px;color:var(--text-muted)">📋 Координатор</div>
+              <div class="toolbar-title">Новая заявка</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">×</div>
+            </div>
+          </div>
+          <div class="app-body">
+            <div class="a-card a-card-shadow">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:6px">Объект</div>
+              <div style="padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--slate-50);font-size:13px;font-weight:600">📍 Коломенская набережная 16</div>
+            </div>
+
+            <div class="a-card a-card-shadow">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:6px">Что нужно привезти</div>
+              <textarea placeholder="Например: 12 пластиковых окон, 3 поддона профиля..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;min-height:80px;resize:vertical">12 окон ПВХ 1500x1200, 3 поддона профиля</textarea>
+            </div>
+
+            <div class="a-card a-card-shadow">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:6px">К времени</div>
+              <div style="display:flex;gap:8px">
+                <input type="text" value="03 мая, 14:00" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px">
+                <button class="btn btn-secondary btn-sm">📅</button>
+              </div>
+            </div>
+
+            <div class="a-card a-card-shadow">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:6px">Приоритет</div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-sm" style="flex:1;background:var(--indigo-100);color:var(--indigo-700)">⚡ Сегодня</button>
+                <button class="btn btn-sm btn-secondary" style="flex:1">📅 Завтра</button>
+                <button class="btn btn-sm btn-secondary" style="flex:1">🗓 На неделе</button>
+              </div>
+            </div>
+
+            <div class="callout" style="margin: 0; padding: 12px;">
+              <div style="font-size: 12px; color: var(--slate-700);">💡 Логист увидит вашу заявку и подберёт водителя. Push когда маршрут будет назначен.</div>
+            </div>
+
+            <button class="btn btn-primary btn-lg" style="width:100%">Создать заявку</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Create Request<div class="phone-caption-sub">координатор / бригадир</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="requests-board">
+  <div class="section-eyebrow">Coordinator / Foreman</div>
+  <h2>Мои заявки</h2>
+  <p class="section-lead">Координатор/бригадир видит свои заявки и их статусы. От pending к assigned (=маршрут назначен) к delivered.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>13:30</span><span class="phone-status-icons">5G · 80%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div style="font-size:11px;color:var(--text-muted)">📋 Координатор</div>
+              <div class="toolbar-title">Мои заявки</div>
+            </div>
+            <div class="toolbar-icons"><div class="toolbar-btn">+</div></div>
+          </div>
+          <div class="app-body">
+            <div class="a-card a-card-shadow" style="border-left:3px solid var(--indigo-600)">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span class="badge badge-info" style="font-size:9px">IN ROUTE</span>
+                <span style="font-size:11px;color:var(--text-muted)">через 30 мин</span>
+              </div>
+              <div style="font-size:14px;font-weight:600">📍 Коломенская набер. 16</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px">12 окон + 3 поддона профиля</div>
+              <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted)">🚛 Водитель Иванов · едет</div>
+            </div>
+
+            <div class="a-card a-card-shadow" style="border-left:3px solid var(--amber-500)">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span class="badge badge-warning" style="font-size:9px">PENDING</span>
+                <span style="font-size:11px;color:var(--text-muted)">ждёт логиста</span>
+              </div>
+              <div style="font-size:14px;font-weight:600">📍 Коломенская набер. 16</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px">5 коробок саморезов · к 15:00</div>
+              <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:6px">
+                <button class="btn btn-tertiary btn-sm">Изменить</button>
+                <button class="btn btn-tertiary btn-sm" style="color:var(--rose-500)">Отменить</button>
+              </div>
+            </div>
+
+            <div class="a-card a-card-shadow" style="border-left:3px solid var(--emerald-500)">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span class="badge badge-success" style="font-size:9px">DELIVERED</span>
+                <span style="font-size:11px;color:var(--text-muted)">11:32</span>
+              </div>
+              <div style="font-size:14px;font-weight:600">📍 Шипиловский 23А</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px">5 коробок саморезов</div>
+              <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted)">✓ Принял Хрулёв · с фото</div>
+            </div>
+
+            <div class="a-card a-card-shadow" style="border-left:3px solid var(--emerald-500);opacity:0.7">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span class="badge badge-success" style="font-size:9px">DELIVERED</span>
+                <span style="font-size:11px;color:var(--text-muted)">02 мая 16:42</span>
+              </div>
+              <div style="font-size:14px;font-weight:600">📍 Годовикова 16А</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px">8 листов профиля</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">My Requests<div class="phone-caption-sub">статус-лента заявок</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── HISTORY OF OBJECT ─────────── -->
+
+<section id="history">
+  <div class="section-eyebrow">Cross-role · Золотая фишка</div>
+  <h2>История объекта</h2>
+  <p class="section-lead">Единая лента всех событий объекта в хронологическом порядке. Создание, фото, смены, доставки, инструменты, задачи, audit-действия куратора. Каждая роль видит со своими фильтрами.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>14:20</span><span class="phone-status-icons">WiFi · 100%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div class="toolbar-title">Коломенская 16</div>
+              <div style="font-size:11px;color:var(--text-muted)">Активный · 3 чел · 5 смен</div>
+            </div>
+            <div class="toolbar-icons"><div class="toolbar-btn">⌕</div></div>
+          </div>
+          <div class="app-body">
+            <div style="display:flex;gap:6px;overflow-x:auto;padding:0 4px;flex-wrap:nowrap">
+              <button class="btn btn-sm" style="background:var(--indigo-100);color:var(--indigo-700);flex-shrink:0">Все</button>
+              <button class="btn btn-sm btn-secondary" style="flex-shrink:0">Доставки</button>
+              <button class="btn btn-sm btn-secondary" style="flex-shrink:0">Монтаж</button>
+              <button class="btn btn-sm btn-secondary" style="flex-shrink:0">Куратор</button>
+            </div>
+
+            <div class="a-card a-card-shadow">
+              <div class="timeline">
+                <div class="timeline-day">Сегодня · 03 мая</div>
+
+                <div class="timeline-item">
+                  <div class="timeline-dot success"></div>
+                  <div class="timeline-time">09:30</div>
+                  <div class="timeline-event">🚛 Иванов привёз окна</div>
+                  <div class="timeline-detail">12 окон, 3 поддона профиля · 8 фото</div>
+                </div>
+
+                <div class="timeline-item">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-time">10:00</div>
+                  <div class="timeline-event">🔨 Петров открыл смену</div>
+                  <div class="timeline-detail">Бригадир: Хрулёв</div>
+                </div>
+
+                <div class="timeline-item">
+                  <div class="timeline-dot info"></div>
+                  <div class="timeline-time">11:00</div>
+                  <div class="timeline-event">📸 Петров: фото "11:00"</div>
+                  <div class="timeline-detail">✓ Подтверждено бригадиром</div>
+                </div>
+
+                <div class="timeline-item">
+                  <div class="timeline-dot success"></div>
+                  <div class="timeline-time">12:30</div>
+                  <div class="timeline-event">🚛 Сидоров привёз профиль</div>
+                  <div class="timeline-detail">⚠ Опоздание 30 мин</div>
+                </div>
+
+                <div class="timeline-item">
+                  <div class="timeline-dot violet"></div>
+                  <div class="timeline-time">14:00</div>
+                  <div class="timeline-event">⚙️ Куратор скорректировал смену</div>
+                  <div class="timeline-detail">Петров · сместил начало 10:00→09:45 · «опечатка»</div>
+                </div>
+
+                <div class="timeline-day">Вчера · 02 мая</div>
+
+                <div class="timeline-item">
+                  <div class="timeline-dot success"></div>
+                  <div class="timeline-time">18:30</div>
+                  <div class="timeline-event">✅ Иванов завершил смену</div>
+                  <div class="timeline-detail">8 ч 15 мин чистого времени</div>
+                </div>
+
+                <div class="timeline-item">
+                  <div class="timeline-dot warning"></div>
+                  <div class="timeline-time">10:00</div>
+                  <div class="timeline-event">🏗 Объект создан</div>
+                  <div class="timeline-detail">Координатор: Сибилев · 3 фото осмотра</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">История объекта<div class="phone-caption-sub">единая лента событий</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── SWITCHER ─────────── -->
+
+<section id="switcher">
+  <div class="section-eyebrow">Cross-role · Critical UX</div>
+  <h2>Переключатель ролей в действии</h2>
+  <p class="section-lead">Меню «⋮» в шапке. Показывает обе роли пользователя. Точка-индикатор справа от роли = там есть незавершённый процесс.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>11:30</span><span class="phone-status-icons">5G · 92%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div class="toolbar-role">💼 Водитель</div>
+              <div class="toolbar-title">Главная</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn" style="background: var(--slate-100); border-color: transparent;">⋮<div class="dot"></div></div>
+            </div>
+          </div>
+          <div class="app-body">
+            <!-- Background dim -->
+            <div style="position:absolute;inset:0;background:rgba(15,23,42,.4);pointer-events:none"></div>
+            <!-- Menu -->
+            <div style="position:absolute;top:64px;right:16px;width:240px;background:white;border-radius:14px;box-shadow:var(--shadow-xl);overflow:hidden;z-index:10">
+              <div style="padding:8px 12px;background:var(--indigo-50);border-bottom:1px solid var(--border);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--indigo-700)">Активная роль</div>
+              <div style="padding:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+                <span style="font-size:18px">💼</span>
+                <div style="flex:1"><div style="font-size:13px;font-weight:600">Водитель</div><div style="font-size:11px;color:var(--text-muted)">Маршрут #234 · 1/4</div></div>
+                <span style="color:var(--emerald-500);font-weight:700">✓</span>
+              </div>
+              <div style="padding:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--slate-50)">
+                <span style="font-size:18px">🔨</span>
+                <div style="flex:1"><div style="font-size:13px;font-weight:600">Монтажник</div><div style="font-size:11px;color:var(--rose-500)">● Открыта смена 2:14</div></div>
+              </div>
+              <div style="padding:8px 0">
+                <div style="padding:8px 12px;font-size:13px;color:var(--text-secondary)">Профиль</div>
+                <div style="padding:8px 12px;font-size:13px;color:var(--text-secondary)">Настройки</div>
+                <div style="padding:8px 12px;font-size:13px;color:var(--rose-500)">Выйти</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Меню переключения<div class="phone-caption-sub">обе роли + индикатор смены</div></div>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>11:31</span><span class="phone-status-icons">5G · 92%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div class="toolbar-role">🔨 Монтажник</div>
+              <div class="toolbar-title">Смена</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">⋮<div class="dot"></div></div>
+            </div>
+          </div>
+          <div class="app-body">
+            <div class="a-card a-card-active">
+              <div style="font-size:10px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Открытая смена</div>
+              <div style="font-size:32px;font-weight:800;font-family:'JetBrains Mono', monospace;letter-spacing:-1px">02:14:36</div>
+              <div style="font-size:11px;opacity:0.85;margin-top:4px">Объект: Шипиловский 23А</div>
+            </div>
+            <div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:12px;padding:12px;display:flex;gap:10px;align-items:flex-start">
+              <span style="font-size:18px">💼</span>
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:600;color:#92400E;margin-bottom:2px">У вас активный маршрут</div>
+                <div style="font-size:11px;color:#92400E;opacity:0.85">Маршрут #234 · 1 из 4 точек выполнено. Не забудьте вернуться.</div>
+              </div>
+              <button class="btn btn-sm" style="background:#92400E;color:white;border-color:#92400E">Открыть</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Переключился на Монтажника<div class="phone-caption-sub">маршрут идёт в фоне — баннер</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="switch-dialog">
+  <div class="section-eyebrow">Cross-role · Critical UX</div>
+  <h2>Диалог при смене роли</h2>
+  <p class="section-lead">Когда переключаешься в роль с открытой сменой — система спрашивает что делать. Дефолт выбран по эвристике (длительность смены, локация маршрута).</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>11:32</span><span class="phone-status-icons">5G · 92%</span></div>
+          <!-- backdrop -->
+          <div style="position:absolute;inset:0;background:rgba(15,23,42,.55);"></div>
+
+          <div style="position:absolute;left:0;right:0;bottom:0;z-index:10">
+            <div class="sheet">
+              <div class="sheet-handle"></div>
+              <div class="sheet-title">Переключиться на Водителя?</div>
+
+              <div style="background:var(--slate-50);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px">
+                <div style="font-weight:600;margin-bottom:4px">У вас открыта смена монтажника</div>
+                <div style="color:var(--text-muted);font-size:12px">Объект: Шипиловский 23А · 2 ч 14 мин</div>
+              </div>
+
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:8px">Что сделать со сменой?</div>
+
+              <label style="display:flex;align-items:center;gap:10px;padding:10px;border:2px solid var(--indigo-600);border-radius:10px;background:var(--indigo-50);margin-bottom:8px;cursor:pointer">
+                <span style="width:18px;height:18px;border-radius:50%;background:var(--indigo-600);position:relative;flex-shrink:0"><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:8px;height:8px;background:white;border-radius:50%"></span></span>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600">Поставить на паузу</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Вернётесь — продолжите. Рекомендуется.</div>
+                </div>
+              </label>
+
+              <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer">
+                <span style="width:18px;height:18px;border-radius:50%;border:2px solid var(--slate-300);flex-shrink:0"></span>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600">Завершить смену</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Закрыть и записать 2:14 в учёт</div>
+                </div>
+              </label>
+
+              <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:10px;margin-bottom:14px;cursor:pointer">
+                <span style="width:18px;height:18px;border-radius:50%;border:2px solid var(--slate-300);flex-shrink:0"></span>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600">Оставить активной</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Если быстро вернётесь, например за инструментом</div>
+                </div>
+              </label>
+
+              <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);margin-bottom:14px">
+                <input type="checkbox" style="width:16px;height:16px"> Делать так всегда в подобных случаях
+              </label>
+
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-secondary" style="flex:1">Отмена</button>
+                <button class="btn btn-primary" style="flex:2">Переключиться</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Диалог переключения<div class="phone-caption-sub">умные дефолты + чекбокс «всегда»</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="curator-caps">
+  <div class="section-eyebrow">Curator · Screens</div>
+  <h2>Управление capabilities</h2>
+  <p class="section-lead">Куратор настраивает возможности пользователя. Главная роль (default) + опциональные дополнительные capabilities.</p>
+
+  <div class="phones-grid">
+    <div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>15:00</span><span class="phone-status-icons">WiFi · 100%</span></div>
+          <div class="app-toolbar">
+            <div class="toolbar-left">
+              <div style="font-size:11px;color:var(--text-muted)">👑 Куратор</div>
+              <div class="toolbar-title">Иванов Сергей</div>
+            </div>
+            <div class="toolbar-icons">
+              <div class="toolbar-btn">⋮</div>
+            </div>
+          </div>
+          <div class="app-body">
+            <div class="a-card a-card-shadow">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+                <div style="width:48px;height:48px;border-radius:50%;background:var(--indigo-600);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px">ИВ</div>
+                <div><div style="font-size:15px;font-weight:600">Иванов Сергей</div><div style="font-size:11px;color:var(--text-muted)">+7 962 206-72-32</div></div>
+              </div>
+
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:6px">Главная роль</div>
+              <div style="padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--slate-50);font-size:13px;font-weight:600;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+                <span>💼 Водитель</span>
+                <button class="btn btn-tertiary btn-sm">Сменить</button>
+              </div>
+
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:8px">Дополнительные возможности</div>
+
+              <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--indigo-200);border-radius:10px;background:var(--indigo-50);margin-bottom:8px;cursor:pointer">
+                <span style="width:32px;height:18px;border-radius:99px;background:var(--indigo-600);position:relative"><span style="position:absolute;top:2px;right:2px;width:14px;height:14px;background:white;border-radius:50%"></span></span>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600">🔨 Монтажник</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Может работать на объекте между доставками</div>
+                </div>
+              </label>
+
+              <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer">
+                <span style="width:32px;height:18px;border-radius:99px;background:var(--slate-300);position:relative"><span style="position:absolute;top:2px;left:2px;width:14px;height:14px;background:white;border-radius:50%"></span></span>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600;color:var(--slate-500)">🚛 Логист</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Сам формирует свои маршруты</div>
+                </div>
+              </label>
+
+              <div class="callout warning" style="margin-top: 12px; padding: 10px;">
+                <div style="font-size: 11px; color: var(--amber-600); font-weight: 600; margin-bottom: 2px;">Лимит: до 2 capabilities</div>
+                <div style="font-size: 11px; color: var(--slate-700);">Тройные комбинации не поддерживаются. Для роли «куратор» нельзя добавить «монтажник» — разные домены.</div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-lg" style="width:100%">Сохранить</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Curator · Capabilities<div class="phone-caption-sub">переключатели возможностей</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="footer-meta">
+  BELSI Brandbook v0.1 · Май 2026 · Документ обсуждения, экраны для уточнения. Все решения отмеченные ⏳ требуют твоего ответа перед переходом к коду.<br>
+  Файл: <code class="inline">docs/driver-integration/index.html</code> · ветка <code class="inline">feature/driver-integration</code>
+</div>
+
+</main>
+</div>
+
+</body>
+</html>

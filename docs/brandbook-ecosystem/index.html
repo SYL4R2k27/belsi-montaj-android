@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BELSI · Brandbook экосистемы — все роли, экраны, функционал</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --indigo-50:#EEF2FF; --indigo-100:#E0E7FF; --indigo-200:#C7D2FE;
+    --indigo-300:#A5B4FC; --indigo-400:#818CF8; --indigo-500:#6366F1;
+    --indigo-600:#4F46E5; --indigo-700:#4338CA; --indigo-800:#3730A3;
+    --indigo-900:#312E81; --indigo-950:#1E1B4B;
+    --slate-50:#F8FAFC; --slate-100:#F1F5F9; --slate-200:#E2E8F0;
+    --slate-300:#CBD5E1; --slate-400:#94A3B8; --slate-500:#64748B;
+    --slate-600:#475569; --slate-700:#334155; --slate-800:#1E293B;
+    --slate-900:#0F172A; --slate-950:#020617;
+
+    /* Domain colors */
+    --installation:#4F46E5;     /* Indigo — монтаж */
+    --installation-bg:#EEF2FF;
+    --logistics:#0EA5E9;        /* Sky — логистика */
+    --logistics-bg:#E0F2FE;
+    --production:#F59E0B;       /* Amber — производство */
+    --production-bg:#FEF3C7;
+    --observer:#8B5CF6;         /* Violet — куратор-наблюдатель */
+    --observer-bg:#EDE9FE;
+
+    --emerald-500:#10B981; --emerald-600:#059669; --emerald-50:#ECFDF5;
+    --rose-500:#F43F5E; --rose-600:#E11D48; --rose-50:#FFF1F2;
+
+    --bg: var(--slate-50);
+    --surface: #FFFFFF;
+    --border: var(--slate-200);
+    --text: var(--slate-900);
+    --text-secondary: var(--slate-600);
+    --text-muted: var(--slate-400);
+
+    --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-xl:20px; --radius-2xl:24px;
+    --shadow-sm: 0 1px 2px rgba(15,23,42,.05);
+    --shadow-md: 0 4px 6px -1px rgba(15,23,42,.07), 0 2px 4px -2px rgba(15,23,42,.05);
+    --shadow-lg: 0 10px 15px -3px rgba(15,23,42,.08), 0 4px 6px -4px rgba(15,23,42,.05);
+    --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+    --space-5:20px; --space-6:24px; --space-8:32px; --space-10:40px;
+    --space-12:48px; --space-16:64px;
+  }
+
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  html { scroll-behavior:smooth; }
+  body {
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.55;
+  }
+  code,kbd,pre { font-family:'JetBrains Mono',Menlo,monospace; font-size:.9em; }
+
+  .app { display:flex; min-height:100vh; }
+  .sidebar {
+    width:300px; background:var(--surface); border-right:1px solid var(--border);
+    padding:var(--space-6) var(--space-4); position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .sidebar h1 { font-size:1.1rem; font-weight:700; margin-bottom:4px; }
+  .sidebar .sub { font-size:.8rem; color:var(--text-muted); margin-bottom:var(--space-6); }
+  .sidebar nav { display:flex; flex-direction:column; gap:2px; }
+  .sidebar nav a {
+    color:var(--text-secondary); text-decoration:none; padding:8px 12px;
+    border-radius:var(--radius-sm); font-size:.88rem; transition:.15s;
+  }
+  .sidebar nav a:hover { background:var(--slate-100); color:var(--text); }
+  .sidebar nav a.section { font-weight:600; color:var(--text); margin-top:14px; font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; padding-left:8px; cursor:default; }
+  .sidebar nav a.section:hover { background:transparent; }
+
+  main { flex:1; padding:var(--space-12) var(--space-10); max-width:1080px; }
+  section { margin-bottom:var(--space-16); }
+  section h2 {
+    font-size:2rem; font-weight:800; margin-bottom:var(--space-3);
+    letter-spacing:-.02em;
+  }
+  section h2 .num { color:var(--text-muted); font-weight:500; margin-right:8px; }
+  section h3 { font-size:1.3rem; font-weight:700; margin:var(--space-8) 0 var(--space-3); }
+  section h4 { font-size:1.05rem; font-weight:600; margin:var(--space-6) 0 var(--space-2); }
+  section .lead { color:var(--text-secondary); font-size:1.05rem; margin-bottom:var(--space-6); max-width:780px; }
+  section p { margin-bottom:var(--space-3); color:var(--text-secondary); }
+  section p strong { color:var(--text); font-weight:600; }
+  section ul,section ol { margin:var(--space-2) 0 var(--space-4) var(--space-5); color:var(--text-secondary); }
+  section li { margin-bottom:6px; }
+  section li strong { color:var(--text); }
+  section a { color:var(--installation); }
+
+  /* Cover */
+  .cover {
+    padding:var(--space-12); border-radius:var(--radius-2xl);
+    background:linear-gradient(135deg,#1E293B 0%,#0F172A 100%);
+    color:#fff; box-shadow:var(--shadow-lg);
+    margin-bottom:var(--space-12);
+  }
+  .cover .eyebrow {
+    display:inline-block; padding:6px 14px; border-radius:99px;
+    background:rgba(255,255,255,.1); font-size:.78rem; font-weight:600;
+    letter-spacing:.06em; text-transform:uppercase; margin-bottom:var(--space-4);
+  }
+  .cover h1 { font-size:3rem; font-weight:800; line-height:1.1; letter-spacing:-.03em; margin-bottom:var(--space-4); }
+  .cover .tag { font-size:1.15rem; color:rgba(255,255,255,.75); max-width:680px; }
+  .cover .meta { display:flex; gap:var(--space-6); margin-top:var(--space-8); font-size:.85rem; color:rgba(255,255,255,.55); }
+  .cover .meta span strong { color:#fff; font-weight:600; }
+
+  /* Cards */
+  .card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:var(--space-6);
+    box-shadow:var(--shadow-sm); margin-bottom:var(--space-4);
+  }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4); }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:var(--space-4); }
+  .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--space-3); }
+
+  /* Domain badges */
+  .badge {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 10px; border-radius:99px; font-size:.78rem; font-weight:600;
+  }
+  .badge.installation { background:var(--installation-bg); color:var(--installation); }
+  .badge.logistics { background:var(--logistics-bg); color:var(--logistics); }
+  .badge.production { background:var(--production-bg); color:var(--production); }
+  .badge.observer { background:var(--observer-bg); color:var(--observer); }
+  .badge.dot::before {
+    content:''; width:6px; height:6px; border-radius:50%; background:currentColor;
+  }
+
+  /* Role card */
+  .role-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); overflow:hidden;
+    margin-bottom:var(--space-4);
+  }
+  .role-card .head {
+    padding:var(--space-5); border-bottom:1px solid var(--border);
+    display:flex; justify-content:space-between; align-items:flex-start; gap:var(--space-3);
+  }
+  .role-card .head h4 { font-size:1.2rem; margin:0; }
+  .role-card .head .key { font-family:'JetBrains Mono',monospace; font-size:.78rem; color:var(--text-muted); margin-top:4px; }
+  .role-card .head .desc { color:var(--text-secondary); margin-top:8px; font-size:.95rem; }
+  .role-card .body { padding:var(--space-5); }
+  .role-card .body h5 { font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:8px; font-weight:700; }
+  .role-card .body ul { margin:0 0 var(--space-3) var(--space-5); font-size:.92rem; }
+  .role-card.installation .head { border-left:4px solid var(--installation); }
+  .role-card.logistics .head { border-left:4px solid var(--logistics); }
+  .role-card.production .head { border-left:4px solid var(--production); }
+  .role-card.observer .head { border-left:4px solid var(--observer); }
+
+  /* Pipeline diagram */
+  .pipeline {
+    background:#fff; border:1px solid var(--border); border-radius:var(--radius-xl);
+    padding:var(--space-8); display:flex; align-items:stretch; gap:var(--space-3);
+    overflow-x:auto;
+  }
+  .pipeline .stage {
+    flex:1; min-width:180px; padding:var(--space-4); border-radius:var(--radius-md);
+    border:1px solid var(--border); position:relative;
+  }
+  .pipeline .stage h5 { font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:6px; font-weight:700; }
+  .pipeline .stage h6 { font-size:1rem; margin-bottom:8px; }
+  .pipeline .stage p { font-size:.85rem; margin-bottom:0; }
+  .pipeline .stage.production { background:var(--production-bg); border-color:var(--production); }
+  .pipeline .stage.logistics { background:var(--logistics-bg); border-color:var(--logistics); }
+  .pipeline .stage.installation { background:var(--installation-bg); border-color:var(--installation); }
+  .pipeline .stage.observer { background:var(--observer-bg); border-color:var(--observer); }
+  .pipeline .arrow {
+    align-self:center; font-size:1.5rem; color:var(--text-muted);
+  }
+
+  /* Screen mock */
+  .screens { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:var(--space-4); }
+  .screen-mock {
+    background:#fff; border:1px solid var(--border); border-radius:var(--radius-lg);
+    overflow:hidden;
+  }
+  .screen-mock .topbar {
+    background:var(--slate-100); padding:8px 12px; font-size:.78rem;
+    color:var(--text-secondary); display:flex; justify-content:space-between;
+  }
+  .screen-mock .body {
+    padding:var(--space-4); min-height:240px;
+  }
+  .screen-mock h6 { font-size:.95rem; margin-bottom:8px; }
+  .screen-mock ul { margin:0 0 0 var(--space-5); font-size:.85rem; color:var(--text-secondary); }
+
+  /* Tables */
+  .matrix {
+    width:100%; border-collapse:collapse; background:#fff;
+    border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden;
+    font-size:.85rem;
+  }
+  .matrix th, .matrix td { padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); }
+  .matrix th { background:var(--slate-100); font-weight:600; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
+  .matrix td.check { text-align:center; font-size:1rem; }
+  .matrix td.yes { color:var(--emerald-600); font-weight:700; }
+  .matrix td.no { color:var(--text-muted); }
+  .matrix td.partial { color:var(--production); font-weight:700; }
+
+  /* Capability list */
+  .cap-list {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:var(--space-3);
+  }
+  .cap-list .cap {
+    background:#fff; border:1px solid var(--border); border-radius:var(--radius-md);
+    padding:var(--space-3) var(--space-4); font-family:'JetBrains Mono',monospace;
+    font-size:.78rem;
+  }
+  .cap-list .cap strong { font-family:'Inter',sans-serif; font-weight:600; display:block; margin-bottom:2px; font-size:.85rem; }
+
+  /* Color swatches */
+  .swatch {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md);
+    overflow:hidden;
+  }
+  .swatch .color { height:80px; }
+  .swatch .meta { padding:10px 12px; font-size:.8rem; }
+  .swatch .meta strong { display:block; font-weight:600; color:var(--text); margin-bottom:2px; }
+  .swatch .meta code { font-size:.72rem; color:var(--text-muted); }
+
+  /* Step blocks */
+  .step {
+    border-left:3px solid var(--installation); padding:var(--space-3) var(--space-4);
+    background:#fff; border-radius:0 var(--radius-md) var(--radius-md) 0;
+    margin-bottom:var(--space-3);
+  }
+  .step h5 { font-size:.95rem; font-weight:600; margin-bottom:4px; }
+  .step p { font-size:.88rem; margin:0; }
+
+  /* TBD callouts */
+  .tbd {
+    background:#FEF3C7; border:1px solid #F59E0B; border-radius:var(--radius-md);
+    padding:var(--space-3) var(--space-4); font-size:.88rem;
+    margin:var(--space-3) 0;
+  }
+  .tbd strong { color:#92400E; }
+
+  .pill {
+    display:inline-block; padding:2px 10px; border-radius:99px;
+    background:var(--slate-100); color:var(--text-secondary);
+    font-size:.72rem; font-weight:600; margin-right:6px; vertical-align:middle;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <h1>BELSI · Экосистема</h1>
+  <div class="sub">Brandbook полного функционала<br>v2.0 · 2026-05-11</div>
+  <nav>
+    <a href="#cover">Обложка</a>
+    <a href="#concept">1 · Концепция экосистемы</a>
+    <a href="#object">2 · Сущность «Объект»</a>
+    <a href="#pipeline">3 · Pipeline партии</a>
+    <a class="section">Роли</a>
+    <a href="#roles-overview">4 · Все 11 ролей</a>
+    <a href="#hierarchy">5 · Иерархия и связи</a>
+    <a href="#multirole">6 · Мульти-роль (до 3)</a>
+    <a class="section">Экраны</a>
+    <a href="#screens-installation">7 · Монтаж — экраны</a>
+    <a href="#screens-logistics">8 · Логистика — экраны</a>
+    <a href="#screens-production">9 · Производство — экраны</a>
+    <a href="#screens-observer">10 · Куратор — экраны</a>
+    <a class="section">Поведение</a>
+    <a href="#registration">11 · Регистрация V2</a>
+    <a href="#capabilities">12 · Capabilities матрица</a>
+    <a href="#shifts-reports">13 · Смены и отчёты</a>
+    <a class="section">Дизайн</a>
+    <a href="#design-system">14 · Дизайн-система</a>
+    <a href="#ai">15 · AI-слой · XeroCode</a>
+    <a href="#open-questions">16 · Открытые вопросы</a>
+  </nav>
+</aside>
+
+<main>
+
+<!-- ============ COVER ============ -->
+<section id="cover">
+  <div class="cover">
+    <span class="eyebrow">Brandbook · v0.1 · 2026-05-04</span>
+    <h1>BELSI · Единая экосистема</h1>
+    <p class="tag">Полное приложение для строительства, мебельного производства и логистики. Один аккаунт — до трёх ролей. Каждый объект — от заказа до монтажа — внутри одной системы.</p>
+    <div class="meta">
+      <span><strong>11</strong> ролей</span>
+      <span><strong>3</strong> домена</span>
+      <span><strong>1</strong> APK с RoleSwitcher</span>
+      <span>Бренд: <strong>BELSI.Команда</strong></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONCEPT ============ -->
+<section id="concept">
+  <h2><span class="num">01</span>Концепция экосистемы</h2>
+  <p class="lead">BELSI — это не три отдельных приложения. Это одна экосистема, в центре которой стоит <strong>объект</strong>. Заказ рождается на производстве, проходит через логистику, материализуется на стройке. Каждый шаг видно в истории объекта.</p>
+
+  <h3>Ключевая идея — Объект как ось</h3>
+  <p>Каждое действие в системе привязано либо к <strong>объекту-производству</strong> (где делают: Углич), либо к <strong>объекту-цели</strong> (куда везут и где монтируют: Коломенская 16, школы). Когда производственная партия пересекает границу — событие фиксируется. Когда водитель доставил — фиксируется. Когда монтажник принял — фиксируется. История объекта — это связный таймлайн всех событий, доступный куратору в одном экране.</p>
+
+  <h3>Три домена + наблюдатель</h3>
+  <div class="grid-4">
+    <div class="card" style="border-left:4px solid var(--production)">
+      <span class="badge production dot">Производство</span>
+      <h4 style="margin-top:8px">Углич</h4>
+      <p style="font-size:.88rem">Делают мебель, упаковывают, формируют партии для отгрузки.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--logistics)">
+      <span class="badge logistics dot">Логистика</span>
+      <h4 style="margin-top:8px">Маршруты</h4>
+      <p style="font-size:.88rem">Логист собирает партии в маршрут. Водитель везёт на объект.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--installation)">
+      <span class="badge installation dot">Монтаж</span>
+      <h4 style="margin-top:8px">На объекте</h4>
+      <p style="font-size:.88rem">Бригадир + монтажники принимают партию и устанавливают.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--observer)">
+      <span class="badge observer dot">Наблюдатель</span>
+      <h4 style="margin-top:8px">Куратор</h4>
+      <p style="font-size:.88rem">Сквозной просмотр всех доменов. Реагирует на push-сигналы (простой, проблема, отклонение).</p>
+    </div>
+  </div>
+
+  <h3>Жёсткая сегрегация UI</h3>
+  <p>Каждая роль видит <strong>только свои экраны</strong>. Монтажник не видит производства, водитель не видит монтажа. Никаких смешанных дашбордов. Если у пользователя несколько ролей — он переключается через RoleSwitcher, и интерфейс целиком меняется. Куратор — единственное исключение: он видит всё.</p>
+</section>
+
+<!-- ============ OBJECT ============ -->
+<section id="object">
+  <h2><span class="num">02</span>Сущность «Объект»</h2>
+  <p class="lead">Объект — это центральный элемент данных. К нему привязываются партии, маршруты, смены, фото, отчёты, задачи. История объекта — это сборная лента всех событий.</p>
+
+  <h3>Два типа объектов</h3>
+  <div class="grid-2">
+    <div class="card">
+      <span class="badge production">Производственный</span>
+      <h4 style="margin-top:8px">Объект-производство</h4>
+      <p>Адрес, где работают производственные роли. Сейчас — один: <strong>Углич</strong>. На будущее — несколько фабрик.</p>
+      <p><strong>Привязки:</strong> сюда приходят на смену все производственные роли (Начальник, Старший, Работник, Комплектатор, Инженер).</p>
+    </div>
+    <div class="card">
+      <span class="badge installation">Целевой</span>
+      <h4 style="margin-top:8px">Объект-цель (стройка)</h4>
+      <p>Школы, ЖК, объекты-заказчики. Куда доставляют и где монтируют. Может быть много, разные города.</p>
+      <p><strong>Привязки:</strong> сюда приходят на смену монтажники, бригадир, координатор. Сюда привозит водитель. Здесь живёт координатор объекта.</p>
+    </div>
+  </div>
+
+  <h3>Атрибуты объекта</h3>
+  <ul>
+    <li><strong>Тип</strong>: <code>production_facility</code> | <code>installation_target</code></li>
+    <li><strong>Название</strong>: «Углич — фабрика», «Коломенская 16»</li>
+    <li><strong>Адрес</strong> + координаты (для карты водителя)</li>
+    <li><strong>Координатор</strong>: ответственный за объект (для целевых)</li>
+    <li><strong>Куратор</strong>: центр (видит все объекты в своей зоне)</li>
+    <li><strong>Статус</strong>: <code>active</code> | <code>archived</code> | <code>completed</code></li>
+  </ul>
+
+  <p>В БД переиспользуем существующую таблицу <code>site_objects</code> (там уже есть имя, адрес, координатор/куратор, координаты). Добавляется только колонка <code>type</code>. <span class="badge installation">утверждено</span></p>
+
+  <h3>Переключатель производственных площадок</h3>
+  <p>Сейчас фабрика одна — Углич. Но архитектура сразу проектируется под несколько площадок: Углич, Брянск и т.д. У каждой производственной роли в профиле — текущая активная фабрика. Если у пользователя доступ к нескольким — он видит <strong>переключатель «Текущая фабрика»</strong> (аналог RoleSwitcher для домена).</p>
+
+  <div class="card">
+    <h4>Где появляется переключатель</h4>
+    <ul>
+      <li><strong>Профиль производственной роли</strong> — кнопка «Сменить фабрику» под ФИО</li>
+      <li><strong>Главный экран</strong> — в шапке отображается «Углич» (или другая) с дроп-стрелкой</li>
+      <li><strong>RoleSwitcher</strong> — при выборе производственной роли подкаст: «На какой фабрике?»</li>
+    </ul>
+    <h4>Что меняется при переключении</h4>
+    <ul>
+      <li>Лента смен — только текущей фабрики</li>
+      <li>Партии — создаются и видны только текущей фабрики</li>
+      <li>Команда — работники этой фабрики</li>
+      <li>Push-сигналы — только этой фабрики</li>
+    </ul>
+  </div>
+
+  <p>Куратор и Начальник производства <strong>конкретной</strong> фабрики могут пригласить пользователя — выдать роль с привязкой к этой площадке. Один пользователь может быть Работником и в Угличе, и в Брянске одновременно (это считается одной ролью с двумя фабриками — переключается фабрикой, а не ролью).</p>
+</section>
+
+<!-- ============ PIPELINE ============ -->
+<section id="pipeline">
+  <h2><span class="num">03</span>Pipeline партии — от заказа до монтажа</h2>
+  <p class="lead">Партия — это единица товара (например 20 подоконников для Коломенской 16). Она проходит 5 стадий, каждую видит соответствующая роль. Куратор видит все стадии одновременно.</p>
+
+  <div class="pipeline">
+    <div class="stage production">
+      <h5>Стадия 1</h5>
+      <h6>📦 Производство</h6>
+      <p><strong>Кто:</strong> Начальник производства<br><strong>Что:</strong> создаёт партию: 20 подоконников для «Коломенская 16». Указывает дедлайн.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage production">
+      <h5>Стадия 2</h5>
+      <h6>🔨 В работе</h6>
+      <p><strong>Кто:</strong> Работники + Старший<br><strong>Что:</strong> делают изделия. Фото каждого этапа. Простои → push куратору.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage logistics">
+      <h5>Стадия 3</h5>
+      <h6>🚚 Маршрут</h6>
+      <p><strong>Кто:</strong> Логист → Водитель<br><strong>Что:</strong> партия включена в маршрут. Водитель загрузился, фото загрузки.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage logistics">
+      <h5>Стадия 4</h5>
+      <h6>📍 Доставка</h6>
+      <p><strong>Кто:</strong> Водитель<br><strong>Что:</strong> доехал. Фото выгрузки. Бригадир/Координатор подписывает приём.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage installation">
+      <h5>Стадия 5</h5>
+      <h6>🔧 Монтаж</h6>
+      <p><strong>Кто:</strong> Бригадир + Монтажники<br><strong>Что:</strong> устанавливают. Часовые фото, отчёт, история объекта пополняется.</p>
+    </div>
+  </div>
+
+  <h3>Ключевые статусы партии</h3>
+  <ul>
+    <li><code>draft</code> — Начальник создал черновик</li>
+    <li><code>in_production</code> — в работе у работников</li>
+    <li><code>ready_to_ship</code> — готова к отгрузке (видит логист)</li>
+    <li><code>in_route</code> — в маршруте (видит водитель)</li>
+    <li><code>delivered</code> — доставлена (бригадир подтвердил)</li>
+    <li><code>installed</code> — смонтирована (бригадир закрыл)</li>
+  </ul>
+
+  <h3>История объекта</h3>
+  <p>На экране любого объекта (целевого, например Коломенская 16) — таймлайн всех событий: какие партии пришли, кто принял, кто монтировал, какие фото, какие задержки. Это видит координатор объекта и куратор.</p>
+</section>
+
+<!-- ============ ROLES OVERVIEW ============ -->
+<section id="roles-overview">
+  <h2><span class="num">04</span>Все 11 ролей</h2>
+  <p class="lead">Сегментация по доменам. У каждой роли — отдельный главный экран, отдельные права. Один аккаунт может иметь до 3 ролей из разных доменов.</p>
+
+  <h3>Монтаж</h3>
+  <div class="role-card installation">
+    <div class="head">
+      <div>
+        <h4>Монтажник</h4>
+        <div class="key">role: <code>installer</code></div>
+        <div class="desc">Базовая роль на стройке. Делает свою смену, фотает, отмечает задачи.</div>
+      </div>
+      <span class="badge installation">монтаж</span>
+    </div>
+    <div class="body">
+      <h5>Может</h5>
+      <ul>
+        <li>Стартовать/завершать смену, ставить паузу/простой</li>
+        <li>Загружать фото с комментариями (часовые + произвольные)</li>
+        <li>Видеть свои задачи от бригадира, ставить статус</li>
+        <li>Принимать партию от водителя (фото-подтверждение)</li>
+      </ul>
+      <h5>Не может</h5>
+      <ul>
+        <li>Видеть других монтажников, ставить им задачи</li>
+        <li>Видеть производство и логистику</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="role-card installation">
+    <div class="head">
+      <div>
+        <h4>Бригадир</h4>
+        <div class="key">role: <code>foreman</code></div>
+        <div class="desc">Старший на объекте. Видит свою команду, ставит задачи монтажникам, выдаёт инструмент.</div>
+      </div>
+      <span class="badge installation">монтаж</span>
+    </div>
+    <div class="body">
+      <h5>Может</h5>
+      <ul>
+        <li>Всё что монтажник + видит команду + ставит задачи + выдаёт инструмент</li>
+        <li>Подтверждать приёмку партии от водителя</li>
+        <li>Закрывать монтаж партии («установлено»)</li>
+        <li>Видеть статистику команды по смене</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="role-card installation">
+    <div class="head">
+      <div>
+        <h4>Координатор объекта</h4>
+        <div class="key">role: <code>coordinator</code></div>
+        <div class="desc">Отвечает за конкретный объект-цель. Видит все события на нём.</div>
+      </div>
+      <span class="badge installation">монтаж</span>
+    </div>
+    <div class="body">
+      <h5>Может</h5>
+      <ul>
+        <li>Видеть всю историю объекта (партии, доставки, монтаж)</li>
+        <li>Создавать запросы на материалы (передаются логисту → производству)</li>
+        <li>Подписывать приёмку партий</li>
+        <li>Видеть и управлять командой бригадиров на объекте</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="role-card observer">
+    <div class="head">
+      <div>
+        <h4>Куратор</h4>
+        <div class="key">role: <code>curator</code></div>
+        <div class="desc">Наблюдатель экосистемы. Видит ВСЁ во всех доменах. Реагирует на сигналы (простои, проблемы).</div>
+      </div>
+      <span class="badge observer">наблюдатель</span>
+    </div>
+    <div class="body">
+      <h5>Может</h5>
+      <ul>
+        <li>Видеть все смены, отчёты, фото, задачи всех доменов</li>
+        <li>Получать push на любой простой в любом домене</li>
+        <li>Открывать чат с любым пользователем</li>
+        <li>Управлять ролями, выдавать/отзывать роли</li>
+        <li>Дашборд аналитики по всему</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Логистика</h3>
+  <div class="role-card logistics">
+    <div class="head">
+      <div>
+        <h4>Водитель</h4>
+        <div class="key">role: <code>driver</code></div>
+        <div class="desc">Везёт партии от Углича на объекты-цели. Фотает загрузку и выгрузку.</div>
+      </div>
+      <span class="badge logistics">логистика</span>
+    </div>
+    <div class="body">
+      <h5>Может</h5>
+      <ul>
+        <li>Видеть свой маршрут на день (несколько точек)</li>
+        <li>Стартовать/завершать поездку, отмечать простой (поломка, пробка)</li>
+        <li>Фотать загрузку на Угличе, фотать выгрузку на объекте</li>
+        <li>Получать подпись бригадира/координатора на приёмку</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="role-card logistics">
+    <div class="head">
+      <div>
+        <h4>Логист</h4>
+        <div class="key">role: <code>logistician</code></div>
+        <div class="desc">Видит партии готовые к отгрузке + список водителей. Собирает маршруты.</div>
+      </div>
+      <span class="badge logistics">логистика</span>
+    </div>
+    <div class="body">
+      <h5>Может</h5>
+      <ul>
+        <li>Видеть все партии в статусе <code>ready_to_ship</code></li>
+        <li>Создавать маршруты: партии × водитель × дата</li>
+        <li>Видеть статусы всех маршрутов (на карте)</li>
+        <li>Видеть запросы от координаторов объектов</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Производство</h3>
+  <div class="role-card production">
+    <div class="head">
+      <div>
+        <h4>Начальник производства</h4>
+        <div class="key">role: <code>production_chief</code></div>
+        <div class="desc">Главный на Угличе. Видит все смены, ставит задачи, формирует партии для отгрузки.</div>
+      </div>
+      <span class="badge production">производство</span>
+    </div>
+    <div class="body">
+      <h5>Может</h5>
+      <ul>
+        <li>Видеть ленту всех смен фабрики в реальном времени</li>
+        <li>Ставить задачи всем работникам</li>
+        <li>Создавать партии: «20 подоконников → Коломенская 16»</li>
+        <li>Менять статус партии: <code>in_production</code> → <code>ready_to_ship</code></li>
+        <li>Получать push на любой простой фабрики</li>
+        <li>Опционально одобрять отчёты работников</li>
+        <li><strong>Видеть все фото всех работников фабрики</strong> (лента, фильтры, комментарии)</li>
+        <li>Получать push на фото с тегом «брак / проблема»</li>
+      </ul>
+      <h5>Не делает</h5>
+      <ul>
+        <li>Не делает фото и не ведёт свою смену (управленческая роль)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="role-card production">
+    <div class="head">
+      <div>
+        <h4>Старший работник</h4>
+        <div class="key">role: <code>senior_worker</code></div>
+        <div class="desc">Старший в группе работников. Аналог бригадира на стройке.</div>
+      </div>
+      <span class="badge production">производство</span>
+    </div>
+    <div class="body">
+      <h5>Может</h5>
+      <ul>
+        <li>Всё что работник + видит свою группу + ставит им задачи</li>
+        <li>Видеть отчёты своих работников</li>
+        <li>Принимать материалы от Комплектатора</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="role-card production">
+    <div class="head">
+      <div>
+        <h4>Работник</h4>
+        <div class="key">role: <code>worker</code></div>
+        <div class="desc">Базовая роль на производстве. Смена, фото, задачи. Привязан к одному адресу — Углич.</div>
+      </div>
+      <span class="badge production">производство</span>
+    </div>
+    <div class="body">
+      <h5>Может</h5>
+      <ul>
+        <li>Стартовать/завершать смену</li>
+        <li>Перекур / Обед / Простой (раздельные кнопки)</li>
+        <li>Фотать с обязательным комментарием</li>
+        <li>Видеть свои задачи и закрывать их</li>
+        <li>Заполнять / автогенерировать отчёт по окончанию смены</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="role-card production">
+    <div class="head">
+      <div>
+        <h4>Комплектатор</h4>
+        <div class="key">role: <code>supplier</code></div>
+        <div class="desc">Кладовщик. Выдаёт материалы и инструмент работникам, фиксирует выдачу.</div>
+      </div>
+      <span class="badge production">производство</span>
+    </div>
+    <div class="body">
+      <h5>Может</h5>
+      <ul>
+        <li>Видеть запросы от работников/старших на материалы</li>
+        <li>Выдавать инструмент и материалы (записывается в журнал)</li>
+        <li>Фото с комментарием при каждой выдаче</li>
+        <li>Видеть остатки на складе (если есть учёт)</li>
+      </ul>
+      <p style="font-size:.85rem; color:var(--text-muted); margin-top:8px"><em>Реализация: переиспользуем существующую систему <code>tools</code> (бригадир→монтажник). Расширяем до Комплектатор→Работник.</em></p>
+    </div>
+  </div>
+
+  <div class="role-card production">
+    <div class="head">
+      <div>
+        <h4>Инженер</h4>
+        <div class="key">role: <code>engineer</code></div>
+        <div class="desc">Технический специалист. Готовит чертежи и тех.задачи. Ставит задачи себе, Работникам, Старшим и Комплектатору. Все видны Начальнику.</div>
+      </div>
+      <span class="badge production">производство</span>
+    </div>
+    <div class="body">
+      <h5>Может</h5>
+      <ul>
+        <li>Создавать себе задачи (self-tasks)</li>
+        <li>Прикреплять чертежи и документы</li>
+        <li>Делать фото с комментарием</li>
+        <li>Ставить задачи <strong>любой производственной роли</strong>: Работникам, Старшим, Комплектатору</li>
+        <li>Видеть все свои поставленные задачи (статусы, фотоотчёты)</li>
+        <li>Получать запросы от других ролей (например, «нужен чертёж»)</li>
+      </ul>
+      <h5>Не может</h5>
+      <ul>
+        <li>Ставить задачи Начальнику производства</li>
+        <li>Менять статусы партий (это делает Начальник)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HIERARCHY ============ -->
+<section id="hierarchy">
+  <h2><span class="num">05</span>Иерархия и связи</h2>
+  <p class="lead">Кто кому подчиняется и кто кого видит. Это основа для прав доступа.</p>
+
+  <h3>Иерархия по доменам</h3>
+  <div class="card">
+    <pre style="font-size:.82rem; line-height:1.6; background:var(--slate-50); padding:var(--space-4); border-radius:var(--radius-md); overflow:auto;">
+КУРАТОР (центр)  ◄────────  видит ВСЁ во всех доменах
+    │
+    ├─ МОНТАЖ
+    │   └── Координатор объекта
+    │       └── Бригадир
+    │           └── Монтажник
+    │
+    ├─ ЛОГИСТИКА
+    │   └── Логист
+    │       └── Водитель
+    │
+    └─ ПРОИЗВОДСТВО (Углич)
+        └── Начальник производства
+            ├── Старший работник
+            │   └── Работник
+            ├── Комплектатор
+            └── Инженер
+                └── ставит задачи Работникам (горизонтально)</pre>
+  </div>
+
+  <h3>Кто ставит задачи кому</h3>
+  <table class="matrix">
+    <thead><tr><th>Кто ставит</th><th>Кому</th><th>Условие</th></tr></thead>
+    <tbody>
+      <tr><td>Куратор</td><td>любому</td><td>—</td></tr>
+      <tr><td>Координатор объекта</td><td>Бригадирам/Монтажникам своего объекта</td><td>в рамках объекта</td></tr>
+      <tr><td>Бригадир</td><td>своим Монтажникам</td><td>через team_membership</td></tr>
+      <tr><td>Логист</td><td>Водителям</td><td>при создании маршрута</td></tr>
+      <tr><td>Начальник производства</td><td>любой роли в Угличе</td><td>—</td></tr>
+      <tr><td>Старший работник</td><td>своим Работникам</td><td>через group_membership</td></tr>
+      <tr><td>Инженер</td><td>Работникам (тех.задачи)</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Push-уведомления — кому летит сигнал «Простой»</h3>
+  <p>Любой простой в любом домене → пуш Куратору (всегда). <span class="pill">TBD</span> Дополнительно:</p>
+  <ul>
+    <li>Простой Монтажника → Бригадир + Координатор объекта + Куратор</li>
+    <li>Простой Работника производства → Старший + Начальник производства + Куратор</li>
+    <li>Простой Водителя → Логист + Куратор</li>
+  </ul>
+</section>
+
+<!-- ============ MULTIROLE ============ -->
+<section id="multirole">
+  <h2><span class="num">06</span>Мульти-роль (до 3)</h2>
+  <p class="lead">Один аккаунт может иметь до трёх ролей из разных доменов. Переключение через RoleSwitcher — экраны полностью меняются.</p>
+
+  <h3>Пример пользователя</h3>
+  <div class="card">
+    <h4>Иван Петров (+79991234567)</h4>
+    <p>Иван работает на нескольких фронтах:</p>
+    <ul>
+      <li><span class="badge production">производство</span> Работник в Угличе (днём)</li>
+      <li><span class="badge logistics">логистика</span> Водитель (по выходным)</li>
+      <li><span class="badge installation">монтаж</span> Монтажник (вечером на объекте)</li>
+    </ul>
+    <p>Когда Иван открывает приложение → видит селектор «Выбери роль на эту сессию». Выбрал «Работник» → видит свой производственный экран. Захотел переключиться → жмёт RoleSwitcher → выбирает «Водитель» → весь интерфейс меняется на водительский.</p>
+  </div>
+
+  <h3>Логика переключения</h3>
+  <div class="step">
+    <h5>1. Логин</h5>
+    <p>Юзер вводит phone + OTP (или OAuth). Сервер возвращает список ролей.</p>
+  </div>
+  <div class="step">
+    <h5>2. Выбор активной роли</h5>
+    <p>Если роль одна → сразу в главный экран. Если несколько → bottom-sheet «Выбери роль».</p>
+  </div>
+  <div class="step">
+    <h5>3. Активная сессия</h5>
+    <p>Сохраняется в <code>EncryptedSharedPreferences</code> через <code>ActiveRoleManager</code>. JWT остаётся общий.</p>
+  </div>
+  <div class="step">
+    <h5>4. RoleSwitcher</h5>
+    <p>Доступен из меню профиля. При переключении — навигация сбрасывается на главный экран новой роли.</p>
+  </div>
+
+  <h3>Лимит 3 роли</h3>
+  <p>Жёсткий лимит на уровне БД (триггер на <code>user_role_assignments</code>). Куратор может выдать дополнительную роль только если у юзера меньше 3 активных. Чтобы выдать 4-ю — нужно сначала отозвать одну.</p>
+</section>
+
+<!-- ============ SCREENS-INSTALLATION ============ -->
+<section id="screens-installation">
+  <h2><span class="num">07</span>Монтаж — экраны</h2>
+  <p class="lead">Базовый сегмент, который сейчас в проде 1.2.5. Большая часть остаётся как есть. Описаны изменения и новые экраны для интеграции с Pipeline.</p>
+
+  <h3>Монтажник — главные экраны</h3>
+  <div class="screens">
+    <div class="screen-mock">
+      <div class="topbar"><span>Главный</span><span>installer</span></div>
+      <div class="body">
+        <h6>📍 Текущая смена</h6>
+        <ul>
+          <li>Кнопка Старт/Финиш</li>
+          <li>Кнопка Пауза, Простой</li>
+          <li>Часовое фото — push раз в час</li>
+          <li>Список задач от бригадира</li>
+          <li>Кнопка «Добавить фото»</li>
+          <li>Кнопка «Принять партию» (если приехал водитель)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Профиль</span><span>installer</span></div>
+      <div class="body">
+        <h6>👤 Профиль</h6>
+        <ul>
+          <li>ФИО, телефон, аватар</li>
+          <li>Текущий объект (где работаю)</li>
+          <li>Бригадир (мой)</li>
+          <li>История смен</li>
+          <li>RoleSwitcher (если ролей >1)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>История смены</span><span>installer</span></div>
+      <div class="body">
+        <h6>📋 Мои смены</h6>
+        <ul>
+          <li>Список последних 30 смен</li>
+          <li>Часы, дата, объект</li>
+          <li>Открыть → отчёт смены</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Бригадир — главные экраны</h3>
+  <div class="screens">
+    <div class="screen-mock">
+      <div class="topbar"><span>Команда</span><span>foreman</span></div>
+      <div class="body">
+        <h6>👥 Моя команда</h6>
+        <ul>
+          <li>Список монтажников + статус (на смене / нет)</li>
+          <li>Кнопка «Пригласить монтажника»</li>
+          <li>Карточки: имя, часы сегодня, статус</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Задачи</span><span>foreman</span></div>
+      <div class="body">
+        <h6>✅ Задачи команды</h6>
+        <ul>
+          <li>Создать новую: текст, исполнитель</li>
+          <li>Список открытых / закрытых</li>
+          <li>Push когда монтажник закрыл</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Партии</span><span>foreman</span></div>
+      <div class="body">
+        <h6>📦 Партии на объекте <span class="pill">NEW</span></h6>
+        <ul>
+          <li>Список партий: ожидаются / приехали / монтаж / закрыто</li>
+          <li>Подтвердить приёмку (фото + подпись)</li>
+          <li>Закрыть монтаж партии</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Инструмент</span><span>foreman</span></div>
+      <div class="body">
+        <h6>🔧 Инструмент</h6>
+        <ul>
+          <li>Выдача / возврат</li>
+          <li>Кто что забрал, фото</li>
+          <li>История</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Координатор объекта — главные экраны</h3>
+  <div class="screens">
+    <div class="screen-mock">
+      <div class="topbar"><span>Объект</span><span>coordinator</span></div>
+      <div class="body">
+        <h6>🏗 Мой объект</h6>
+        <ul>
+          <li>Название, адрес, статус</li>
+          <li>Команда (бригадиры + монтажники на сегодня)</li>
+          <li>Партии в работе</li>
+          <li>История событий объекта</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Запросы</span><span>coordinator</span></div>
+      <div class="body">
+        <h6>📨 Запросы материалов <span class="pill">NEW</span></h6>
+        <ul>
+          <li>Создать новый запрос → летит логисту</li>
+          <li>Статусы: новый, в работе, отгружен, доставлен</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>История</span><span>coordinator</span></div>
+      <div class="body">
+        <h6>📜 История объекта <span class="pill">NEW</span></h6>
+        <ul>
+          <li>Таймлайн: партии, доставки, монтаж, фото</li>
+          <li>Фильтры по дате и типу события</li>
+          <li>Экспорт в PDF (для отчёта заказчику)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREENS-LOGISTICS ============ -->
+<section id="screens-logistics">
+  <h2><span class="num">08</span>Логистика — экраны</h2>
+  <p class="lead">Уже есть мокапы в <code>screens/logistician/</code> и <code>screens/driver/</code>. Здесь — финальная спецификация.</p>
+
+  <h3>Водитель — главные экраны</h3>
+  <div class="screens">
+    <div class="screen-mock">
+      <div class="topbar"><span>Маршрут</span><span>driver</span></div>
+      <div class="body">
+        <h6>🚚 Сегодня</h6>
+        <ul>
+          <li>Карта с точками маршрута</li>
+          <li>Список точек: Углич → Коломенская 16 → ЖК «Солнечный»</li>
+          <li>Кнопка «Стартовать поездку»</li>
+          <li>Текущая точка: фото загрузки/выгрузки</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Точка</span><span>driver</span></div>
+      <div class="body">
+        <h6>📍 Точка маршрута</h6>
+        <ul>
+          <li>Адрес, контакт (бригадир/координатор)</li>
+          <li>Партии на этой точке</li>
+          <li>Фото загрузки</li>
+          <li>Кнопка «Получить подпись» (приёмка)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Простой</span><span>driver</span></div>
+      <div class="body">
+        <h6>⚠️ Простой</h6>
+        <ul>
+          <li>Поломка ТС</li>
+          <li>Ожидание загрузки</li>
+          <li>Ожидание выгрузки</li>
+          <li>Пробка / ДТП</li>
+          <li>Другое (свободный ввод)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>История</span><span>driver</span></div>
+      <div class="body">
+        <h6>📋 История маршрутов</h6>
+        <ul>
+          <li>Прошлые маршруты</li>
+          <li>Часы за рулём, км</li>
+          <li>Открыть → детали</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Логист — главные экраны</h3>
+  <div class="screens">
+    <div class="screen-mock">
+      <div class="topbar"><span>Партии</span><span>logistician</span></div>
+      <div class="body">
+        <h6>📦 К отгрузке</h6>
+        <ul>
+          <li>Партии в статусе <code>ready_to_ship</code></li>
+          <li>От: Углич → На: объект</li>
+          <li>Кнопка «В маршрут»</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Маршруты</span><span>logistician</span></div>
+      <div class="body">
+        <h6>🛣 Маршруты</h6>
+        <ul>
+          <li>Активные на сегодня (с водителями)</li>
+          <li>Карта</li>
+          <li>Кнопка «Создать новый»</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Создание</span><span>logistician</span></div>
+      <div class="body">
+        <h6>➕ Новый маршрут</h6>
+        <ul>
+          <li>Выбрать партии (галочки)</li>
+          <li>Назначить водителя</li>
+          <li>Дата, время старта</li>
+          <li>Сохранить</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Запросы</span><span>logistician</span></div>
+      <div class="body">
+        <h6>📨 Запросы координаторов</h6>
+        <ul>
+          <li>Что просят от объектов</li>
+          <li>Передать в производство</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREENS-PRODUCTION ============ -->
+<section id="screens-production">
+  <h2><span class="num">09</span>Производство — экраны</h2>
+  <p class="lead">Самая большая новая часть. 5 ролей, каждая со своим главным экраном.</p>
+
+  <h3>Начальник производства</h3>
+  <div class="screens">
+    <div class="screen-mock">
+      <div class="topbar"><span>Дашборд</span><span>production_chief</span></div>
+      <div class="body">
+        <h6>🏭 Углич — сейчас</h6>
+        <ul>
+          <li>Список всех на смене (кто работает / простой / обед)</li>
+          <li>Активные простои (push-сигналы)</li>
+          <li>Партии: создаю / в работе / готовы</li>
+          <li>Кнопка «Создать партию»</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Партии</span><span>production_chief</span></div>
+      <div class="body">
+        <h6>📦 Партии</h6>
+        <ul>
+          <li>Список со статусами</li>
+          <li>Кому: какой объект-цель</li>
+          <li>Кнопка «Готова к отгрузке» → летит логисту</li>
+          <li>Дедлайн, ответственные</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Задачи</span><span>production_chief</span></div>
+      <div class="body">
+        <h6>✅ Задачи</h6>
+        <ul>
+          <li>Поставить задачу любой роли в Угличе</li>
+          <li>Открытые задачи (статусы)</li>
+          <li>Уведомления о закрытии</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Отчёты</span><span>production_chief</span></div>
+      <div class="body">
+        <h6>📋 Отчёты</h6>
+        <ul>
+          <li>Все отчёты Углича за период</li>
+          <li>Опционально одобрить</li>
+          <li>Аналитика: время, простои, выработка</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Фото</span><span>production_chief</span></div>
+      <div class="body">
+        <h6>📷 Фото всех работников</h6>
+        <ul>
+          <li>Лента всех фото фабрики (новые сверху)</li>
+          <li>Фильтр по: роли · работнику · дате</li>
+          <li>Каждое фото с автором, временем, комментарием</li>
+          <li>Можно прокомментировать / отметить как проблему</li>
+          <li>Push при загрузке фото с тегом «брак»</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Старший работник</h3>
+  <div class="screens">
+    <div class="screen-mock">
+      <div class="topbar"><span>Группа</span><span>senior_worker</span></div>
+      <div class="body">
+        <h6>👥 Моя группа</h6>
+        <ul>
+          <li>Список работников + статус</li>
+          <li>Кто на смене, кто на простое</li>
+          <li>Карточки: имя, часы, текущая задача</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Смена</span><span>senior_worker</span></div>
+      <div class="body">
+        <h6>📍 Моя смена</h6>
+        <ul>
+          <li>Старт/финиш, перекур, обед, простой</li>
+          <li>Фото с комментарием</li>
+          <li>Свои задачи + задачи группы</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Задачи группе</span><span>senior_worker</span></div>
+      <div class="body">
+        <h6>✅ Раздать задачи</h6>
+        <ul>
+          <li>Создать → выбрать работника</li>
+          <li>Open / Done / Cancelled</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Работник</h3>
+  <div class="screens">
+    <div class="screen-mock">
+      <div class="topbar"><span>Смена</span><span>worker</span></div>
+      <div class="body">
+        <h6>📍 Моя смена · Углич</h6>
+        <ul>
+          <li>Старт/финиш</li>
+          <li>3 кнопки: Перекур · Обед · Простой</li>
+          <li>Список задач</li>
+          <li>Камера (фото + обязательный комментарий)</li>
+          <li>Текущий счётчик времени по типам</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Простой</span><span>worker</span></div>
+      <div class="body">
+        <h6>⚠️ Указать причину</h6>
+        <ul>
+          <li>Жду материалы</li>
+          <li>Нет работы</li>
+          <li>Поломка станка</li>
+          <li>Жду комплектатора</li>
+          <li>Жду чертежи от инженера</li>
+          <li>Жду ОТК / приёмку</li>
+          <li>Отключение электричества</li>
+          <li>Другое (текст)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Отчёт</span><span>worker</span></div>
+      <div class="body">
+        <h6>📋 Отчёт смены <span class="pill">авто</span></h6>
+        <ul>
+          <li>Общее время за день</li>
+          <li>Авто-статистика по типам</li>
+          <li>Фото + комментарии</li>
+          <li>Задачи: сделано / осталось</li>
+          <li>Брак / проблемы (текст)</li>
+          <li>Кнопка «Закрыть смену»</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Комплектатор</h3>
+  <div class="screens">
+    <div class="screen-mock">
+      <div class="topbar"><span>Склад</span><span>supplier</span></div>
+      <div class="body">
+        <h6>📦 Запросы</h6>
+        <ul>
+          <li>Кому что нужно (от работников)</li>
+          <li>Кнопка «Выдать»</li>
+          <li>Фото + комментарий обязательно</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Журнал</span><span>supplier</span></div>
+      <div class="body">
+        <h6>📋 История выдач</h6>
+        <ul>
+          <li>Дата, кто, что, фото</li>
+          <li>Возвраты</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Смена</span><span>supplier</span></div>
+      <div class="body">
+        <h6>📍 Моя смена</h6>
+        <ul>
+          <li>Стандартная смена + фото</li>
+          <li>Перекур / Обед / Простой</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Инженер</h3>
+  <div class="screens">
+    <div class="screen-mock">
+      <div class="topbar"><span>Мои задачи</span><span>engineer</span></div>
+      <div class="body">
+        <h6>📐 Self-tasks</h6>
+        <ul>
+          <li>Создать задачу себе</li>
+          <li>Чек-лист этапов</li>
+          <li>Прикрепить чертёж/документ</li>
+          <li>Видны Начальнику</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Тех.задачи</span><span>engineer</span></div>
+      <div class="body">
+        <h6>✅ Задачи Работникам</h6>
+        <ul>
+          <li>Создать с чертежом</li>
+          <li>Список открытых</li>
+          <li>Push когда работник закрыл</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Чертежи</span><span>engineer</span></div>
+      <div class="body">
+        <h6>📄 Архив</h6>
+        <ul>
+          <li>Загруженные документы</li>
+          <li>Поиск по проекту/объекту</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREENS-OBSERVER ============ -->
+<section id="screens-observer">
+  <h2><span class="num">10</span>Куратор — экраны</h2>
+  <p class="lead">Куратор — единый наблюдатель экосистемы. Видит всё, реагирует на сигналы.</p>
+
+  <div class="screens">
+    <div class="screen-mock">
+      <div class="topbar"><span>Дашборд</span><span>curator</span></div>
+      <div class="body">
+        <h6>📊 Сейчас</h6>
+        <ul>
+          <li>Активные простои (по доменам)</li>
+          <li>Кто на смене (счётчики по доменам)</li>
+          <li>Партии в работе</li>
+          <li>Сегодняшние происшествия</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Объекты</span><span>curator</span></div>
+      <div class="body">
+        <h6>🏗 Все объекты</h6>
+        <ul>
+          <li>Целевые + производственные</li>
+          <li>Карта</li>
+          <li>Открыть → история объекта</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Команда</span><span>curator</span></div>
+      <div class="body">
+        <h6>👥 Все пользователи</h6>
+        <ul>
+          <li>Поиск по имени/телефону</li>
+          <li>Карточка: роли (до 3), история, аналитика</li>
+          <li>Выдать/отозвать роль</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Чаты</span><span>curator</span></div>
+      <div class="body">
+        <h6>💬 Поддержка</h6>
+        <ul>
+          <li>Активные тикеты</li>
+          <li>Прямые чаты с пользователями</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Аналитика</span><span>curator</span></div>
+      <div class="body">
+        <h6>📈 Аналитика</h6>
+        <ul>
+          <li>Часы / простои / выработка по доменам</li>
+          <li>График по дням / неделям</li>
+          <li>Отчёт в PDF</li>
+        </ul>
+      </div>
+    </div>
+    <div class="screen-mock">
+      <div class="topbar"><span>Push-журнал</span><span>curator</span></div>
+      <div class="body">
+        <h6>🔔 Сигналы</h6>
+        <ul>
+          <li>Лог всех простоев</li>
+          <li>Лог всех проблем</li>
+          <li>Кто, когда, причина, разрешено?</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REGISTRATION ============ -->
+<section id="registration">
+  <h2><span class="num">11</span>Регистрация V2 — выбор ролей</h2>
+  <p class="lead">Большая выборка ролей не должна перегрузить пользователя. Поэтому делим по доменам, ограничиваем 3 ролями, открытые роли требуют одобрения куратора.</p>
+
+  <h3>Поток регистрации</h3>
+  <div class="step">
+    <h5>Шаг 1 · Телефон</h5>
+    <p>Ввод номера → OTP по SMS (или OAuth Yandex). Если новый — переход дальше. Если старый — сразу в свою активную роль.</p>
+  </div>
+  <div class="step">
+    <h5>Шаг 2 · ФИО + email</h5>
+    <p>Если из Yandex — поля уже заполнены. Если по SMS — заполняет вручную. Email опционально.</p>
+  </div>
+  <div class="step">
+    <h5>Шаг 3 · Выбор домена</h5>
+    <p>Три большие карточки: Монтаж · Логистика · Производство. Юзер выбирает один или несколько (до 3).</p>
+  </div>
+  <div class="step">
+    <h5>Шаг 4 · Выбор роли в каждом домене</h5>
+    <p>Внутри выбранных доменов — список ролей. Открытые (Монтажник, Работник, Водитель) → сразу. Закрытые (Куратор, Координатор, Начальник производства, Бригадир, Старший работник, Логист, Инженер, Комплектатор) → требуется одобрение Куратора (статус <code>pending_approval</code>).</p>
+  </div>
+  <div class="step">
+    <h5>Шаг 5 · Привязка к объекту</h5>
+    <p>Для ролей привязанных к объекту (Координатор, Бригадир, Работник, Старший, Комплектатор, Инженер) — выбор из списка существующих или ввод нового (с одобрением).</p>
+  </div>
+  <div class="step">
+    <h5>Шаг 6 · Готово</h5>
+    <p>Если все роли открытые → сразу в главный экран первой роли. Если есть pending — экран «Ждём одобрения куратора» с возможностью использовать открытые роли.</p>
+  </div>
+
+  <h3>Дизайн-выбора ролей</h3>
+  <ul>
+    <li><strong>Карточки доменов</strong> — большие, цветные (indigo / sky / amber), с иконкой и описанием.</li>
+    <li><strong>Список ролей</strong> внутри домена — компактные строки с радио / чекбоксами.</li>
+    <li><strong>Закрытые роли</strong> — заметка «Требуется одобрение куратора» под названием.</li>
+    <li><strong>Лимит 3</strong> — индикатор «Выбрано N/3» вверху, кнопка «Далее» дизаблится при превышении.</li>
+  </ul>
+
+  <div class="tbd"><strong>TBD:</strong> для существующих 19 пользователей в проде — миграция оставляет их с одной активной ролью (текущей в БД). Дополнительные роли можно добавить через куратора. Без потери данных.</div>
+</section>
+
+<!-- ============ CAPABILITIES ============ -->
+<section id="capabilities">
+  <h2><span class="num">12</span>Capabilities — матрица прав</h2>
+  <p class="lead">Каждая роль имеет набор capability-флагов. UI и API на сервере проверяют их перед отображением/выполнением действия.</p>
+
+  <h3>Список capabilities</h3>
+  <div class="cap-list">
+    <div class="cap"><strong>SHIFT_START_FINISH</strong>start_at, finish_at собственной смены</div>
+    <div class="cap"><strong>SHIFT_PAUSE_BREAK</strong>перекур / обед / простой</div>
+    <div class="cap"><strong>PHOTO_UPLOAD</strong>загрузка фото с комментарием</div>
+    <div class="cap"><strong>PHOTO_HOURLY_REQUIRED</strong>принудительные часовые фото</div>
+    <div class="cap"><strong>PHOTO_VIEW_FACILITY</strong>лента всех фото фабрики (Начальник производства)</div>
+    <div class="cap"><strong>PHOTO_FLAG_DEFECT</strong>отмечать фото как «брак» (Начальник, ОТК-функция)</div>
+    <div class="cap"><strong>FACILITY_SWITCH</strong>переключать активную фабрику (мульти-площадка)</div>
+    <div class="cap"><strong>TASK_VIEW_OWN</strong>видеть свои задачи</div>
+    <div class="cap"><strong>TASK_CREATE_TEAM</strong>ставить задачи команде</div>
+    <div class="cap"><strong>TASK_CREATE_ANY</strong>ставить любому в Угличе / своему объекту</div>
+    <div class="cap"><strong>BATCH_CREATE</strong>создать партию (Начальник производства)</div>
+    <div class="cap"><strong>BATCH_VIEW_OWN</strong>видеть партии своего объекта</div>
+    <div class="cap"><strong>BATCH_VIEW_ALL</strong>видеть все партии (Логист, Куратор)</div>
+    <div class="cap"><strong>BATCH_SHIP</strong>отметить как готова к отгрузке</div>
+    <div class="cap"><strong>BATCH_RECEIVE</strong>принять партию на объекте (Бригадир, Координатор)</div>
+    <div class="cap"><strong>ROUTE_CREATE</strong>создать маршрут (Логист)</div>
+    <div class="cap"><strong>ROUTE_VIEW_OWN</strong>свой маршрут (Водитель)</div>
+    <div class="cap"><strong>ROUTE_VIEW_ALL</strong>все маршруты (Логист, Куратор)</div>
+    <div class="cap"><strong>OBJECT_HISTORY_VIEW</strong>таймлайн объекта</div>
+    <div class="cap"><strong>OBJECT_HISTORY_EXPORT</strong>экспорт PDF</div>
+    <div class="cap"><strong>TOOLS_ISSUE</strong>выдача инструмента/материалов</div>
+    <div class="cap"><strong>REPORT_VIEW_OWN</strong>свой отчёт</div>
+    <div class="cap"><strong>REPORT_VIEW_TEAM</strong>отчёты подчинённых</div>
+    <div class="cap"><strong>REPORT_VIEW_FACILITY</strong>отчёты объекта/Углича</div>
+    <div class="cap"><strong>REPORT_VIEW_ALL</strong>все отчёты (Куратор)</div>
+    <div class="cap"><strong>REPORT_APPROVE</strong>одобрить отчёт (Начальник производства)</div>
+    <div class="cap"><strong>USERS_VIEW_ALL</strong>видеть всех пользователей</div>
+    <div class="cap"><strong>USERS_GRANT_ROLE</strong>выдавать/отзывать роли (Куратор)</div>
+    <div class="cap"><strong>PUSH_RECEIVE_IDLE</strong>push о простое (Куратор + руководители)</div>
+    <div class="cap"><strong>SUPPORT_CHAT_RESPOND</strong>отвечать в поддержку (Куратор)</div>
+    <div class="cap"><strong>ANALYTICS_VIEW</strong>дашборд аналитики</div>
+  </div>
+
+  <h3>Матрица: роли × capabilities (фрагмент)</h3>
+  <p style="font-size:.85rem">Полная матрица — в коде <code>Capability.kt</code>. Здесь сокращённая версия по ключевым флагам.</p>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th>Capability</th>
+        <th>installer</th>
+        <th>foreman</th>
+        <th>coordinator</th>
+        <th>curator</th>
+        <th>driver</th>
+        <th>logistician</th>
+        <th>worker</th>
+        <th>senior</th>
+        <th>chief</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>SHIFT_START_FINISH</td><td class="check yes">✓</td><td class="check yes">✓</td><td class="check no">—</td><td class="check no">—</td><td class="check yes">✓</td><td class="check no">—</td><td class="check yes">✓</td><td class="check yes">✓</td><td class="check no">—</td></tr>
+      <tr><td>PHOTO_UPLOAD</td><td class="check yes">✓</td><td class="check yes">✓</td><td class="check no">—</td><td class="check no">—</td><td class="check yes">✓</td><td class="check no">—</td><td class="check yes">✓</td><td class="check yes">✓</td><td class="check no">—</td></tr>
+      <tr><td>TASK_CREATE_TEAM</td><td class="check no">—</td><td class="check yes">✓</td><td class="check yes">✓</td><td class="check yes">✓</td><td class="check no">—</td><td class="check yes">✓</td><td class="check no">—</td><td class="check yes">✓</td><td class="check yes">✓</td></tr>
+      <tr><td>BATCH_CREATE</td><td class="check no">—</td><td class="check no">—</td><td class="check no">—</td><td class="check yes">✓</td><td class="check no">—</td><td class="check no">—</td><td class="check no">—</td><td class="check no">—</td><td class="check yes">✓</td></tr>
+      <tr><td>BATCH_RECEIVE</td><td class="check no">—</td><td class="check yes">✓</td><td class="check yes">✓</td><td class="check yes">✓</td><td class="check no">—</td><td class="check no">—</td><td class="check no">—</td><td class="check no">—</td><td class="check no">—</td></tr>
+      <tr><td>ROUTE_CREATE</td><td class="check no">—</td><td class="check no">—</td><td class="check no">—</td><td class="check yes">✓</td><td class="check no">—</td><td class="check yes">✓</td><td class="check no">—</td><td class="check no">—</td><td class="check no">—</td></tr>
+      <tr><td>OBJECT_HISTORY_VIEW</td><td class="check no">—</td><td class="check partial">свой</td><td class="check yes">✓</td><td class="check yes">✓</td><td class="check no">—</td><td class="check partial">свои</td><td class="check no">—</td><td class="check no">—</td><td class="check yes">✓</td></tr>
+      <tr><td>USERS_GRANT_ROLE</td><td class="check no">—</td><td class="check no">—</td><td class="check no">—</td><td class="check yes">✓</td><td class="check no">—</td><td class="check no">—</td><td class="check no">—</td><td class="check no">—</td><td class="check no">—</td></tr>
+      <tr><td>PUSH_RECEIVE_IDLE</td><td class="check no">—</td><td class="check partial">свои</td><td class="check partial">свои</td><td class="check yes">все</td><td class="check no">—</td><td class="check partial">свои</td><td class="check no">—</td><td class="check partial">свои</td><td class="check yes">Углич</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ SHIFTS-REPORTS ============ -->
+<section id="shifts-reports">
+  <h2><span class="num">13</span>Смены и отчёты — единая логика</h2>
+  <p class="lead">Базовая логика смены — единая. Отличия по доменам — список причин простоя и кто видит отчёт.</p>
+
+  <h3>Структура смены</h3>
+  <div class="card">
+    <pre style="font-size:.82rem; line-height:1.7; background:var(--slate-50); padding:var(--space-4); border-radius:var(--radius-md); overflow:auto;">
+shift {
+  start_at, finish_at
+  total_seconds       (всё время)
+  work_seconds        (рабочее)
+  pause_seconds       (перекуры)        ◄ NEW для производства/логистики
+  lunch_seconds       (обед)            ◄ NEW для производства/логистики
+  idle_seconds        (простой)
+  idle_reason         (текст причины)
+  photos[]            (фото с комментариями)
+  tasks[]             (выполненные задачи)
+  domain_specific     (для производства: brak, problems)
+}</pre>
+  </div>
+
+  <h3>Причины простоя по доменам</h3>
+  <table class="matrix">
+    <thead><tr><th>Домен</th><th>Список причин</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge installation">монтаж</span></td><td>Ожидание материалов · Ожидание инструмента · Технические проблемы · Погодные условия · Ожидание бригадира</td></tr>
+      <tr><td><span class="badge logistics">логистика</span></td><td>Поломка ТС · Ожидание загрузки · Ожидание выгрузки · Пробка / ДТП · Другое</td></tr>
+      <tr><td><span class="badge production">производство</span></td><td>Жду материалы · Нет работы · Поломка станка · Жду комплектатора · Жду чертежи · Жду ОТК · Отключение электричества · Другое</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Структура отчёта (домен производство)</h3>
+  <ol>
+    <li>Общее время смены за сегодня (авто)</li>
+    <li>Авто-статистика по типам времени (работа / перекур / обед / простой)</li>
+    <li>Фото за день с комментариями</li>
+    <li>Задачи: поставленные / сделанные / оставшиеся</li>
+    <li>Брак / проблемы (свободный текст)</li>
+  </ol>
+
+  <p>Отчёт <strong>автогенерируется по окончанию смены</strong>, работник может дополнить вручную. Опционально <span class="pill">TBD</span> Начальник может одобрить.</p>
+
+  <h3>Push на простой</h3>
+  <p>Любой простой → push Куратору всегда. Дополнительно — руководителям соответствующего домена. Аудит-лог простоев доступен Куратору.</p>
+</section>
+
+<!-- ============ DESIGN SYSTEM ============ -->
+<section id="design-system">
+  <h2><span class="num">14</span>Дизайн-система</h2>
+  <p class="lead">Цвета доменов как навигационный якорь. У каждого домена — свой основной цвет, единая типографика и токены.</p>
+
+  <h3>Цвета доменов</h3>
+  <div class="grid-4">
+    <div class="swatch">
+      <div class="color" style="background:var(--installation)"></div>
+      <div class="meta"><strong>Монтаж</strong><code>#4F46E5 · indigo-600</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--logistics)"></div>
+      <div class="meta"><strong>Логистика</strong><code>#0EA5E9 · sky-500</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--production)"></div>
+      <div class="meta"><strong>Производство</strong><code>#F59E0B · amber-500</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--observer)"></div>
+      <div class="meta"><strong>Куратор</strong><code>#8B5CF6 · violet-500</code></div>
+    </div>
+  </div>
+
+  <h3>Семантические цвета</h3>
+  <div class="grid-4">
+    <div class="swatch">
+      <div class="color" style="background:var(--emerald-500)"></div>
+      <div class="meta"><strong>Успех / Done</strong><code>#10B981</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:#F59E0B"></div>
+      <div class="meta"><strong>Внимание / Pending</strong><code>#F59E0B</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--rose-500)"></div>
+      <div class="meta"><strong>Ошибка / Idle</strong><code>#F43F5E</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--slate-500)"></div>
+      <div class="meta"><strong>Нейтральный</strong><code>#64748B</code></div>
+    </div>
+  </div>
+
+  <h3>Типографика</h3>
+  <p><strong>Inter</strong> — основной шрифт UI (300, 400, 500, 600, 700, 800).<br><strong>JetBrains Mono</strong> — для кода, ID, технических меток.</p>
+  <ul>
+    <li>Заголовки экрана — 24-32px / 700-800</li>
+    <li>Заголовки секций — 18-20px / 600-700</li>
+    <li>Body — 14-16px / 400-500</li>
+    <li>Caption — 12px / 500</li>
+  </ul>
+
+  <h3>Иконография</h3>
+  <p>Material Symbols (rounded). Размеры 20-24-32 dp. Один стиль во всех доменах.</p>
+
+  <h3>Spacing & Radius</h3>
+  <p>Шкала: 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 · 64. Радиусы: 8 · 12 · 16 · 20 · 24 px.</p>
+
+  <h3>Иконка APK</h3>
+  <p><strong>Production</strong> — основная иконка BELSI (текущая).<br><strong>Debug</strong> — иконка с надписью «DEBUG» для всех debug-сборок (любой домен).</p>
+</section>
+
+<!-- ============ AI · XEROCODE ============ -->
+<section id="ai">
+  <h2><span class="num">15</span>AI-слой · XeroCode</h2>
+  <p class="lead">С версии BELSI 2.0 экосистема подключена к XeroCode AI Office — российскому AI-агрегатору с матрицей моделей под разные задачи. AI — это <strong>non-critical optional layer</strong>: вся продуктовая логика работает без него, AI добавляет ускорение и второе мнение, но никогда не блокирует.</p>
+
+  <h3>Архитектурные инварианты</h3>
+  <table class="matrix">
+    <thead><tr><th>Инвариант</th><th>Что это значит</th><th>Где соблюдается</th></tr></thead>
+    <tbody>
+      <tr><td>Silent fail</td><td>Любой AI-вызов возвращает <code>Result&lt;T&gt;</code>; при провале UI просто не показывает AI-блок</td><td><code>AiRepository.safeCall</code></td></tr>
+      <tr><td>Идемпотентность</td><td>Каждый AI-запрос несёт <code>request_id = belsi-{type}-{entity_id}</code>; повторный вызов возвращает кэш</td><td><code>xerocode_client.py</code></td></tr>
+      <tr><td>Free first</td><td>По умолчанию только бесплатные модели; платные включаются явно <code>allow_paid_fallback=true</code></td><td><code>photo_analysis._analyze_via_xerocode</code></td></tr>
+      <tr><td>Feature flag</td><td><code>XEROCODE_ENABLED=false</code> мгновенно вырубает весь AI без релиза</td><td>backend env</td></tr>
+      <tr><td>Аудит</td><td>Каждый AI-результат хранится в таблице <code>ai_analyses</code>: что попросили, какая модель ответила, сколько токенов, было ли корректировано человеком</td><td>миграция <code>f6g7h8i9j0k1</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Матрица 8 AI use cases</h3>
+  <table class="matrix">
+    <thead><tr><th>Use case</th><th>Endpoint</th><th>Класс модели</th><th>Где в UI</th></tr></thead>
+    <tbody>
+      <tr><td>photo_quality</td><td>POST /photo/analyze</td><td>vision (мультимодальная)</td><td>CuratorPhotosScreen, ForemanPhotosScreen</td></tr>
+      <tr><td>daily_summary</td><td>GET /curator/ai-daily-summary</td><td>text-LLM (smart, RU)</td><td>CuratorMain Dashboard</td></tr>
+      <tr><td>idle_verify</td><td>POST /shift/ai-verify-idle/{pause_id}</td><td>vision (мультимодальная)</td><td>UserCard в CuratorMain</td></tr>
+      <tr><td>voice_input</td><td>POST /shift/voice/transcribe</td><td>speech-to-text (RU)</td><td>ShiftScreen (idle), MessengerConversation</td></tr>
+      <tr><td>triage_ticket</td><td>POST /support/ai-triage/{id}</td><td>text-LLM (fast, RU)</td><td>CuratorSupportScreen, Dashboard tickets</td></tr>
+      <tr><td>smart_reply</td><td>POST /messenger/ai-suggest-replies</td><td>text-LLM (fast, RU)</td><td>MessengerConversation</td></tr>
+      <tr><td>photo_search</td><td>POST /curator/ai-search-photos</td><td>text-LLM (smart, RU)</td><td>AiPhotoSearchScreen</td></tr>
+      <tr><td>predictive_low_stock</td><td>GET /production/ai-forecast/{facility}</td><td>text-LLM (smart, RU)</td><td>SupplierMainScreen</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:.85rem;color:var(--text-muted);margin-top:8px;">Конкретные модели для каждого класса выбираются XeroCode на основе доступности и нагрузки. Список и матрица fallback хранятся на стороне AI-провайдера.</p>
+
+  <h3>Визуальный язык AI</h3>
+  <p>Контракт с пользователем: где работает AI — там всегда префикс <strong>🤖</strong> и подпись курсивом <em>«AI processing · XeroCode»</em>. Это снимает вопросы «откуда взялся приоритет / оценка / сводка» и даёт куратору ясный сигнал «можно переопределить».</p>
+  <ul>
+    <li><strong>🔴 СРОЧНО / urgent</strong> — Rose 500 <code>#F43F5E</code></li>
+    <li><strong>🟠 Высокий / high</strong> — Amber 500 <code>#F59E0B</code></li>
+    <li><strong>🔵 Обычный / normal</strong> — Indigo 500 <code>#6366F1</code></li>
+    <li><strong>⚪ Низкий / low</strong> — Stone 400 <code>#A8A29E</code></li>
+    <li><strong>✅ Подтверждено / agree</strong> — Emerald 500 <code>#10B981</code></li>
+    <li><strong>⚠ Сомнительно / suspicious</strong> — Amber 500 <code>#F59E0B</code></li>
+    <li><strong>🚨 Фейк / fake</strong> — Rose 600 <code>#E11D48</code></li>
+  </ul>
+
+  <h3>Что НЕ делает AI</h3>
+  <ul>
+    <li>Не принимает решения за человека — только подсказывает. Куратор/бригадир имеет право переопределить любой результат.</li>
+    <li>Не оценивает настроение/состояние людей (отказались от <code>daily_mood</code>, <code>morning_readiness</code>, <code>overwork_alert</code>).</li>
+    <li>Не отвечает за деньги. Никаких автозакупок, никаких автосписаний.</li>
+    <li>Не шлёт push-сообщения вместо человека.</li>
+  </ul>
+</section>
+
+<!-- ============ OPEN QUESTIONS ============ -->
+<section id="open-questions">
+  <h2><span class="num">16</span>Открытые вопросы</h2>
+  <p class="lead">Что осталось согласовать с заказчиком до старта реализации.</p>
+
+  <table class="matrix">
+    <thead><tr><th>#</th><th>Вопрос</th><th>Дефолт (если нет ответа)</th><th>Блокирует</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><s>Привязка к Угличу: site_objects / отдельная таблица / текст</s></td><td><span class="badge installation">site_objects ✓ закрыто</span></td><td>—</td></tr>
+      <tr><td>2</td><td>Обед оплачивается?</td><td>Нет</td><td>Расчёт duration_hours</td></tr>
+      <tr><td>3</td><td>Push простоя кому именно?</td><td>Куратор + руководители домена</td><td>Конфиг push</td></tr>
+      <tr><td>4</td><td>Одобрение отчёта Начальником — обязательно?</td><td>Опциональное</td><td>UI Начальника</td></tr>
+      <tr><td>5</td><td>Имя приложения в трее: BELSI / BELSI.Команда</td><td><span class="badge production">BELSI.Команда</span></td><td>build.gradle.kts</td></tr>
+      <tr><td>6</td><td>Отчёт мульти-сменный: 1 смена = 1 отчёт или 1 день = 1 отчёт</td><td>1 смена = 1 отчёт</td><td>Структура БД</td></tr>
+      <tr><td>7</td><td>Закрытые роли (Куратор, Начальник и т.д.) — кто одобряет регистрацию?</td><td>Только Куратор</td><td>Регистрация V2</td></tr>
+      <tr><td>8</td><td>Иерархия групп на производстве — как Старший видит «своих» работников?</td><td>Аналог foreman_memberships → senior_memberships</td><td>API задач</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Отдельный brandbook BELSI.Команда — потом</h3>
+  <p>После того как этот brandbook утверждён и реализация начата — отдельный визуально-маркетинговый brandbook BELSI.Команда: позиционирование, фотографии, скриншоты, для презентации производству и партнёрам.</p>
+</section>
+
+</main>
+</div>
+</body>
+</html>

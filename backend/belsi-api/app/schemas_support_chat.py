@@ -1,0 +1,46 @@
+# /opt/belsi-api/app/schemas_support_chat.py
+from __future__ import annotations
+
+from datetime import datetime
+from typing import List, Optional, Literal
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class ChatMessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    ticket_id: UUID
+    sender_role: str  # user/foreman/curator/system (наружу lower-case)
+    sender_user_id: Optional[UUID] = None
+    text: str
+    photo_url: Optional[str] = None
+    is_internal: bool
+    created_at: datetime
+
+
+class ChatMessageCreate(BaseModel):
+    # ticket_id нужен только для куратора/бригадира (ответить в конкретный чат)
+    ticket_id: Optional[UUID] = None
+    text: str = Field(min_length=1, max_length=4000)
+    photo_url: Optional[str] = None
+
+
+class ChatInboxItemOut(BaseModel):
+    ticket_id: UUID
+    user_id: UUID
+    user_phone: str
+    user_role: str
+    last_message_at: Optional[datetime] = None
+    last_message_id: Optional[UUID] = None
+    last_message_text: Optional[str] = None
+
+    # Сколько непрочитанных сообщений для текущего читателя (куратор/бригадир)
+    unread_hint: Optional[int] = 0
+
+
+class MarkReadRequest(BaseModel):
+    # если не передано — ставим прочитано по последнему сообщению
+    message_id: Optional[UUID] = None

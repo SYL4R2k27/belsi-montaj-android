@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BELSI.Команда — Brandbook производства</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Производственная палитра — амбер/охра как материал-древесина */
+    --amber-50:#FFFBEB; --amber-100:#FEF3C7; --amber-200:#FDE68A;
+    --amber-300:#FCD34D; --amber-400:#FBBF24; --amber-500:#F59E0B;
+    --amber-600:#D97706; --amber-700:#B45309; --amber-800:#92400E;
+    --amber-900:#78350F; --amber-950:#451A03;
+
+    /* Тёплая нейтральная (древесина) */
+    --warm-50:#FAFAF9; --warm-100:#F5F5F4; --warm-200:#E7E5E4;
+    --warm-300:#D6D3D1; --warm-400:#A8A29E; --warm-500:#78716C;
+    --warm-600:#57534E; --warm-700:#44403C; --warm-800:#292524;
+    --warm-900:#1C1917;
+
+    /* Брендовая стальная (общее с BELSI) */
+    --steel-deep:#324859;
+    --steel-mid:#3A5067;
+    --steel-top:#5A7186;
+
+    /* Семантика */
+    --emerald:#10B981; --rose:#F43F5E; --sky:#0EA5E9; --indigo:#4F46E5;
+
+    --primary: var(--amber-600);
+    --bg: var(--warm-50);
+    --surface: #FFFFFF;
+    --border: var(--warm-200);
+    --text: var(--warm-900);
+    --text-secondary: var(--warm-600);
+    --text-muted: var(--warm-400);
+
+    --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-xl:24px; --radius-2xl:32px;
+    --shadow-md: 0 4px 6px -1px rgba(28,25,23,.07), 0 2px 4px -2px rgba(28,25,23,.05);
+    --shadow-lg: 0 12px 24px -8px rgba(28,25,23,.12), 0 6px 10px -6px rgba(28,25,23,.06);
+    --shadow-xl: 0 24px 48px -12px rgba(28,25,23,.16);
+  }
+
+  *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+  html { scroll-behavior:smooth; }
+  body {
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--bg); color:var(--text);
+    -webkit-font-smoothing:antialiased; line-height:1.55;
+  }
+  code,kbd,pre { font-family:'JetBrains Mono',Menlo,monospace; font-size:.9em; }
+
+  .app { display:flex; min-height:100vh; }
+  .sidebar {
+    width:280px; background:var(--surface); border-right:1px solid var(--border);
+    padding:32px 20px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .logo-mark {
+    display:flex; align-items:center; gap:10px; margin-bottom:8px;
+  }
+  .logo-mark .dot {
+    width:32px; height:32px; border-radius:9px;
+    background:linear-gradient(135deg,var(--amber-500),var(--amber-700));
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:800; font-size:.9rem; letter-spacing:.02em;
+    box-shadow:0 4px 8px rgba(217,119,6,.3);
+  }
+  .logo-mark h1 { font-size:1.05rem; font-weight:800; letter-spacing:-.01em; }
+  .sidebar .sub { font-size:.78rem; color:var(--text-muted); margin-bottom:32px; }
+  .sidebar nav { display:flex; flex-direction:column; gap:2px; }
+  .sidebar nav a {
+    color:var(--text-secondary); text-decoration:none; padding:8px 12px;
+    border-radius:var(--radius-sm); font-size:.88rem; transition:.15s;
+  }
+  .sidebar nav a:hover { background:var(--warm-100); color:var(--text); }
+  .sidebar nav a.section { font-weight:700; color:var(--amber-700); margin-top:18px; font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; padding-left:8px; cursor:default; }
+  .sidebar nav a.section:hover { background:transparent; }
+
+  main { flex:1; padding:64px 56px; max-width:1100px; }
+  section { margin-bottom:88px; }
+  section h2 { font-size:2.5rem; font-weight:900; letter-spacing:-.025em; margin-bottom:14px; line-height:1.1; }
+  section h2 .num { color:var(--amber-300); font-weight:600; margin-right:14px; }
+  section h3 { font-size:1.4rem; font-weight:700; margin:32px 0 12px; letter-spacing:-.01em; }
+  section h4 { font-size:1.05rem; font-weight:600; margin:20px 0 8px; }
+  section .lead { color:var(--text-secondary); font-size:1.1rem; max-width:780px; margin-bottom:24px; }
+  section p { color:var(--text-secondary); margin-bottom:12px; }
+  section p strong { color:var(--text); font-weight:600; }
+  section ul,section ol { margin:8px 0 16px 22px; color:var(--text-secondary); }
+  section li { margin-bottom:6px; }
+  section li strong { color:var(--text); }
+
+  /* Cover hero */
+  .hero {
+    padding:80px 64px;
+    border-radius:var(--radius-2xl);
+    background:
+      radial-gradient(circle at 90% 10%, rgba(245,158,11,.15) 0, transparent 40%),
+      linear-gradient(135deg,var(--warm-900) 0%, var(--warm-800) 50%, #2D1F0E 100%);
+    color:#fff;
+    box-shadow:var(--shadow-xl);
+    margin-bottom:80px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after {
+    content:''; position:absolute; right:-40px; bottom:-40px;
+    width:360px; height:360px;
+    background:radial-gradient(circle,rgba(245,158,11,.12) 0,transparent 70%);
+    pointer-events:none;
+  }
+  .hero .eyebrow {
+    display:inline-flex; gap:8px; align-items:center;
+    padding:7px 16px; border-radius:99px;
+    background:rgba(245,158,11,.15); color:var(--amber-300);
+    font-size:.78rem; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; margin-bottom:20px;
+    border:1px solid rgba(245,158,11,.3);
+  }
+  .hero .eyebrow::before {
+    content:''; width:6px; height:6px; border-radius:50%; background:var(--amber-400);
+    box-shadow:0 0 8px var(--amber-400);
+  }
+  .hero h1 { font-size:4rem; font-weight:900; letter-spacing:-.04em; line-height:1; margin-bottom:18px; }
+  .hero h1 .accent { color:var(--amber-400); }
+  .hero .tagline { font-size:1.4rem; color:rgba(255,255,255,.8); max-width:680px; line-height:1.4; }
+  .hero .meta { display:flex; gap:36px; margin-top:48px; padding-top:32px; border-top:1px solid rgba(255,255,255,.1); font-size:.85rem; color:rgba(255,255,255,.6); flex-wrap:wrap; }
+  .hero .meta strong { display:block; color:#fff; font-size:1.4rem; font-weight:800; margin-bottom:4px; }
+
+  /* Cards */
+  .card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:24px;
+    box-shadow:var(--shadow-md); margin-bottom:16px;
+  }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+  .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+
+  /* Manifesto cards */
+  .manifesto {
+    background:linear-gradient(135deg,#fff 0%,var(--amber-50) 100%);
+    border:1px solid var(--amber-200);
+    border-radius:var(--radius-xl);
+    padding:28px;
+    margin-bottom:14px;
+    position:relative;
+  }
+  .manifesto h4 {
+    font-size:.78rem; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--amber-700); font-weight:700; margin-bottom:12px;
+  }
+  .manifesto p { font-size:1.1rem; color:var(--warm-800); line-height:1.5; }
+  .manifesto .num {
+    position:absolute; top:24px; right:28px;
+    font-size:3rem; font-weight:900; color:var(--amber-200); line-height:1;
+  }
+
+  /* Logo block */
+  .logo-block {
+    background:#fff; border:1px solid var(--border);
+    border-radius:var(--radius-xl); padding:48px;
+    display:flex; align-items:center; justify-content:center; gap:24px;
+    margin-bottom:16px;
+  }
+  .logo-block.dark { background:var(--warm-900); }
+  .logo-glyph {
+    width:88px; height:88px; border-radius:22px;
+    background:linear-gradient(135deg,var(--amber-500),var(--amber-700));
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:900; font-size:2rem;
+    box-shadow:var(--shadow-lg);
+    letter-spacing:-.02em;
+  }
+  .logo-text { font-size:2.4rem; font-weight:900; letter-spacing:-.025em; }
+  .logo-text .accent { color:var(--amber-600); }
+  .logo-block.dark .logo-text { color:#fff; }
+  .logo-block.dark .logo-text .accent { color:var(--amber-400); }
+
+  /* Color */
+  .swatch {
+    background:#fff; border:1px solid var(--border); border-radius:var(--radius-md);
+    overflow:hidden;
+  }
+  .swatch .color { height:100px; }
+  .swatch .meta { padding:12px 14px; font-size:.8rem; }
+  .swatch .meta strong { display:block; font-weight:700; color:var(--text); margin-bottom:4px; }
+  .swatch .meta code { font-size:.72rem; color:var(--text-muted); }
+
+  /* Voice tone */
+  .voice {
+    border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:24px; background:#fff; margin-bottom:14px;
+  }
+  .voice .label {
+    display:inline-block; padding:4px 12px; border-radius:99px;
+    font-size:.72rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .voice.do .label { background:#ECFDF5; color:var(--emerald); }
+  .voice.dont .label { background:#FFF1F2; color:var(--rose); }
+  .voice p { font-size:1rem; color:var(--text); margin:6px 0; }
+  .voice .example { font-style:italic; color:var(--text-secondary); font-size:.9rem; margin-top:6px; padding-left:12px; border-left:2px solid var(--border); }
+
+  /* Storyboard */
+  .story {
+    display:flex; gap:0; align-items:stretch;
+    background:#fff; border:1px solid var(--border); border-radius:var(--radius-lg);
+    overflow:hidden; margin-bottom:14px;
+  }
+  .story .step-num {
+    background:var(--amber-100); color:var(--amber-700);
+    width:80px; flex:0 0 80px; display:flex; align-items:center; justify-content:center;
+    font-size:2rem; font-weight:900;
+  }
+  .story .body { padding:20px 24px; flex:1; }
+  .story h5 { font-size:1.1rem; font-weight:700; margin-bottom:6px; }
+  .story p { margin:0; font-size:.95rem; }
+
+  /* Stat block */
+  .stats {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
+    margin:24px 0;
+  }
+  .stat {
+    background:#fff; border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:24px; text-align:center;
+  }
+  .stat .num { font-size:2.5rem; font-weight:900; color:var(--amber-600); line-height:1; margin-bottom:8px; }
+  .stat .label { font-size:.85rem; color:var(--text-secondary); }
+
+  /* Phrase chips */
+  .chip-row { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }
+  .chip {
+    padding:8px 16px; border-radius:99px;
+    background:var(--amber-50); color:var(--amber-800); border:1px solid var(--amber-200);
+    font-size:.92rem; font-weight:500;
+  }
+  .chip.dark { background:var(--warm-900); color:#fff; border-color:var(--warm-800); }
+
+  /* Pill */
+  .pill { display:inline-block; padding:3px 10px; border-radius:99px; background:var(--warm-100); color:var(--text-secondary); font-size:.72rem; font-weight:600; }
+  .pill.amber { background:var(--amber-100); color:var(--amber-800); }
+
+  /* Mock screen */
+  .mock {
+    background:linear-gradient(180deg,var(--warm-50),#fff);
+    border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:18px; min-height:300px;
+  }
+  .mock .topbar {
+    background:var(--amber-100); color:var(--amber-800);
+    padding:10px 14px; border-radius:8px;
+    font-size:.85rem; font-weight:600; margin-bottom:12px;
+    display:flex; justify-content:space-between;
+  }
+  .mock h6 { font-size:1rem; margin-bottom:8px; }
+  .mock ul { font-size:.88rem; }
+
+  /* Quote block */
+  .quote {
+    border-left:4px solid var(--amber-500);
+    background:linear-gradient(90deg,var(--amber-50),#fff);
+    padding:24px 32px;
+    border-radius:0 var(--radius-lg) var(--radius-lg) 0;
+    margin:20px 0;
+  }
+  .quote p { font-size:1.2rem; color:var(--warm-900); font-style:italic; line-height:1.5; }
+  .quote .author { display:block; margin-top:14px; font-size:.85rem; color:var(--text-secondary); font-style:normal; font-weight:600; }
+
+  /* Update-gate wireframe */
+  .ug-wrap {
+    max-width:520px; margin:24px auto; background:#fff;
+    border-radius:var(--radius-xl); box-shadow:var(--shadow-xl);
+    overflow:hidden; border:1px solid var(--border);
+  }
+  .ug-head {
+    padding:24px 28px 18px;
+    background:linear-gradient(135deg,var(--amber-500),var(--amber-700));
+    color:#fff;
+  }
+  .ug-head .ver-row {
+    display:flex; align-items:center; gap:10px; font-size:.78rem;
+    text-transform:uppercase; letter-spacing:.08em; opacity:.85;
+    margin-bottom:6px; font-weight:700;
+  }
+  .ug-head .ver-arrow { opacity:.6; }
+  .ug-head h3 { font-size:1.4rem; font-weight:800; letter-spacing:-.01em; }
+  .ug-head .sub { font-size:.85rem; opacity:.9; margin-top:4px; }
+  .ug-body { padding:20px 28px 12px; }
+  .ug-section-title {
+    font-size:.72rem; font-weight:800; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--amber-700); margin:12px 0 8px;
+  }
+  .ug-feat-list { display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin-bottom:10px; }
+  .ug-feat-list .it {
+    font-size:.82rem; color:var(--text); display:flex; gap:6px; align-items:flex-start;
+  }
+  .ug-feat-list .it .emo { font-size:1rem; line-height:1; flex-shrink:0; }
+  .ug-info {
+    background:var(--warm-100); border-radius:var(--radius-md);
+    padding:12px 14px; font-size:.82rem; color:var(--text-secondary);
+    margin-top:10px; border-left:3px solid var(--amber-500);
+  }
+  .ug-info strong { color:var(--text); }
+  .ug-consent {
+    padding:0 28px 14px; border-top:1px solid var(--border); margin-top:14px;
+  }
+  .ug-consent .ttl {
+    font-size:.72rem; font-weight:800; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--warm-700); margin:14px 0 10px;
+  }
+  .ug-check {
+    display:flex; gap:10px; align-items:flex-start; padding:9px 0;
+    border-bottom:1px solid var(--warm-100); font-size:.85rem; color:var(--text);
+  }
+  .ug-check:last-child { border-bottom:none; }
+  .ug-check .box {
+    flex-shrink:0; width:20px; height:20px; border-radius:5px;
+    border:2px solid var(--warm-300); background:#fff; margin-top:1px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:.85rem; color:#fff; font-weight:700;
+  }
+  .ug-check.checked .box { background:var(--amber-600); border-color:var(--amber-600); }
+  .ug-check.checked .box::after { content:'✓'; }
+  .ug-actions {
+    padding:16px 28px 24px; display:flex; gap:10px;
+    border-top:1px solid var(--border); background:var(--warm-50);
+  }
+  .ug-btn {
+    flex:1; padding:13px 16px; border-radius:var(--radius-md);
+    font-weight:700; font-size:.92rem; text-align:center;
+    border:none; cursor:default;
+  }
+  .ug-btn.primary { background:var(--amber-600); color:#fff; }
+  .ug-btn.primary.disabled { background:var(--warm-300); color:var(--warm-500); }
+  .ug-btn.secondary { background:#fff; color:var(--text-secondary); border:1px solid var(--border); }
+  .ug-state-row {
+    display:flex; gap:8px; align-items:center; padding:8px 28px;
+    background:var(--amber-50); color:var(--amber-800);
+    font-size:.78rem; font-weight:600; border-top:1px solid var(--amber-200);
+  }
+  .ug-state-row.ready { background:#ECFDF5; color:#065F46; border-color:#A7F3D0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="logo-mark">
+    <div class="dot">К</div>
+    <h1>BELSI.Команда</h1>
+  </div>
+  <div class="sub">Brandbook производства<br>v2.0 · 2026-05-11</div>
+  <nav>
+    <a href="#cover">Обложка</a>
+    <a class="section">Идея</a>
+    <a href="#manifesto">1 · Манифест</a>
+    <a href="#audience">2 · Кому это</a>
+    <a href="#positioning">3 · Позиционирование</a>
+    <a class="section">Бренд</a>
+    <a href="#name">4 · Имя</a>
+    <a href="#logo">5 · Логотип</a>
+    <a href="#palette">6 · Палитра</a>
+    <a href="#typography">7 · Типографика</a>
+    <a href="#voice">8 · Tone of voice</a>
+    <a class="section">Опыт</a>
+    <a href="#storyboard">9 · Сценарий «День Ивана»</a>
+    <a href="#screens">10 · Ключевые экраны</a>
+    <a href="#metrics">11 · Что измеряем</a>
+    <a class="section">Связи</a>
+    <a href="#ecosystem">12 · BELSI как зонтик</a>
+    <a href="#release">13 · Релиз и каналы</a>
+    <a href="#ai">14 · AI · XeroCode</a>
+    <a href="#update-gate">15 · Экран обновления</a>
+  </nav>
+</aside>
+
+<main>
+
+<!-- COVER -->
+<section id="cover">
+  <div class="hero">
+    <span class="eyebrow">Brandbook · v0.1 · 2026-05-04</span>
+    <h1>BELSI<span class="accent">.Команда</span></h1>
+    <p class="tagline">Производство мебели — на ладони. Смены, перерывы, фото, отчёты, задачи — для каждого участника фабрики. Один аккаунт, до трёх ролей, общая экосистема BELSI.</p>
+    <div class="meta">
+      <span><strong>5</strong> производственных ролей</span>
+      <span><strong>1</strong> фабрика → ∞</span>
+      <span><strong>0</strong> бумаги в смене</span>
+      <span><strong>real-time</strong> для управленцев</span>
+    </div>
+  </div>
+</section>
+
+<!-- MANIFESTO -->
+<section id="manifesto">
+  <h2><span class="num">01</span>Манифест</h2>
+  <p class="lead">Команда — это не должность. Это люди, которые делают мебель и довозят её туда, где её ждут. Приложение должно работать так же — собранно, без лишних слов, на их языке.</p>
+
+  <div class="manifesto">
+    <span class="num">01</span>
+    <h4>Принцип 1</h4>
+    <p><strong>Один аккаунт — все смены.</strong> Если человек сегодня кроит, завтра везёт, а в выходные ставит — он не должен заводить три разных профиля. Одна точка входа, переключатель ролей, единая история работы.</p>
+  </div>
+
+  <div class="manifesto">
+    <span class="num">02</span>
+    <h4>Принцип 2</h4>
+    <p><strong>Нет бумаги. Всё в фото.</strong> Каждое действие — фотофиксация с комментарием. Это не контроль, это память. Через месяц найти «когда ставили этот блок» — две секунды.</p>
+  </div>
+
+  <div class="manifesto">
+    <span class="num">03</span>
+    <h4>Принцип 3</h4>
+    <p><strong>Простой — это сигнал, а не наказание.</strong> Когда работник нажал «Жду материалы» — это автоматический пинг руководителю. Не для того чтобы наказать, а чтобы решить. Скорость реакции — главный KPI.</p>
+  </div>
+
+  <div class="manifesto">
+    <span class="num">04</span>
+    <h4>Принцип 4</h4>
+    <p><strong>Видимость — основа доверия.</strong> Начальник видит ленту фото фабрики, отчёты, статистику времени. Не для надзора — для понимания, где помочь.</p>
+  </div>
+
+  <div class="manifesto">
+    <span class="num">05</span>
+    <h4>Принцип 5</h4>
+    <p><strong>Связка от заказа до монтажа.</strong> Партия, сделанная сегодня в Угличе, через 12 часов едет на школу. Это не три приложения — это одна нить событий. Куратор видит всю нить.</p>
+  </div>
+</section>
+
+<!-- AUDIENCE -->
+<section id="audience">
+  <h2><span class="num">02</span>Кому это</h2>
+  <p class="lead">Внутренний продукт BELSI для производственных команд. Не для сторов, не для «массового пользователя». Для конкретных фабрик и конкретных людей.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>👷 Кто пользуется ежедневно</h4>
+      <ul>
+        <li><strong>Работник</strong> — кроит, шлифует, фрезерует, собирает</li>
+        <li><strong>Старший работник</strong> — следит за группой 3-7 человек</li>
+        <li><strong>Комплектатор</strong> — выдаёт материал и инструмент со склада</li>
+        <li><strong>Инженер</strong> — готовит чертежи, ставит тех.задачи</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>👔 Кто использует для управления</h4>
+      <ul>
+        <li><strong>Начальник производства</strong> — видит фабрику в real-time</li>
+        <li><strong>Куратор</strong> — видит все фабрики и стыки с логистикой/монтажом</li>
+        <li><strong>Логист</strong> — забирает партии в маршрут</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Что НЕ делает BELSI.Команда</h3>
+  <ul>
+    <li><strong>Не CRM</strong> — клиентов и заказов не ведём (это отдельная система)</li>
+    <li><strong>Не ERP</strong> — складского учёта по штукам нет (только выдача инструмента/материала)</li>
+    <li><strong>Не таймтрекер</strong> в смысле зарплаты — расчёт оплаты пока вне приложения</li>
+  </ul>
+  <p>Мы делаем <strong>операционный слой</strong> — связь между руками и руководством. Финансовая и продуктовая часть — снаружи.</p>
+</section>
+
+<!-- POSITIONING -->
+<section id="positioning">
+  <h2><span class="num">03</span>Позиционирование</h2>
+  <p class="lead">Одной строкой — кто мы и для кого.</p>
+
+  <div class="quote">
+    <p>BELSI.Команда — мобильное приложение для команд мебельных производств. Один человек, одна смена, одна нить событий до объекта-заказчика.</p>
+    <span class="author">Внутреннее позиционирование, 2026</span>
+  </div>
+
+  <h3>Чем отличаемся от «общих» решений</h3>
+  <table style="width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; border:1px solid var(--border); margin:16px 0;">
+    <thead>
+      <tr style="background:var(--warm-100); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted);">
+        <th style="padding:12px; text-align:left;">Характеристика</th>
+        <th style="padding:12px; text-align:left;">Универсальный таймтрекер</th>
+        <th style="padding:12px; text-align:left; background:var(--amber-100); color:var(--amber-800);">BELSI.Команда</th>
+      </tr>
+    </thead>
+    <tbody style="font-size:.9rem;">
+      <tr style="border-top:1px solid var(--border);">
+        <td style="padding:12px;">Перерывы</td>
+        <td style="padding:12px; color:var(--text-muted);">Один тип «пауза»</td>
+        <td style="padding:12px;">Раздельно: <strong>перекур / обед / простой</strong></td>
+      </tr>
+      <tr style="border-top:1px solid var(--border);">
+        <td style="padding:12px;">Простой</td>
+        <td style="padding:12px; color:var(--text-muted);">Текст в комментарии</td>
+        <td style="padding:12px;">8 типовых причин для производства, push руководителю</td>
+      </tr>
+      <tr style="border-top:1px solid var(--border);">
+        <td style="padding:12px;">Связь с логистикой</td>
+        <td style="padding:12px; color:var(--text-muted);">Нет</td>
+        <td style="padding:12px;">Партия → маршрут → водитель → монтаж</td>
+      </tr>
+      <tr style="border-top:1px solid var(--border);">
+        <td style="padding:12px;">Мульти-роль</td>
+        <td style="padding:12px; color:var(--text-muted);">Один профиль = одна роль</td>
+        <td style="padding:12px;">До <strong>3 ролей</strong> на одном аккаунте</td>
+      </tr>
+      <tr style="border-top:1px solid var(--border);">
+        <td style="padding:12px;">Фотофиксация</td>
+        <td style="padding:12px; color:var(--text-muted);">Опционально</td>
+        <td style="padding:12px;">Обязательно с комментарием для всех ролей</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Слоганы и подзаголовки</h3>
+  <div class="chip-row">
+    <span class="chip">Команда без бумаги</span>
+    <span class="chip">От заказа до монтажа</span>
+    <span class="chip">Смена в кармане</span>
+    <span class="chip">Производство, которое видно</span>
+    <span class="chip">Один работник — один телефон — три роли</span>
+  </div>
+</section>
+
+<!-- NAME -->
+<section id="name">
+  <h2><span class="num">04</span>Имя</h2>
+  <p class="lead">Имя — часть бренда BELSI. Точка-разделитель — обязательная.</p>
+
+  <h3>Правильное написание</h3>
+  <div class="chip-row">
+    <span class="chip">BELSI.Команда</span>
+    <span class="chip">BELSI · Команда</span>
+  </div>
+
+  <h3>Неправильно</h3>
+  <div class="chip-row">
+    <span class="chip dark">Belsi.команда</span>
+    <span class="chip dark">BELSI КОМАНДА</span>
+    <span class="chip dark">Команда BELSI</span>
+    <span class="chip dark">BELSI-Команда</span>
+  </div>
+
+  <h3>Контексты использования</h3>
+  <ul>
+    <li><strong>Иконка приложения</strong> — короткая форма «Команда» (BELSI как зонтик не упоминаем в названии в Play Store)</li>
+    <li><strong>Шапка приложения внутри</strong> — «BELSI.Команда»</li>
+    <li><strong>Документы и письма</strong> — полная форма «BELSI.Команда»</li>
+    <li><strong>Внутренние чаты, переписка</strong> — допустимо «Команда» (без префикса)</li>
+  </ul>
+</section>
+
+<!-- LOGO -->
+<section id="logo">
+  <h2><span class="num">05</span>Логотип</h2>
+  <p class="lead">Логотип строится из глифа «К» (Команда) и тёплой амбер-палитры. Есть тёмная и светлая версии.</p>
+
+  <div class="logo-block">
+    <div class="logo-glyph">К</div>
+    <div class="logo-text">BELSI<span class="accent">.Команда</span></div>
+  </div>
+
+  <div class="logo-block dark">
+    <div class="logo-glyph">К</div>
+    <div class="logo-text">BELSI<span class="accent">.Команда</span></div>
+  </div>
+
+  <h3>Безопасное поле</h3>
+  <p>Минимальный отступ вокруг логотипа — высота глифа «К», делённая на 2.</p>
+
+  <h3>Минимальный размер</h3>
+  <ul>
+    <li><strong>Цифровое</strong>: высота глифа не меньше 24px (для иконки в трее — 48px)</li>
+    <li><strong>Печатное</strong>: высота глифа не меньше 8mm</li>
+  </ul>
+
+  <h3>Запрещено</h3>
+  <ul>
+    <li>Растягивать или сжимать пропорции</li>
+    <li>Использовать на сложных фотографических фонах без затемняющей подложки</li>
+    <li>Менять цвет глифа на не-амберовый</li>
+    <li>Разрезать «BELSI» и «.Команда» на разные строки</li>
+  </ul>
+</section>
+
+<!-- PALETTE -->
+<section id="palette">
+  <h2><span class="num">06</span>Палитра</h2>
+  <p class="lead">Амбер — основной цвет. Это материал: тёплое дерево, охра, медовый. Тёплые серые — фон. Стальной BELSI — связка с зонтичным брендом.</p>
+
+  <h3>Основные</h3>
+  <div class="grid-4">
+    <div class="swatch">
+      <div class="color" style="background:var(--amber-600)"></div>
+      <div class="meta"><strong>Amber 600</strong><code>#D97706 · primary</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--amber-500)"></div>
+      <div class="meta"><strong>Amber 500</strong><code>#F59E0B · accent</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--amber-700)"></div>
+      <div class="meta"><strong>Amber 700</strong><code>#B45309 · deep</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--amber-100)"></div>
+      <div class="meta"><strong>Amber 100</strong><code>#FEF3C7 · soft bg</code></div>
+    </div>
+  </div>
+
+  <h3>Нейтральные (warm)</h3>
+  <div class="grid-4">
+    <div class="swatch">
+      <div class="color" style="background:var(--warm-900)"></div>
+      <div class="meta"><strong>Warm 900</strong><code>#1C1917 · text</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--warm-600)"></div>
+      <div class="meta"><strong>Warm 600</strong><code>#57534E · text-2</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--warm-200)"></div>
+      <div class="meta"><strong>Warm 200</strong><code>#E7E5E4 · border</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--warm-50)"></div>
+      <div class="meta"><strong>Warm 50</strong><code>#FAFAF9 · bg</code></div>
+    </div>
+  </div>
+
+  <h3>Семантические</h3>
+  <div class="grid-4">
+    <div class="swatch">
+      <div class="color" style="background:var(--emerald)"></div>
+      <div class="meta"><strong>Emerald</strong><code>#10B981 · работа / done</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--amber-400)"></div>
+      <div class="meta"><strong>Amber 400</strong><code>#FBBF24 · перекур / обед</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--rose)"></div>
+      <div class="meta"><strong>Rose</strong><code>#F43F5E · простой / брак</code></div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:var(--steel-deep)"></div>
+      <div class="meta"><strong>Steel deep</strong><code>#324859 · BELSI зонтик</code></div>
+    </div>
+  </div>
+</section>
+
+<!-- TYPOGRAPHY -->
+<section id="typography">
+  <h2><span class="num">07</span>Типографика</h2>
+  <p class="lead">Inter — основной шрифт. JetBrains Mono — для технических меток (ID, коды). Никаких декоративных шрифтов — это не презентация, это рабочий инструмент.</p>
+
+  <div class="card">
+    <div style="font-family:'Inter'; font-size:3rem; font-weight:900; letter-spacing:-.03em; line-height:1; margin-bottom:8px;">Производство видно</div>
+    <div style="font-size:.78rem; color:var(--text-muted); font-family:'JetBrains Mono'">Inter 900 · 48px · -3% letter-spacing</div>
+  </div>
+
+  <div class="card">
+    <div style="font-family:'Inter'; font-size:1.6rem; font-weight:700; line-height:1.2; margin-bottom:8px;">Раздел приложения</div>
+    <div style="font-size:.78rem; color:var(--text-muted); font-family:'JetBrains Mono'">Inter 700 · 26px</div>
+  </div>
+
+  <div class="card">
+    <div style="font-family:'Inter'; font-size:1rem; font-weight:400; line-height:1.5; margin-bottom:8px; color:var(--text-secondary);">Иван открывает приложение, нажимает «Старт» — смена пошла. На фабрике стало одной рукой меньше, и Начальник производства уже видит это в своей ленте.</div>
+    <div style="font-size:.78rem; color:var(--text-muted); font-family:'JetBrains Mono'">Inter 400 · 16px · 1.5 line-height</div>
+  </div>
+
+  <div class="card">
+    <div style="font-family:'JetBrains Mono'; font-size:.95rem; line-height:1.5; background:var(--warm-100); padding:14px; border-radius:8px;">batch_id: <strong>UGL-2026-05-04-0042</strong><br>status: ready_to_ship → in_route</div>
+    <div style="font-size:.78rem; color:var(--text-muted); font-family:'JetBrains Mono'; margin-top:8px;">JetBrains Mono · для технических меток</div>
+  </div>
+</section>
+
+<!-- VOICE -->
+<section id="voice">
+  <h2><span class="num">08</span>Tone of voice</h2>
+  <p class="lead">Говорим как старший на смене — коротко, по делу, на «ты», без подобострастия и без панибратства. Тёплый, уважительный.</p>
+
+  <h3>Делаем</h3>
+  <div class="voice do">
+    <span class="label">✓ Делаем</span>
+    <p>Короткие команды и понятные кнопки.</p>
+    <div class="example">«Старт смены» · «Перекур» · «Закрыть смену» · «Жду материалы»</div>
+  </div>
+  <div class="voice do">
+    <span class="label">✓ Делаем</span>
+    <p>Уведомления как информацию, не как тревогу.</p>
+    <div class="example">«Иван начал простой: жду материалы. 14:32» — без восклицаний и эмоций.</div>
+  </div>
+  <div class="voice do">
+    <span class="label">✓ Делаем</span>
+    <p>Конкретика вместо общих слов.</p>
+    <div class="example">«20 подоконников отгружено» вместо «партия отправлена»</div>
+  </div>
+
+  <h3>Не делаем</h3>
+  <div class="voice dont">
+    <span class="label">✗ Не делаем</span>
+    <p>Канцелярит и формальности.</p>
+    <div class="example">❌ «Процедура регистрации трудовой смены успешно осуществлена»<br>✓ «Смена начата»</div>
+  </div>
+  <div class="voice dont">
+    <span class="label">✗ Не делаем</span>
+    <p>Эмодзи в боевых уведомлениях.</p>
+    <div class="example">❌ «🎉 Смена успешно завершена! 🚀»<br>✓ «Смена закрыта. 8ч 12мин»</div>
+  </div>
+  <div class="voice dont">
+    <span class="label">✗ Не делаем</span>
+    <p>Маркетинговые слова.</p>
+    <div class="example">❌ «Революционное решение для производства»<br>✓ «Смены, перерывы, фото — на одном экране»</div>
+  </div>
+</section>
+
+<!-- STORYBOARD -->
+<section id="storyboard">
+  <h2><span class="num">09</span>Сценарий «День Ивана»</h2>
+  <p class="lead">Один день из жизни Работника на фабрике в Угличе. Восемь шагов — от старта до закрытия смены.</p>
+
+  <div class="story">
+    <div class="step-num">07:55</div>
+    <div class="body">
+      <h5>Пришёл на фабрику</h5>
+      <p>Открывает BELSI.Команда. У него три роли (Работник, Водитель, Монтажник). Жмёт «Работник, Углич».</p>
+    </div>
+  </div>
+  <div class="story">
+    <div class="step-num">08:00</div>
+    <div class="body">
+      <h5>Старт смены</h5>
+      <p>Большая кнопка «Старт». Таймер пошёл. На дашборде Начальника производства Иван появился в ленте «На смене».</p>
+    </div>
+  </div>
+  <div class="story">
+    <div class="step-num">10:30</div>
+    <div class="body">
+      <h5>Сделал блок — фото</h5>
+      <p>Камера, снимок, обязательный комментарий: «Боковина левая, готова». Загружено. В ленте фото у Начальника — новый кадр от Ивана.</p>
+    </div>
+  </div>
+  <div class="story">
+    <div class="step-num">11:15</div>
+    <div class="body">
+      <h5>Перекур</h5>
+      <p>Кнопка «Перекур». Таймер работы → таймер перекура. Через 8 минут — «Вернуться». Перекур закрыт, работа продолжается.</p>
+    </div>
+  </div>
+  <div class="story">
+    <div class="step-num">12:30</div>
+    <div class="body">
+      <h5>Обед</h5>
+      <p>Кнопка «Обед». Отдельный счётчик. 50 минут. Старший видит, что Иван на обеде.</p>
+    </div>
+  </div>
+  <div class="story">
+    <div class="step-num">14:45</div>
+    <div class="body">
+      <h5>Простой — нет материалов</h5>
+      <p>Закончились заготовки. Жмёт «Простой → Жду материалы». Push улетает Старшему и Начальнику. Через 12 минут пришёл Комплектатор. «Вернуться к работе».</p>
+    </div>
+  </div>
+  <div class="story">
+    <div class="step-num">16:50</div>
+    <div class="body">
+      <h5>Закрытие задачи</h5>
+      <p>Задача от Старшего «Собрать комплект для Коломенской 16» — отмечает «Готово», прикладывает финальное фото.</p>
+    </div>
+  </div>
+  <div class="story">
+    <div class="step-num">17:00</div>
+    <div class="body">
+      <h5>Закрыть смену</h5>
+      <p>Жмёт «Закрыть смену». Открывается отчёт <strong>с автозаполнением</strong>: 8ч 8мин работы · 30мин обед · 8мин перекур · 12мин простой · 4 фото · 1 закрытая задача. Дополняет графу «Брак / проблемы»: «Один станок прыгал — звал Инженера». Сохранил.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENS -->
+<section id="screens">
+  <h2><span class="num">10</span>Ключевые экраны</h2>
+  <p class="lead">Скетчи трёх главных экранов BELSI.Команда. Полный список — в основном Brandbook экосистемы.</p>
+
+  <div class="grid-3">
+    <div class="mock">
+      <div class="topbar"><span>Смена</span><span>Углич ▾</span></div>
+      <h6>👷 Иван · Работник</h6>
+      <ul>
+        <li><strong>08:23:14</strong> Текущий счётчик</li>
+        <li>Кнопки: Перекур · Обед · Простой</li>
+        <li>📷 Камера + комментарий</li>
+        <li>Активная задача от Старшего</li>
+        <li>RoleSwitcher → Водитель / Монтажник</li>
+      </ul>
+    </div>
+    <div class="mock">
+      <div class="topbar"><span>Дашборд</span><span>Начальник</span></div>
+      <h6>🏭 Углич — сейчас</h6>
+      <ul>
+        <li><strong>12 / 14</strong> на смене</li>
+        <li><strong>2</strong> в простое (Иван — материалы)</li>
+        <li><strong>3</strong> партии готовы к отгрузке</li>
+        <li>Лента фото (новые сверху)</li>
+        <li>Кнопка «Создать партию»</li>
+      </ul>
+    </div>
+    <div class="mock">
+      <div class="topbar"><span>Партия</span><span>UGL-0042</span></div>
+      <h6>📦 20 подоконников</h6>
+      <ul>
+        <li>→ Коломенская 16, школа №7</li>
+        <li>Дедлайн: завтра 14:00</li>
+        <li>Статус: <strong>В работе</strong> (8/20)</li>
+        <li>Ответственный: Старший Пётр</li>
+        <li>Кнопка «Готово к отгрузке»</li>
+      </ul>
+    </div>
+  </div>
+
+  <p style="margin-top:16px; font-size:.9rem;"><span class="pill amber">Реализация</span> Все экраны строятся на готовых компонентах единого приложения BELSI. Никакой отдельной кодовой базы — это flavor / роль внутри одного APK.</p>
+</section>
+
+<!-- METRICS -->
+<section id="metrics">
+  <h2><span class="num">11</span>Что измеряем</h2>
+  <p class="lead">KPI продукта — то, что мы хотим видеть улучшающимся со временем. Если эти метрики растут — приложение делает свою работу.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="num">↓ 30%</div><div class="label">Время реакции на простой<br><span style="font-size:.7rem; color:var(--text-muted)">от факта до помощи</span></div></div>
+    <div class="stat"><div class="num">↑ 100%</div><div class="label">Покрытие фото<br><span style="font-size:.7rem; color:var(--text-muted)">фабрика без бумаги</span></div></div>
+    <div class="stat"><div class="num">≤ 2с</div><div class="label">Время старта смены<br><span style="font-size:.7rem; color:var(--text-muted)">кнопка → таймер</span></div></div>
+    <div class="stat"><div class="num">≥ 90%</div><div class="label">Отчёты автогенерируются<br><span style="font-size:.7rem; color:var(--text-muted)">без ручного ввода</span></div></div>
+  </div>
+
+  <h3>Доп. метрики (внутренние)</h3>
+  <ul>
+    <li><strong>Время простоя без причины</strong> — сколько раз работники нажимают «Другое» вместо типового — нужно расширять список</li>
+    <li><strong>Отношение брак / партия</strong> — % партий, отмеченных как «брак / проблема»</li>
+    <li><strong>Конверсия партии в маршрут</strong> — сколько часов от <code>ready_to_ship</code> до <code>in_route</code> — проблемы у логиста</li>
+    <li><strong>DAU / WAU производственных ролей</strong> — реальное использование, а не «учётка есть»</li>
+  </ul>
+</section>
+
+<!-- ECOSYSTEM -->
+<section id="ecosystem">
+  <h2><span class="num">12</span>BELSI как зонтик</h2>
+  <p class="lead">BELSI.Команда — часть большего. Один аккаунт BELSI открывает доступ ко всем ролям в монтаже, логистике и производстве. Это сила экосистемы, а не три отдельных продукта.</p>
+
+  <div class="card">
+    <h4>Бренд-семейство BELSI</h4>
+    <div class="grid-4">
+      <div style="text-align:center;">
+        <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#4F46E5,#3730A3); margin:0 auto 8px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800;">М</div>
+        <strong style="display:block; font-size:.88rem;">BELSI.Монтаж</strong>
+        <span style="font-size:.78rem; color:var(--text-muted);">монтажные команды</span>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#D97706,#92400E); margin:0 auto 8px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800;">К</div>
+        <strong style="display:block; font-size:.88rem;">BELSI.Команда</strong>
+        <span style="font-size:.78rem; color:var(--amber-700);">производство</span>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#0EA5E9,#0369A1); margin:0 auto 8px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800;">Д</div>
+        <strong style="display:block; font-size:.88rem;">BELSI.Драйвер</strong>
+        <span style="font-size:.78rem; color:var(--text-muted);">логистика</span>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#8B5CF6,#5B21B6); margin:0 auto 8px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800;">Ц</div>
+        <strong style="display:block; font-size:.88rem;">BELSI.Центр</strong>
+        <span style="font-size:.78rem; color:var(--text-muted);">кураторы (внутренний)</span>
+      </div>
+    </div>
+  </div>
+
+  <p>Технически — это <strong>один APK</strong> с переключателем ролей. Бренд-имена (Монтаж/Команда/Драйвер) — это название роли в свитчере, а не отдельные приложения. На иконке в трее — общее «BELSI».</p>
+
+  <h3>Как BELSI.Команда соединяется с другими</h3>
+  <ul>
+    <li><strong>→ BELSI.Драйвер</strong>: партия из Команды появляется у Логиста и Водителя</li>
+    <li><strong>→ BELSI.Монтаж</strong>: партия приезжает Бригадиру, фиксируется на объекте</li>
+    <li><strong>→ BELSI.Центр</strong>: Куратор видит всю цепочку, реагирует на простои</li>
+  </ul>
+</section>
+
+<!-- RELEASE -->
+<section id="release">
+  <h2><span class="num">13</span>Релиз и каналы</h2>
+  <p class="lead">Как и где появится BELSI.Команда. Этот раздел финализируется ближе к выкатке.</p>
+
+  <div class="card">
+    <h4>Каналы дистрибуции</h4>
+    <ul>
+      <li><strong>Внутри компании</strong> — APK через ссылку (как сейчас 1.2.5). Не Google Play.</li>
+      <li><strong>RuStore</strong> — рассматриваем после стабилизации (квартал не определён)</li>
+      <li><strong>Web admin</strong> — для куратора и начальника производства может появиться веб-интерфейс</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h4>Этапы релиза</h4>
+    <ol>
+      <li><strong>v0.1 alpha</strong> — мокапы в RoleTestPlayground (для согласования визуала)</li>
+      <li><strong>v0.2 beta</strong> — рабочий каркас на одной фабрике (Углич), 5 ролей</li>
+      <li><strong>v0.3</strong> — связка с логистикой и монтажом, история объекта</li>
+      <li><strong>v1.0</strong> — публичный релиз, мульти-фабрика</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h4>Документация</h4>
+    <ul>
+      <li><strong>Этот brandbook</strong> — внутренний, для команды разработки и презентаций</li>
+      <li><strong>Brandbook экосистемы</strong> — полный, для архитекторов и владельцев продукта</li>
+      <li><strong>Видео-инструкция</strong> — для работников фабрики (после v0.2)</li>
+      <li><strong>Памятка Начальника</strong> — печатная (после v0.2)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- AI · XEROCODE -->
+<section id="ai">
+  <h2><span class="num">14</span>AI · XeroCode</h2>
+  <p class="lead">С версии 2.0 BELSI.Команда подключена к XeroCode AI Office — нашему внутреннему AI-агрегатору. Это не «модный baseline» и не маркетинг: AI убирает рутину у куратора, защищает монтажников от чужих ошибок и предупреждает фабрику о пустых полках до того, как они опустели.</p>
+
+  <div class="card">
+    <h4>Принцип</h4>
+    <p><strong>AI — non-critical optional layer.</strong> Любая фича работает и без него: если AI недоступен, мы тихо откатываемся на эвристики, прячем бейдж или просто не показываем чип. Пользователь никогда не упирается в «AI не ответил».</p>
+    <ul>
+      <li><strong>Идемпотентность</strong> — один и тот же тикет/фото/смена дёргают AI ровно один раз (через <code>request_id</code>)</li>
+      <li><strong>Без платных моделей по умолчанию</strong> — Llama / Gemini / Whisper в free tier. Claude Haiku включается явным флагом</li>
+      <li><strong>Feature flag</strong> <code>XEROCODE_ENABLED</code> — можно мгновенно отключить весь AI без релиза</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h4>Где AI живёт в интерфейсе</h4>
+    <ul>
+      <li><strong>🤖 8/10 на фото</strong> — оценка качества (свет, ракурс, шлем, работник в кадре) учитывает комментарий монтажника. <em>CuratorPhotosScreen, ForemanPhotosScreen</em></li>
+      <li><strong>📋 Дайджест дня</strong> — AI-сводка для куратора с аномалиями и рекомендациями. <em>CuratorMain Dashboard</em></li>
+      <li><strong>🚨 Проверь простой</strong> — verify-idle сравнивает последнее фото объекта с заявленной причиной паузы и даёт suspicion_score. <em>UserCard в CuratorMain</em></li>
+      <li><strong>🎙 Голосовой ввод</strong> — Whisper транскрибирует речь монтажника в текст для причины простоя и сообщений в мессенджере. <em>ShiftScreen, MessengerConversationScreen</em></li>
+      <li><strong>🤖 СРОЧНО</strong> — бейдж AI-приоритета на support-тикете. <em>CuratorSupport, Dashboard</em></li>
+      <li><strong>🤖 чипы</strong> — три быстрых ответа на входящее сообщение. <em>MessengerConversation</em></li>
+      <li><strong>🔍 NLP-поиск фото</strong> — естественный язык, не фильтры. <em>AiPhotoSearchScreen</em></li>
+      <li><strong>📦 Прогноз остатков</strong> — когда материал закончится, AI оценивает по скорости расхода. <em>SupplierMainScreen</em></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h4>Визуальный язык AI</h4>
+    <p>Везде, где работает AI, используется единый префикс <strong>🤖</strong> и подпись курсивом «AI processing · XeroCode». Это контракт с пользователем: не AI-сгенерированный контент маскируется под фабричный, AI всегда подписан.</p>
+    <ul>
+      <li><strong>🔴 СРОЧНО</strong> — Rose 500 (#F43F5E)</li>
+      <li><strong>🟠 Высокий</strong> — Amber 500 (#F59E0B)</li>
+      <li><strong>🔵 Обычный</strong> — Indigo 500 (#6366F1)</li>
+      <li><strong>⚪ Низкий</strong> — Stone 400 (#A8A29E)</li>
+      <li><strong>✅ Подтверждено</strong> — Emerald 500 (#10B981)</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h4>Прозрачность для работника</h4>
+    <p>На каждом экране, где AI оценивает чью-то работу (фото, простой, тикет), <strong>обязательно</strong> рядом с результатом стоит подпись «AI · XeroCode» и куратор имеет право переопределить AI вручную. AI не приговор — это второе мнение.</p>
+  </div>
+</section>
+
+<!-- UPDATE GATE -->
+<section id="update-gate">
+  <h2><span class="num">15</span>Экран обновления</h2>
+  <p class="lead">Перед скачиванием APK 2.0.0 (in-app Compose-диалог на старте, HTML на <code>belsi.ru/download</code> — позже) пользователь видит gate-экран: что нового с момента 1.2.5, что меняется в работе, и <strong>9 пунктов согласия</strong> (6 про обновление + 3 общих TOS / Privacy / EULA, которые ранее показывались на экране регистрации). Кнопка «Скачать» неактивна, пока все пункты не отмечены. Также gate показывается ОДИН РАЗ при first-launch новой major-версии — даже для пользователей, которые обновились с 1.2.5 → 2.0.0 через простой banner. <strong>Статус draft v0.4 — реализован.</strong></p>
+
+  <div class="card" style="border-left:4px solid var(--amber-500);">
+    <h4>Шаг сразу 1.2.5 → 2.0.0</h4>
+    <p>Прод 1.2.5 — то что работает у 14 монтажников сегодня. 1.3.0 был только на /preview и в полевую эксплуатацию не выходил. Поэтому реальный апгрейд для всех пользователей — это <strong>major-скачок через 5 крупных блоков изменений</strong>: новые роли производства, оффлайн-режим, обогащение профиля, стабильность и AI. Экран обновления показывает весь этот объём.</p>
+  </div>
+
+  <h3>Состояние А — кнопка «Скачать» неактивна (по умолчанию)</h3>
+
+  <div class="ug-wrap">
+    <div class="ug-head">
+      <div class="ver-row">
+        <span>v1.2.5</span><span class="ver-arrow">→</span><span>v2.0.0</span>
+        <span style="margin-left:auto;padding:3px 10px;background:rgba(255,255,255,.18);border-radius:99px;font-size:.7rem;">MAJOR</span>
+      </div>
+      <h3>BELSI.Команда 2.0.0</h3>
+      <div class="sub">Большое обновление · 5 блоков изменений · 2026-05-11</div>
+    </div>
+    <div class="ug-body">
+      <div class="ug-section-title">🏭 Производство — новые роли</div>
+      <div class="ug-feat-list">
+        <div class="it"><span class="emo">👷</span><span>Добавлены 5 ролей фабрики: Начальник, Старший, Снабжение, Технолог, Сборщик</span></div>
+        <div class="it"><span class="emo">📦</span><span>Партии заказа — видно весь путь от заявки до отгрузки</span></div>
+        <div class="it"><span class="emo">⏱</span><span>Своя пауза и причины простоя для фабрики, монтажа, логистики</span></div>
+        <div class="it"><span class="emo">🔁</span><span>Один телефон — до 3 ролей сразу (например, бригадир и монтажник)</span></div>
+      </div>
+
+      <div class="ug-section-title">📡 Работа без интернета</div>
+      <div class="ug-feat-list">
+        <div class="it"><span class="emo">📥</span><span>Пауза, задача и фото работают даже когда сеть пропала</span></div>
+        <div class="it"><span class="emo">🔄</span><span>Связь появится — всё уйдёт на сервер само</span></div>
+        <div class="it"><span class="emo">🖼</span><span>Фото хранятся на телефоне до отправки, ничего не теряется</span></div>
+        <div class="it"><span class="emo">📋</span><span>Видно что ещё не ушло — экран «Ожидают отправки»</span></div>
+      </div>
+
+      <div class="ug-section-title">👤 Профиль и вход</div>
+      <div class="ug-feat-list">
+        <div class="it"><span class="emo">🆔</span><span>Вход через Яндекс — имя, телефон и аватар подгружаются сами</span></div>
+        <div class="it"><span class="emo">📝</span><span>Регистрация без звонка в офис — пошаговый мастер</span></div>
+        <div class="it"><span class="emo">🔐</span><span>Сменить пароль теперь можно прямо в настройках</span></div>
+        <div class="it"><span class="emo">📲</span><span>Новая иконка приложения на экране телефона</span></div>
+      </div>
+
+      <div class="ug-section-title">🛠 Что стало стабильнее</div>
+      <div class="ug-feat-list">
+        <div class="it"><span class="emo">♻️</span><span>«Вечная пауза» больше не зависает — починили</span></div>
+        <div class="it"><span class="emo">✅</span><span>Случайный двойной тап на кнопку не задваивает действие</span></div>
+        <div class="it"><span class="emo">🔔</span><span>Уведомление открывает сразу нужный экран, а не главный</span></div>
+        <div class="it"><span class="emo">📐</span><span>Удобно на любом телефоне — складные, планшеты, обычные</span></div>
+      </div>
+
+      <div class="ug-section-title">🤖 AI-помощник (8 функций)</div>
+      <div class="ug-feat-list">
+        <div class="it"><span class="emo">📷</span><span>AI оценивает каждое фото — баллы, шлем, работник в кадре</span></div>
+        <div class="it"><span class="emo">🎙</span><span>Голосом — причина простоя и сообщения в чате</span></div>
+        <div class="it"><span class="emo">📋</span><span>Сводка дня для куратора + проверка простоя по фото</span></div>
+        <div class="it"><span class="emo">💬</span><span>Быстрые ответы, поиск фото словами, приоритет тикетов, прогноз материалов</span></div>
+      </div>
+
+      <div class="ug-info">
+        <strong>AI — это помощник.</strong> Окончательное решение по фото, тикетам и простою остаётся за куратором. Если AI недоступен, приложение работает в обычном режиме. Если интернета нет — оффлайн-режим продолжает писать в очередь.
+      </div>
+    </div>
+    <div class="ug-consent">
+      <div class="ttl">Для продолжения отметьте все 9 пунктов</div>
+      <div class="ug-check"><span class="box"></span><span>Я ознакомился со всеми 5 блоками новых функций</span></div>
+      <div class="ug-check"><span class="box"></span><span>Понимаю: AI — это помощник, окончательное решение остаётся за куратором</span></div>
+      <div class="ug-check"><span class="box"></span><span>Согласен на обработку фото и голоса AI-провайдером XeroCode (Россия)</span></div>
+      <div class="ug-check"><span class="box"></span><span>Понимаю, что версия 1.2.5 перестанет получать поддержку</span></div>
+      <div class="ug-check"><span class="box"></span><span>Готов к major-обновлению (копия рабочих данных сохраняется на сервере)</span></div>
+      <div class="ug-check"><span class="box"></span><span>Подтверждаю, что мне 18 лет или больше</span></div>
+      <div class="ug-check"><span class="box"></span><span>Принимаю Условия использования BELSI</span></div>
+      <div class="ug-check"><span class="box"></span><span>Принимаю Политику конфиденциальности и обработку персональных данных</span></div>
+      <div class="ug-check"><span class="box"></span><span>Принимаю Лицензионное соглашение пользователя (EULA)</span></div>
+    </div>
+    <div class="ug-state-row">⚠ Отметьте все 9 пунктов, чтобы продолжить</div>
+    <div class="ug-actions">
+      <button class="ug-btn secondary">Назад</button>
+      <button class="ug-btn primary disabled">Скачать APK · 40 МБ</button>
+    </div>
+  </div>
+
+  <h3>Состояние Б — все пункты отмечены, кнопка активна</h3>
+
+  <div class="ug-wrap">
+    <div class="ug-head">
+      <div class="ver-row">
+        <span>v1.2.5</span><span class="ver-arrow">→</span><span>v2.0.0</span>
+        <span style="margin-left:auto;padding:3px 10px;background:rgba(255,255,255,.18);border-radius:99px;font-size:.7rem;">MAJOR</span>
+      </div>
+      <h3>BELSI.Команда 2.0.0</h3>
+      <div class="sub">Большое обновление · 5 блоков изменений · 2026-05-11</div>
+    </div>
+    <div class="ug-body">
+      <div class="ug-section-title">Сводка</div>
+      <div class="ug-feat-list">
+        <div class="it"><span class="emo">🏭</span><span>Производство — 5 ролей, Pipeline партий, домены</span></div>
+        <div class="it"><span class="emo">📡</span><span>Оффлайн-режим — очередь действий + авто-синк</span></div>
+        <div class="it"><span class="emo">👤</span><span>Yandex OAuth + самостоятельная регистрация</span></div>
+        <div class="it"><span class="emo">🛠</span><span>Self-heal паузы, идемпотентность, push с deep-link</span></div>
+        <div class="it"><span class="emo">🤖</span><span>8 AI-функций через XeroCode (Россия)</span></div>
+        <div class="it"><span class="emo">📐</span><span>Адаптив Z Fold + улучшенный UX форм</span></div>
+      </div>
+      <div class="ug-info">
+        <strong>AI — это помощник.</strong> Окончательное решение по фото, тикетам и простою остаётся за куратором. Если AI недоступен, приложение работает в обычном режиме.
+      </div>
+    </div>
+    <div class="ug-consent">
+      <div class="ttl">Все 9 пунктов отмечены</div>
+      <div class="ug-check checked"><span class="box"></span><span>Я ознакомился со всеми 5 блоками новых функций</span></div>
+      <div class="ug-check checked"><span class="box"></span><span>Понимаю: AI — это помощник, окончательное решение остаётся за куратором</span></div>
+      <div class="ug-check checked"><span class="box"></span><span>Согласен на обработку фото и голоса AI-провайдером XeroCode (Россия)</span></div>
+      <div class="ug-check checked"><span class="box"></span><span>Понимаю, что версия 1.2.5 перестанет получать поддержку</span></div>
+      <div class="ug-check checked"><span class="box"></span><span>Готов к major-обновлению (копия рабочих данных сохраняется на сервере)</span></div>
+      <div class="ug-check checked"><span class="box"></span><span>Подтверждаю, что мне 18 лет или больше</span></div>
+      <div class="ug-check checked"><span class="box"></span><span>Принимаю Условия использования BELSI</span></div>
+      <div class="ug-check checked"><span class="box"></span><span>Принимаю Политику конфиденциальности и обработку персональных данных</span></div>
+      <div class="ug-check checked"><span class="box"></span><span>Принимаю Лицензионное соглашение пользователя (EULA)</span></div>
+    </div>
+    <div class="ug-state-row ready">✓ Готово. Можно скачивать.</div>
+    <div class="ug-actions">
+      <button class="ug-btn secondary">Назад</button>
+      <button class="ug-btn primary">Скачать APK · 40 МБ</button>
+    </div>
+  </div>
+
+  <h3>Поведение и логика</h3>
+  <div class="card">
+    <h4>Где живёт экран</h4>
+    <ul>
+      <li><strong>Этап 1 (старт) — in-app Compose-диалог</strong> внутри приложения 1.2.5. При запуске прилы проверяется наличие обновления; если новая версия 2.0.0 доступна — открывается полноэкранный диалог с теми же 5 блоками и 5 чекбоксами. Кнопка «Скачать» включается только когда все 5 отмечены, затем — стандартный intent на скачивание APK.</li>
+      <li><strong>Этап 2 (после релиза)</strong> — статичная HTML-страница на <code>belsi.ru/download</code>. Открывается из QR-кода/прямой ссылки. Та же копия, та же логика. Нужна для тех, кто ставит впервые (без 1.2.5 в руке).</li>
+    </ul>
+
+    <h4>Правила</h4>
+    <ul>
+      <li><strong>Все 9 чекбоксов обязательны</strong>. Кнопка «Скачать»/«Подтвердить» активируется только когда все 9 отмечены. Нет «Принять всё» — снимаем риск автоматического согласия.</li>
+      <li><strong>First-launch fallback</strong>: gate показывается ОДИН РАЗ при первом запуске новой major-версии, даже если юзер обновился через простой banner (без gate). После подтверждения локально сохраняется флаг <code>update_consent_signed_2.0.0</code> и до следующего major-апгрейда экран не появится.</li>
+      <li><strong>Минорные апдейты</strong> (2.0.x, 2.1.x) этот экран не показывают — только при смене major-версии или существенном изменении AI-функций.</li>
+      <li><strong>Кнопка «Назад»</strong> закрывает диалог; при следующем старте gate появится снова, пока юзер не подтвердит. Невозможно «отказаться навсегда».</li>
+    </ul>
+
+    <h4>Технические параметры (для разработки)</h4>
+    <ul>
+      <li>Версионная пара: <code>previousVersionName</code> (например, <code>1.2.5</code>) + <code>newVersionName</code> (<code>2.0.0</code>) приходят в манифест обновления и подставляются в заголовок диалога.</li>
+      <li>Триггер: при старте Activity → запрос на <code>/api/version/check</code>. Если <code>force_update.show_gate: true</code> → открыть диалог.</li>
+      <li>Размер APK подтягивается из <code>Content-Length</code> HEAD-запроса на файл — не зашит в копию.</li>
+      <li><strong>Аудит согласия (152-ФЗ): обязателен.</strong> При нажатии «Скачать» отправляется POST <code>/audit/update-consent</code> с телом <code>{user_id, from_version, to_version, agreed_at, items: [{id, text}, …]}</code>. Endpoint должен быть сделан до релиза 2.0.0. Запись в БД хранится бессрочно.</li>
+      <li>Для пользователей <strong>с версии 1.2.5</strong> — это шаг major-через-major (минуя 1.3.0). Экран показывает все 5 блоков; пропускать «Производство» или «Оффлайн» нельзя — это новые функции для 14 действующих монтажников.</li>
+    </ul>
+
+    <h4>Tone of voice</h4>
+    <ul>
+      <li>Никакого «согласие со всеми условиями» в стиле EULA — конкретные понятные пункты.</li>
+      <li>Эмодзи в списке функций — да, они помогают сканировать. В чекбоксах — нет, чтобы галочки выглядели серьёзно.</li>
+      <li>«AI — это помощник» повторяется во всех материалах: брендбук, экран обновления, in-app подсказки. Это единый тезис.</li>
+      <li>Язык — простой, без жаргона. «Когда сеть появится» вместо «при восстановлении соединения». «Удобно на любом телефоне» вместо «адаптивный UI».</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h4>Решения (зафиксированы 2026-05-11)</h4>
+    <ul>
+      <li><strong>Где живёт экран</strong> — на старте только in-app Compose-диалог. HTML на сайте — этап 2.</li>
+      <li><strong>6 пунктов согласия</strong> — финальная редакция выше. Добавлен пункт «18+». Пункт про резервную копию заменён на «копия рабочих данных сохраняется на сервере».</li>
+      <li><strong>Размер списка функций</strong> — оставляем «4 строки на блок», текст упрощён для понимания работником без IT-фона.</li>
+      <li><strong>Audit endpoint</strong> — <code>/audit/update-consent</code> делаем. Без него «Скачать» не активируется (либо ошибка после тапа).</li>
+      <li><strong>XeroCode</strong> — в пользовательских текстах позиционируется как российский AI-провайдер. Подробности про модели — не выносим в gate-экран.</li>
+      <li><strong>Возрастное ограничение</strong> — пункт «18+» включён как 6-й чекбокс.</li>
+      <li><strong>Реквизиты компании</strong> — в подвале gate-экрана НЕ нужны. Юр. наименование, ИНН и контакт DPO — в отдельном разделе «О приложении» (Settings → About).</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+</div>
+</body>
+</html>

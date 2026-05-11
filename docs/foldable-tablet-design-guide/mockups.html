@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BELSI · Mockups · Adaptive UI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --indigo-50:#EEF2FF; --indigo-100:#E0E7FF; --indigo-200:#C7D2FE;
+    --indigo-300:#A5B4FC; --indigo-400:#818CF8; --indigo-500:#6366F1;
+    --indigo-600:#4F46E5; --indigo-700:#4338CA; --indigo-800:#3730A3;
+    --slate-50:#F8FAFC; --slate-100:#F1F5F9; --slate-200:#E2E8F0;
+    --slate-300:#CBD5E1; --slate-400:#94A3B8; --slate-500:#64748B;
+    --slate-600:#475569; --slate-700:#334155; --slate-800:#1E293B;
+    --slate-900:#0F172A;
+    --amber-500:#F59E0B; --amber-600:#D97706; --amber-100:#FEF3C7;
+    --emerald-500:#10B981; --emerald-100:#D1FAE5;
+    --rose-500:#F43F5E; --rose-100:#FFE4E6;
+    --violet-500:#8B5CF6; --violet-100:#EDE9FE;
+  }
+  *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--slate-100); color:var(--slate-900);
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+    min-height:100vh;
+  }
+
+  .topbar {
+    background:var(--slate-900); color:#fff; padding:14px 24px;
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+    position:sticky; top:0; z-index:10;
+    box-shadow:0 4px 12px rgba(0,0,0,.15);
+  }
+  .topbar h1 { font-size:1.05rem; font-weight:800; }
+  .topbar h1 .accent { color:var(--indigo-400); }
+  .topbar .sub { color:rgba(255,255,255,.55); font-size:.78rem; }
+  .topbar a.back {
+    color:var(--indigo-300); text-decoration:none; font-size:.85rem;
+    padding:6px 12px; border-radius:6px;
+    background:rgba(99,102,241,.2); border:1px solid rgba(99,102,241,.4);
+  }
+  .topbar a.back:hover { background:rgba(99,102,241,.35); }
+
+  .controls {
+    padding:24px; background:var(--slate-50); border-bottom:1px solid var(--slate-200);
+    display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;
+  }
+  .control-group h3 {
+    font-size:.7rem; font-weight:800; color:var(--slate-500);
+    text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px;
+  }
+  .pills { display:flex; gap:6px; flex-wrap:wrap; }
+  .pill {
+    padding:8px 14px; background:#fff; border:1px solid var(--slate-200);
+    border-radius:8px; font-size:.82rem; font-weight:600;
+    cursor:pointer; transition:.12s; color:var(--slate-700);
+  }
+  .pill:hover { border-color:var(--indigo-400); }
+  .pill.active {
+    background:var(--indigo-600); color:#fff; border-color:var(--indigo-600);
+    box-shadow:0 2px 8px rgba(99,102,241,.4);
+  }
+  .pill .badge {
+    display:inline-block; padding:1px 7px; border-radius:99px;
+    background:rgba(255,255,255,.2); margin-left:6px;
+    font-size:.7rem; font-weight:700;
+  }
+  .pill:not(.active) .badge { background:var(--slate-100); color:var(--slate-600); }
+
+  .stage {
+    padding:40px 24px; min-height:calc(100vh - 200px);
+    display:flex; flex-direction:column; align-items:center; gap:20px;
+  }
+  .stage-info {
+    text-align:center; color:var(--slate-600); font-size:.86rem;
+  }
+  .stage-info code {
+    background:var(--slate-200); padding:2px 8px; border-radius:4px;
+    font-family:'JetBrains Mono',monospace; font-size:.82rem;
+  }
+
+  /* Device frame */
+  .device {
+    background:#000; border-radius:36px; padding:14px;
+    box-shadow:0 30px 60px -20px rgba(15,23,42,.35);
+    transition:width .35s ease, height .35s ease;
+    position:relative;
+  }
+  .device::before {
+    content:''; position:absolute; top:18px; left:50%; transform:translateX(-50%);
+    width:60px; height:6px; background:#1a1a1a; border-radius:3px;
+    z-index:2;
+  }
+  .device .screen {
+    background:var(--slate-50); border-radius:24px;
+    width:100%; height:100%; overflow:hidden;
+    position:relative; display:flex; flex-direction:column;
+  }
+
+  /* Sizes — соответствуют реальным dp / 1.65 для удобства просмотра */
+  .device.size-compact { width:240px; height:486px; }      /* 411×828 dp phone */
+  .device.size-foldclosed { width:226px; height:465px; }   /* 374×768 dp Z Fold cover */
+  .device.size-foldopen { width:536px; height:408px; }     /* 884×673 dp Z Fold open */
+  .device.size-tab11 { width:565px; height:354px; }        /* 933×583 dp Tab 11" */
+  .device.size-tabxl { width:746px; height:466px; }        /* 1232×768 dp Tab S Ultra */
+
+  /* Layout primitives внутри screen */
+  .ui-topbar {
+    background:var(--indigo-600); color:#fff; padding:8px 12px;
+    font-size:10px; font-weight:700;
+    display:flex; align-items:center; justify-content:space-between;
+    flex-shrink:0;
+  }
+  .ui-topbar .actions { display:flex; gap:6px; }
+  .ui-topbar .actions span {
+    width:14px; height:14px; background:rgba(255,255,255,.3); border-radius:3px;
+  }
+
+  .ui-bottomnav {
+    background:#fff; border-top:1px solid var(--slate-200);
+    padding:8px; display:flex; justify-content:space-around; flex-shrink:0;
+  }
+  .ui-bottomnav .item {
+    width:24px; height:24px; background:var(--slate-300); border-radius:6px;
+  }
+  .ui-bottomnav .item.active { background:var(--indigo-600); }
+
+  .ui-tabrow {
+    background:#fff; border-bottom:1px solid var(--slate-200);
+    padding:6px 4px; display:flex; gap:4px; overflow-x:auto;
+    font-size:9px; flex-shrink:0;
+  }
+  .ui-tabrow .tab {
+    padding:5px 8px; color:var(--slate-500); white-space:nowrap;
+    border-bottom:2px solid transparent;
+  }
+  .ui-tabrow .tab.active {
+    color:var(--indigo-600); font-weight:700;
+    border-bottom-color:var(--indigo-600);
+  }
+
+  .ui-navrail {
+    width:54px; background:#fff; border-right:1px solid var(--slate-200);
+    display:flex; flex-direction:column; align-items:center; padding:10px 0; gap:10px;
+    flex-shrink:0;
+  }
+  .ui-navrail .item {
+    width:30px; padding:5px 0; display:flex; flex-direction:column;
+    align-items:center; gap:2px; border-radius:6px;
+    font-size:7px; color:var(--slate-500);
+  }
+  .ui-navrail .item.active { background:var(--indigo-100); color:var(--indigo-700); font-weight:700; }
+  .ui-navrail .icon { width:14px; height:14px; background:currentColor; border-radius:3px; opacity:.7; }
+  .ui-navrail .item.active .icon { opacity:1; }
+
+  .ui-content {
+    flex:1; overflow:hidden; padding:8px;
+    display:flex; gap:6px; min-height:0;
+  }
+  .ui-pane {
+    background:#fff; border-radius:6px; padding:8px;
+    overflow:hidden; min-height:0;
+    border:1px solid var(--slate-200);
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .ui-pane .pane-title {
+    font-size:8px; color:var(--slate-500);
+    text-transform:uppercase; letter-spacing:.04em; font-weight:700;
+    margin-bottom:2px;
+  }
+  .ui-card {
+    background:var(--slate-50); border-radius:4px; padding:5px 6px;
+    border:1px solid var(--slate-200);
+  }
+  .ui-card.selected {
+    background:var(--indigo-50); border-color:var(--indigo-300);
+  }
+  .line { height:3px; background:var(--slate-300); border-radius:1.5px; }
+  .line.accent { background:var(--indigo-500); }
+  .line.warn { background:var(--amber-500); }
+  .line.success { background:var(--emerald-500); }
+  .line.s60 { width:60%; }
+  .line.s80 { width:80%; }
+  .line.s40 { width:40%; }
+  .line.tall { height:5px; }
+
+  /* photo slot grid */
+  .photo-grid { display:grid; gap:3px; }
+  .photo-grid.cols-2 { grid-template-columns:1fr 1fr; }
+  .photo-grid.cols-3 { grid-template-columns:repeat(3,1fr); }
+  .photo-grid.cols-4 { grid-template-columns:repeat(4,1fr); }
+  .photo-grid.cols-5 { grid-template-columns:repeat(5,1fr); }
+  .photo-tile {
+    aspect-ratio:1/1;
+    background:linear-gradient(135deg,var(--slate-300),var(--slate-400));
+    border-radius:3px; position:relative;
+  }
+  .photo-tile.empty {
+    background:var(--slate-100);
+    border:1px dashed var(--slate-300);
+  }
+  .photo-tile.warning::after {
+    content:'⚠'; position:absolute; top:1px; right:2px;
+    color:var(--amber-500); font-size:8px;
+  }
+  .photo-tile.approved::after {
+    content:'✓'; position:absolute; top:1px; right:2px;
+    color:var(--emerald-500); font-size:8px; font-weight:700;
+  }
+  .photo-tile.selected { outline:2px solid var(--indigo-500); outline-offset:1px; }
+
+  /* Stat cards */
+  .stat-row { display:grid; gap:4px; }
+  .stat-row.cols-2 { grid-template-columns:1fr 1fr; }
+  .stat-row.cols-3 { grid-template-columns:repeat(3,1fr); }
+  .stat-row.cols-4 { grid-template-columns:repeat(4,1fr); }
+  .stat {
+    background:var(--slate-50); border-radius:4px; padding:5px;
+    border-left:2px solid var(--indigo-500);
+  }
+  .stat .v { font-size:11px; font-weight:800; color:var(--indigo-700); }
+  .stat .l { font-size:7px; color:var(--slate-500); }
+
+  /* Big timer block */
+  .timer-block {
+    background:linear-gradient(135deg,var(--indigo-500),var(--indigo-700));
+    color:#fff; border-radius:6px; padding:10px;
+  }
+  .timer-block .time { font-size:18px; font-weight:800; letter-spacing:.02em; }
+  .timer-block .label { font-size:8px; opacity:.8; }
+
+  /* Button row */
+  .btn-row { display:flex; gap:4px; }
+  .btn {
+    flex:1; padding:6px 8px; background:var(--indigo-600); color:#fff;
+    border-radius:4px; font-size:8px; font-weight:700;
+    text-align:center; letter-spacing:.02em;
+  }
+  .btn.secondary { background:#fff; color:var(--indigo-700); border:1px solid var(--indigo-300); }
+  .btn.warn { background:var(--amber-600); }
+
+  /* Annotations under mockup */
+  .annotations {
+    background:#fff; border:1px solid var(--slate-200);
+    border-radius:8px; padding:14px 18px; max-width:780px;
+    font-size:.86rem; color:var(--slate-700);
+  }
+  .annotations h4 {
+    font-size:.86rem; font-weight:800; color:var(--slate-900);
+    margin-bottom:6px;
+  }
+  .annotations ul { margin:6px 0 0 18px; }
+  .annotations li { margin-bottom:3px; color:var(--slate-600); }
+  .annotations li strong { color:var(--slate-900); }
+
+  /* Hide / show by data attrs */
+  .screen-content { display:none; flex:1; min-height:0; flex-direction:column; }
+  .screen-content.active { display:flex; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>BELSI<span class="accent">.</span>Mockups</h1>
+  <span class="sub">Adaptive UI · реальные wireframes по WSC</span>
+  <a class="back" href="./index.html">← Design Guide</a>
+</div>
+
+<div class="controls">
+  <div class="control-group">
+    <h3>Экран</h3>
+    <div class="pills" id="screenPills">
+      <button class="pill active" data-screen="shift">ShiftScreen <span class="badge">монтажник</span></button>
+      <button class="pill" data-screen="curator-dashboard">CuratorMain · Обзор</button>
+      <button class="pill" data-screen="curator-tickets">CuratorMain · Тикеты</button>
+      <button class="pill" data-screen="curator-photos">CuratorMain · Фото</button>
+      <button class="pill" data-screen="foreman">ForemanMain</button>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <h3>Устройство</h3>
+    <div class="pills" id="sizePills">
+      <button class="pill active" data-size="compact">📱 Phone <span class="badge">411 dp</span></button>
+      <button class="pill" data-size="foldclosed">📱 Fold closed <span class="badge">374 dp</span></button>
+      <button class="pill" data-size="foldopen">📖 Fold open <span class="badge">884 dp</span></button>
+      <button class="pill" data-size="tab11">📊 Tab 11" <span class="badge">933 dp</span></button>
+      <button class="pill" data-size="tabxl">📊 Tab Ultra <span class="badge">1232 dp</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="stage-info" id="stageInfo">
+    <strong>ShiftScreen</strong> на <strong>Phone Compact (411 dp)</strong> · BottomNav · одна колонка
+  </div>
+
+  <div class="device size-compact" id="device">
+    <div class="screen" id="screen">
+
+      <!-- ============================================================
+           SHIFT SCREEN — все размеры в одном блоке, показываем по data-active
+           ============================================================ -->
+
+      <!-- SHIFT · COMPACT (phone / fold-closed) -->
+      <div class="screen-content active" data-screen="shift" data-size="compact foldclosed">
+        <div class="ui-topbar">
+          <span>Смена · Углич-2</span>
+          <div class="actions"><span></span><span></span></div>
+        </div>
+        <div class="ui-content" style="flex-direction:column;">
+          <div class="timer-block">
+            <div class="label">ВРЕМЯ В РАБОТЕ</div>
+            <div class="time">4:23:18</div>
+          </div>
+          <div class="btn-row">
+            <div class="btn">Пауза</div>
+            <div class="btn warn">Простой</div>
+          </div>
+          <div class="ui-pane" style="flex:1;">
+            <div class="pane-title">Фото слоты (вертикально)</div>
+            <div class="photo-grid cols-2">
+              <div class="photo-tile approved"></div>
+              <div class="photo-tile approved"></div>
+              <div class="photo-tile warning"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile empty"></div>
+              <div class="photo-tile empty"></div>
+            </div>
+          </div>
+        </div>
+        <div class="ui-bottomnav">
+          <div class="item active"></div>
+          <div class="item"></div>
+          <div class="item"></div>
+          <div class="item"></div>
+        </div>
+      </div>
+
+      <!-- SHIFT · EXPANDED (fold open / tab 11) -->
+      <div class="screen-content" data-screen="shift" data-size="foldopen tab11">
+        <div class="ui-topbar">
+          <span>Смена · Углич-2 · Бригадир: Сидоров А.</span>
+          <div class="actions"><span></span><span></span><span></span></div>
+        </div>
+        <div class="ui-content">
+          <div class="ui-navrail">
+            <div class="item active"><div class="icon"></div>Смена</div>
+            <div class="item"><div class="icon"></div>Задачи</div>
+            <div class="item"><div class="icon"></div>Чат</div>
+            <div class="item"><div class="icon"></div>Профиль</div>
+          </div>
+          <div class="ui-pane" style="flex:0.45;">
+            <div class="pane-title">Статус смены</div>
+            <div class="timer-block">
+              <div class="label">ВРЕМЯ В РАБОТЕ</div>
+              <div class="time">4:23:18</div>
+            </div>
+            <div class="btn-row">
+              <div class="btn">Пауза</div>
+              <div class="btn warn">Простой</div>
+            </div>
+            <div class="ui-card">
+              <div class="line accent s80"></div>
+              <div class="line s60" style="margin-top:3px;"></div>
+            </div>
+            <div class="ui-card">
+              <div class="line s80"></div>
+              <div class="line s40" style="margin-top:3px;"></div>
+            </div>
+          </div>
+          <div class="ui-pane" style="flex:0.55;">
+            <div class="pane-title">Фото отчёт (грид)</div>
+            <div class="photo-grid cols-3">
+              <div class="photo-tile approved"></div>
+              <div class="photo-tile approved"></div>
+              <div class="photo-tile warning"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile empty"></div>
+              <div class="photo-tile empty"></div>
+              <div class="photo-tile empty"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHIFT · XLARGE (tab ultra) -->
+      <div class="screen-content" data-screen="shift" data-size="tabxl">
+        <div class="ui-topbar">
+          <span>Смена · Углич-2 · Бригадир: Сидоров А. · #Iv4-2026-05-11</span>
+          <div class="actions"><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="ui-content">
+          <div class="ui-navrail">
+            <div class="item active"><div class="icon"></div>Смена</div>
+            <div class="item"><div class="icon"></div>Задачи</div>
+            <div class="item"><div class="icon"></div>Чат</div>
+            <div class="item"><div class="icon"></div>Профиль</div>
+          </div>
+          <div class="ui-pane" style="flex:0.32;">
+            <div class="pane-title">Статус + действия</div>
+            <div class="timer-block">
+              <div class="label">ВРЕМЯ В РАБОТЕ</div>
+              <div class="time">4:23:18</div>
+            </div>
+            <div class="btn-row">
+              <div class="btn">Пауза</div>
+              <div class="btn warn">Простой</div>
+            </div>
+            <div class="ui-card"><div class="line accent s80"></div><div class="line s60" style="margin-top:3px;"></div></div>
+            <div class="ui-card"><div class="line s80"></div><div class="line s40" style="margin-top:3px;"></div></div>
+          </div>
+          <div class="ui-pane" style="flex:0.42;">
+            <div class="pane-title">Фото отчёт</div>
+            <div class="photo-grid cols-3">
+              <div class="photo-tile approved"></div>
+              <div class="photo-tile approved"></div>
+              <div class="photo-tile warning"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile empty"></div>
+              <div class="photo-tile empty"></div>
+              <div class="photo-tile empty"></div>
+            </div>
+          </div>
+          <div class="ui-pane" style="flex:0.26;">
+            <div class="pane-title">Активность / задачи</div>
+            <div class="ui-card"><div class="line success s80"></div><div class="line s60" style="margin-top:3px;"></div></div>
+            <div class="ui-card"><div class="line warn s80"></div><div class="line s40" style="margin-top:3px;"></div></div>
+            <div class="ui-card"><div class="line s80"></div><div class="line s60" style="margin-top:3px;"></div></div>
+            <div class="ui-card"><div class="line s60"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           CURATOR DASHBOARD
+           ============================================================ -->
+
+      <!-- CURATOR DASHBOARD · COMPACT -->
+      <div class="screen-content" data-screen="curator-dashboard" data-size="compact foldclosed">
+        <div class="ui-topbar">
+          <span>Куратор · Обзор</span>
+          <div class="actions"><span></span><span></span></div>
+        </div>
+        <div class="ui-tabrow">
+          <div class="tab active">Обзор</div>
+          <div class="tab">Бригады</div>
+          <div class="tab">Люди</div>
+          <div class="tab">Объекты</div>
+          <div class="tab">Задачи</div>
+          <div class="tab">Фото</div>
+        </div>
+        <div class="ui-content" style="flex-direction:column;">
+          <div class="ui-card" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-left:3px solid var(--violet-500);">
+            <div class="pane-title">🤖 AI инсайты</div>
+            <div class="line accent s80"></div>
+            <div class="line s60" style="margin-top:3px;"></div>
+            <div class="line s40" style="margin-top:3px;"></div>
+          </div>
+          <div class="stat-row cols-2">
+            <div class="stat"><div class="v">14</div><div class="l">Смены</div></div>
+            <div class="stat"><div class="v">23</div><div class="l">Активные</div></div>
+          </div>
+          <div class="stat-row cols-2">
+            <div class="stat"><div class="v">7</div><div class="l">Фото</div></div>
+            <div class="stat"><div class="v">3</div><div class="l">Тикеты</div></div>
+          </div>
+          <div class="ui-card"><div class="line s80"></div><div class="line s60" style="margin-top:3px;"></div></div>
+          <div class="ui-card"><div class="line s80"></div><div class="line s40" style="margin-top:3px;"></div></div>
+        </div>
+      </div>
+
+      <!-- CURATOR DASHBOARD · EXPANDED -->
+      <div class="screen-content" data-screen="curator-dashboard" data-size="foldopen tab11">
+        <div class="ui-topbar">
+          <span>Куратор · ООО ЗСО</span>
+          <div class="actions"><span></span><span></span><span></span></div>
+        </div>
+        <div class="ui-content">
+          <div class="ui-navrail">
+            <div class="item active"><div class="icon"></div>Обзор</div>
+            <div class="item"><div class="icon"></div>Бриг</div>
+            <div class="item"><div class="icon"></div>Люди</div>
+            <div class="item"><div class="icon"></div>Объе</div>
+            <div class="item"><div class="icon"></div>Зад</div>
+            <div class="item"><div class="icon"></div>Фото</div>
+            <div class="item"><div class="icon"></div>Тик</div>
+            <div class="item"><div class="icon"></div>Чат</div>
+          </div>
+          <div class="ui-pane" style="flex:1;">
+            <div class="pane-title">Дашборд</div>
+            <div class="ui-card" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-left:3px solid var(--violet-500);">
+              <div class="pane-title">🤖 AI · 4 инсайта дня</div>
+              <div class="line accent s80"></div>
+              <div class="line s60" style="margin-top:3px;"></div>
+              <div class="line s40" style="margin-top:3px;"></div>
+            </div>
+            <div class="stat-row cols-4">
+              <div class="stat"><div class="v">14</div><div class="l">Смены</div></div>
+              <div class="stat"><div class="v">23</div><div class="l">Активные</div></div>
+              <div class="stat"><div class="v">7</div><div class="l">Фото</div></div>
+              <div class="stat"><div class="v">3</div><div class="l">Тикеты</div></div>
+            </div>
+            <div class="stat-row cols-2">
+              <div class="ui-card"><div class="pane-title">Команда</div><div class="line accent s80"></div><div class="line s60" style="margin-top:3px;"></div></div>
+              <div class="ui-card"><div class="pane-title">Эффективность</div><div class="line success s80"></div><div class="line s40" style="margin-top:3px;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CURATOR DASHBOARD · XLARGE -->
+      <div class="screen-content" data-screen="curator-dashboard" data-size="tabxl">
+        <div class="ui-topbar">
+          <span>Куратор · ООО ЗСО · Углич</span>
+          <div class="actions"><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="ui-content">
+          <div class="ui-navrail">
+            <div class="item active"><div class="icon"></div>Обзор</div>
+            <div class="item"><div class="icon"></div>Бриг</div>
+            <div class="item"><div class="icon"></div>Люди</div>
+            <div class="item"><div class="icon"></div>Объе</div>
+            <div class="item"><div class="icon"></div>Зад</div>
+            <div class="item"><div class="icon"></div>Фото</div>
+            <div class="item"><div class="icon"></div>Тик</div>
+            <div class="item"><div class="icon"></div>Чат</div>
+          </div>
+          <div class="ui-pane" style="flex:1;">
+            <div class="pane-title">Дашборд</div>
+            <div class="ui-card" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-left:3px solid var(--violet-500);">
+              <div class="pane-title">🤖 AI · 4 инсайта дня</div>
+              <div class="line accent s80"></div>
+              <div class="line s60" style="margin-top:3px;"></div>
+            </div>
+            <div class="stat-row cols-4">
+              <div class="stat"><div class="v">14</div><div class="l">Смены</div></div>
+              <div class="stat"><div class="v">23</div><div class="l">Активные</div></div>
+              <div class="stat"><div class="v">7</div><div class="l">Фото</div></div>
+              <div class="stat"><div class="v">3</div><div class="l">Тикеты</div></div>
+            </div>
+            <div class="stat-row cols-3">
+              <div class="ui-card"><div class="pane-title">Команда</div><div class="line accent s80"></div><div class="line s60" style="margin-top:3px;"></div></div>
+              <div class="ui-card"><div class="pane-title">Эффективность</div><div class="line success s80"></div><div class="line s40" style="margin-top:3px;"></div></div>
+              <div class="ui-card"><div class="pane-title">Инструмент</div><div class="line s80"></div><div class="line warn s40" style="margin-top:3px;"></div></div>
+            </div>
+            <div class="ui-card"><div class="pane-title">Аналитика недели</div><div class="line s80"></div><div class="line s60" style="margin-top:3px;"></div><div class="line s40" style="margin-top:3px;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           CURATOR TICKETS — лучший пример list-detail
+           ============================================================ -->
+
+      <!-- TICKETS · COMPACT -->
+      <div class="screen-content" data-screen="curator-tickets" data-size="compact foldclosed">
+        <div class="ui-topbar">
+          <span>Тикеты поддержки · 3</span>
+          <div class="actions"><span></span><span></span></div>
+        </div>
+        <div class="ui-tabrow">
+          <div class="tab">Обзор</div>
+          <div class="tab">Бригады</div>
+          <div class="tab">Люди</div>
+          <div class="tab active">Тикеты</div>
+        </div>
+        <div class="ui-content" style="flex-direction:column;">
+          <div class="ui-card">
+            <div style="display:flex;gap:4px;align-items:center;">
+              <div class="line accent" style="width:30px;"></div>
+              <div style="font-size:7px;background:var(--rose-500);color:#fff;padding:1px 4px;border-radius:99px;font-weight:700;">🤖 СРОЧНО</div>
+            </div>
+            <div class="line" style="margin-top:3px;"></div>
+            <div class="line s60" style="margin-top:2px;"></div>
+          </div>
+          <div class="ui-card">
+            <div style="display:flex;gap:4px;align-items:center;">
+              <div class="line" style="width:30px;"></div>
+              <div style="font-size:7px;background:var(--amber-500);color:#fff;padding:1px 4px;border-radius:99px;font-weight:700;">🤖 Высокий</div>
+            </div>
+            <div class="line" style="margin-top:3px;"></div>
+            <div class="line s40" style="margin-top:2px;"></div>
+          </div>
+          <div class="ui-card">
+            <div class="line"></div>
+            <div class="line s60" style="margin-top:2px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TICKETS · EXPANDED list-detail -->
+      <div class="screen-content" data-screen="curator-tickets" data-size="foldopen tab11">
+        <div class="ui-topbar">
+          <span>Тикеты поддержки</span>
+          <div class="actions"><span></span><span></span><span></span></div>
+        </div>
+        <div class="ui-content">
+          <div class="ui-navrail">
+            <div class="item"><div class="icon"></div>Обзор</div>
+            <div class="item"><div class="icon"></div>Бриг</div>
+            <div class="item"><div class="icon"></div>Люди</div>
+            <div class="item"><div class="icon"></div>Объе</div>
+            <div class="item"><div class="icon"></div>Зад</div>
+            <div class="item"><div class="icon"></div>Фото</div>
+            <div class="item active"><div class="icon"></div>Тик</div>
+            <div class="item"><div class="icon"></div>Чат</div>
+          </div>
+          <div class="ui-pane" style="flex:0.35;">
+            <div class="pane-title">Список тикетов · 3</div>
+            <div class="ui-card selected">
+              <div style="display:flex;gap:4px;align-items:center;">
+                <div class="line accent" style="width:24px;"></div>
+                <div style="font-size:6px;background:var(--rose-500);color:#fff;padding:1px 3px;border-radius:99px;font-weight:700;">🔴 СРОЧНО</div>
+              </div>
+              <div class="line s80" style="margin-top:3px;"></div>
+              <div class="line s60" style="margin-top:2px;"></div>
+            </div>
+            <div class="ui-card">
+              <div style="display:flex;gap:4px;align-items:center;">
+                <div class="line" style="width:24px;"></div>
+                <div style="font-size:6px;background:var(--amber-500);color:#fff;padding:1px 3px;border-radius:99px;font-weight:700;">🟠 Высокий</div>
+              </div>
+              <div class="line s80" style="margin-top:3px;"></div>
+              <div class="line s40" style="margin-top:2px;"></div>
+            </div>
+            <div class="ui-card">
+              <div class="line s80"></div>
+              <div class="line s40" style="margin-top:2px;"></div>
+            </div>
+          </div>
+          <div class="ui-pane" style="flex:0.65;">
+            <div class="pane-title">Тикет #142 · Иванов А. · 🔴 СРОЧНО</div>
+            <div class="ui-card" style="background:var(--rose-100);border-left:3px solid var(--rose-500);">
+              <div class="line tall accent"></div>
+              <div class="line" style="margin-top:3px;"></div>
+              <div class="line s80" style="margin-top:2px;"></div>
+              <div class="line s60" style="margin-top:2px;"></div>
+            </div>
+            <div class="ui-card">
+              <div class="pane-title">Conversation</div>
+              <div class="line s80"></div>
+              <div class="line s60" style="margin-top:2px;"></div>
+              <div class="line s40" style="margin-top:2px;"></div>
+            </div>
+            <div class="btn-row">
+              <div class="btn secondary">В работу</div>
+              <div class="btn">Ответить</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TICKETS · XLARGE 3-pane -->
+      <div class="screen-content" data-screen="curator-tickets" data-size="tabxl">
+        <div class="ui-topbar">
+          <span>Тикеты поддержки</span>
+          <div class="actions"><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="ui-content">
+          <div class="ui-navrail">
+            <div class="item"><div class="icon"></div>Обзор</div>
+            <div class="item"><div class="icon"></div>Бриг</div>
+            <div class="item"><div class="icon"></div>Люди</div>
+            <div class="item"><div class="icon"></div>Объе</div>
+            <div class="item"><div class="icon"></div>Зад</div>
+            <div class="item"><div class="icon"></div>Фото</div>
+            <div class="item active"><div class="icon"></div>Тик</div>
+            <div class="item"><div class="icon"></div>Чат</div>
+          </div>
+          <div class="ui-pane" style="flex:0.28;">
+            <div class="pane-title">Список · 3</div>
+            <div class="ui-card selected">
+              <div style="font-size:6px;background:var(--rose-500);color:#fff;padding:1px 3px;border-radius:99px;font-weight:700;display:inline-block;">🔴 СРОЧНО</div>
+              <div class="line s80" style="margin-top:3px;"></div>
+              <div class="line s60" style="margin-top:2px;"></div>
+            </div>
+            <div class="ui-card">
+              <div style="font-size:6px;background:var(--amber-500);color:#fff;padding:1px 3px;border-radius:99px;font-weight:700;display:inline-block;">🟠 Высокий</div>
+              <div class="line s80" style="margin-top:3px;"></div>
+            </div>
+            <div class="ui-card">
+              <div class="line s80"></div>
+            </div>
+          </div>
+          <div class="ui-pane" style="flex:0.42;">
+            <div class="pane-title">Тикет #142 · Conversation</div>
+            <div class="ui-card" style="background:var(--rose-100);border-left:3px solid var(--rose-500);">
+              <div class="line tall accent"></div>
+              <div class="line" style="margin-top:3px;"></div>
+              <div class="line s80" style="margin-top:2px;"></div>
+            </div>
+            <div class="ui-card">
+              <div class="line s80"></div>
+              <div class="line s60" style="margin-top:2px;"></div>
+            </div>
+            <div class="ui-card" style="background:var(--indigo-50);">
+              <div class="line s80"></div>
+              <div class="line s40" style="margin-top:2px;"></div>
+            </div>
+          </div>
+          <div class="ui-pane" style="flex:0.30;">
+            <div class="pane-title">Действия / Inspector</div>
+            <div class="ui-card">
+              <div class="pane-title">Юзер</div>
+              <div class="line accent s80"></div>
+              <div class="line s60" style="margin-top:2px;"></div>
+            </div>
+            <div class="ui-card">
+              <div class="pane-title">История тикетов</div>
+              <div class="line s60"></div>
+              <div class="line s40" style="margin-top:2px;"></div>
+            </div>
+            <div class="btn-row" style="flex-direction:column;">
+              <div class="btn">Ответить</div>
+              <div class="btn secondary">В работу</div>
+              <div class="btn warn">Эскалация</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           CURATOR PHOTOS
+           ============================================================ -->
+
+      <!-- PHOTOS · COMPACT -->
+      <div class="screen-content" data-screen="curator-photos" data-size="compact foldclosed">
+        <div class="ui-topbar">
+          <span>Фото · 7 на проверке</span>
+          <div class="actions"><span></span><span></span></div>
+        </div>
+        <div class="ui-tabrow">
+          <div class="tab">Все</div>
+          <div class="tab active">На проверке</div>
+          <div class="tab">Одобрено</div>
+          <div class="tab">Отклонено</div>
+        </div>
+        <div class="ui-content" style="flex-direction:column;">
+          <div class="photo-grid cols-2">
+            <div class="photo-tile"></div>
+            <div class="photo-tile warning"></div>
+            <div class="photo-tile"></div>
+            <div class="photo-tile"></div>
+            <div class="photo-tile warning"></div>
+            <div class="photo-tile"></div>
+            <div class="photo-tile"></div>
+            <div class="photo-tile"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHOTOS · EXPANDED grid+preview -->
+      <div class="screen-content" data-screen="curator-photos" data-size="foldopen tab11">
+        <div class="ui-topbar">
+          <span>Фото · 7 на проверке</span>
+          <div class="actions"><span></span><span></span><span></span></div>
+        </div>
+        <div class="ui-content">
+          <div class="ui-navrail">
+            <div class="item"><div class="icon"></div>Обзор</div>
+            <div class="item"><div class="icon"></div>Бриг</div>
+            <div class="item"><div class="icon"></div>Люди</div>
+            <div class="item"><div class="icon"></div>Объе</div>
+            <div class="item"><div class="icon"></div>Зад</div>
+            <div class="item active"><div class="icon"></div>Фото</div>
+            <div class="item"><div class="icon"></div>Тик</div>
+            <div class="item"><div class="icon"></div>Чат</div>
+          </div>
+          <div class="ui-pane" style="flex:0.55;">
+            <div class="pane-title">На проверке · 7</div>
+            <div class="photo-grid cols-3">
+              <div class="photo-tile selected"></div>
+              <div class="photo-tile warning"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile warning"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+            </div>
+          </div>
+          <div class="ui-pane" style="flex:0.45;">
+            <div class="pane-title">Preview · Иванов А. · 14:23</div>
+            <div class="photo-tile" style="width:100%; aspect-ratio:4/3;"></div>
+            <div class="ui-card" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-left:3px solid var(--violet-500);">
+              <div class="pane-title">🤖 AI · 8/10</div>
+              <div class="line accent s80"></div>
+              <div class="line s60" style="margin-top:2px;"></div>
+            </div>
+            <div class="btn-row">
+              <div class="btn secondary">Отклонить</div>
+              <div class="btn">Одобрить</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHOTOS · XLARGE -->
+      <div class="screen-content" data-screen="curator-photos" data-size="tabxl">
+        <div class="ui-topbar">
+          <span>Фото · 7 на проверке · ООО ЗСО</span>
+          <div class="actions"><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="ui-content">
+          <div class="ui-navrail">
+            <div class="item"><div class="icon"></div>Обзор</div>
+            <div class="item"><div class="icon"></div>Бриг</div>
+            <div class="item"><div class="icon"></div>Люди</div>
+            <div class="item"><div class="icon"></div>Объе</div>
+            <div class="item"><div class="icon"></div>Зад</div>
+            <div class="item active"><div class="icon"></div>Фото</div>
+            <div class="item"><div class="icon"></div>Тик</div>
+            <div class="item"><div class="icon"></div>Чат</div>
+          </div>
+          <div class="ui-pane" style="flex:0.50;">
+            <div class="pane-title">Сетка · 7 на проверке</div>
+            <div class="photo-grid cols-4">
+              <div class="photo-tile selected"></div>
+              <div class="photo-tile warning"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile warning"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile approved"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+            </div>
+          </div>
+          <div class="ui-pane" style="flex:0.30;">
+            <div class="pane-title">Preview · 14:23</div>
+            <div class="photo-tile" style="width:100%; aspect-ratio:4/3;"></div>
+            <div class="ui-card" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-left:3px solid var(--violet-500);">
+              <div class="pane-title">🤖 AI · 8/10 · шлем ✓</div>
+              <div class="line accent s80"></div>
+              <div class="line s60" style="margin-top:2px;"></div>
+            </div>
+          </div>
+          <div class="ui-pane" style="flex:0.20;">
+            <div class="pane-title">Действия / Метаданные</div>
+            <div class="ui-card">
+              <div class="line accent s80"></div>
+              <div class="line s40" style="margin-top:2px;"></div>
+            </div>
+            <div class="ui-card">
+              <div class="line s60"></div>
+            </div>
+            <div class="btn">Одобрить</div>
+            <div class="btn secondary">Отклонить</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           FOREMAN MAIN — NavigationSuiteScaffold
+           ============================================================ -->
+
+      <!-- FOREMAN · COMPACT -->
+      <div class="screen-content" data-screen="foreman" data-size="compact foldclosed">
+        <div class="ui-topbar">
+          <span>Бригадир · Сидоров А.</span>
+          <div class="actions"><span></span><span></span></div>
+        </div>
+        <div class="ui-content" style="flex-direction:column;">
+          <div class="stat-row cols-2">
+            <div class="stat"><div class="v">5</div><div class="l">В смене</div></div>
+            <div class="stat"><div class="v">12</div><div class="l">Задач</div></div>
+          </div>
+          <div class="ui-card">
+            <div class="pane-title">Моя команда · 5</div>
+            <div class="line accent s80"></div>
+            <div class="line s60" style="margin-top:2px;"></div>
+            <div class="line s40" style="margin-top:2px;"></div>
+          </div>
+          <div class="ui-card">
+            <div class="pane-title">Задачи на сегодня</div>
+            <div class="line s80"></div>
+            <div class="line s60" style="margin-top:2px;"></div>
+          </div>
+          <div class="ui-card">
+            <div class="pane-title">Фото 24ч · 12</div>
+            <div class="photo-grid cols-3" style="margin-top:3px;">
+              <div class="photo-tile approved" style="aspect-ratio:1;"></div>
+              <div class="photo-tile" style="aspect-ratio:1;"></div>
+              <div class="photo-tile warning" style="aspect-ratio:1;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="ui-bottomnav">
+          <div class="item active"></div>
+          <div class="item"></div>
+          <div class="item"></div>
+          <div class="item"></div>
+          <div class="item"></div>
+        </div>
+      </div>
+
+      <!-- FOREMAN · EXPANDED -->
+      <div class="screen-content" data-screen="foreman" data-size="foldopen tab11">
+        <div class="ui-topbar">
+          <span>Бригадир · Сидоров А. · ООО ЗСО</span>
+          <div class="actions"><span></span><span></span><span></span></div>
+        </div>
+        <div class="ui-content">
+          <div class="ui-navrail">
+            <div class="item active"><div class="icon"></div>Главн</div>
+            <div class="item"><div class="icon"></div>Коман</div>
+            <div class="item"><div class="icon"></div>Зад</div>
+            <div class="item"><div class="icon"></div>Фото</div>
+            <div class="item"><div class="icon"></div>Чат</div>
+            <div class="item"><div class="icon"></div>Проф</div>
+          </div>
+          <div class="ui-pane" style="flex:0.45;">
+            <div class="pane-title">Главная</div>
+            <div class="stat-row cols-2">
+              <div class="stat"><div class="v">5</div><div class="l">В смене</div></div>
+              <div class="stat"><div class="v">12</div><div class="l">Задач</div></div>
+            </div>
+            <div class="ui-card">
+              <div class="pane-title">Моя команда · 5</div>
+              <div class="line accent s80"></div>
+              <div class="line s60" style="margin-top:2px;"></div>
+            </div>
+            <div class="ui-card">
+              <div class="pane-title">Сегодняшние задачи</div>
+              <div class="line s80"></div>
+              <div class="line s60" style="margin-top:2px;"></div>
+              <div class="line s40" style="margin-top:2px;"></div>
+            </div>
+          </div>
+          <div class="ui-pane" style="flex:0.55;">
+            <div class="pane-title">Фото 24ч · 12</div>
+            <div class="photo-grid cols-4">
+              <div class="photo-tile approved"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile warning"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile approved"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile warning"></div>
+              <div class="photo-tile"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOREMAN · XLARGE -->
+      <div class="screen-content" data-screen="foreman" data-size="tabxl">
+        <div class="ui-topbar">
+          <span>Бригадир · Сидоров А. · ООО ЗСО · Углич-2</span>
+          <div class="actions"><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="ui-content">
+          <div class="ui-navrail">
+            <div class="item active"><div class="icon"></div>Главн</div>
+            <div class="item"><div class="icon"></div>Коман</div>
+            <div class="item"><div class="icon"></div>Зад</div>
+            <div class="item"><div class="icon"></div>Фото</div>
+            <div class="item"><div class="icon"></div>Чат</div>
+            <div class="item"><div class="icon"></div>Проф</div>
+          </div>
+          <div class="ui-pane" style="flex:0.30;">
+            <div class="pane-title">Статистика</div>
+            <div class="stat-row cols-2">
+              <div class="stat"><div class="v">5</div><div class="l">В смене</div></div>
+              <div class="stat"><div class="v">12</div><div class="l">Задач</div></div>
+            </div>
+            <div class="ui-card">
+              <div class="pane-title">Команда</div>
+              <div class="line accent s80"></div>
+              <div class="line s60" style="margin-top:2px;"></div>
+              <div class="line s40" style="margin-top:2px;"></div>
+            </div>
+          </div>
+          <div class="ui-pane" style="flex:0.40;">
+            <div class="pane-title">Фото 24ч · 12</div>
+            <div class="photo-grid cols-3">
+              <div class="photo-tile approved"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile warning"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile approved"></div>
+              <div class="photo-tile"></div>
+              <div class="photo-tile"></div>
+            </div>
+          </div>
+          <div class="ui-pane" style="flex:0.30;">
+            <div class="pane-title">Активные смены / Чат</div>
+            <div class="ui-card"><div class="line accent s80"></div><div class="line s60" style="margin-top:2px;"></div></div>
+            <div class="ui-card"><div class="line s80"></div><div class="line s40" style="margin-top:2px;"></div></div>
+            <div class="ui-card"><div class="line s60"></div></div>
+            <div class="ui-card" style="background:var(--indigo-50);">
+              <div class="pane-title">Чат</div>
+              <div class="line accent s80"></div>
+              <div class="line s40" style="margin-top:2px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="annotations" id="annotations">
+    <h4>ShiftScreen на Phone Compact</h4>
+    <ul>
+      <li><strong>Навигация</strong>: BottomNavigation внизу (4 пункта)</li>
+      <li><strong>Контент</strong>: одна колонка во всю ширину</li>
+      <li><strong>Таймер</strong>: крупный индиго-градиент сверху</li>
+      <li><strong>Кнопки</strong>: Пауза + Простой через Row { weight(1f), weight(1f) }</li>
+      <li><strong>Фото-сетка</strong>: 2 столбца (statCardsPerRow=2 для compact)</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  const screenPills = document.querySelectorAll('#screenPills .pill');
+  const sizePills = document.querySelectorAll('#sizePills .pill');
+  const device = document.getElementById('device');
+  const stageInfo = document.getElementById('stageInfo');
+  const annotations = document.getElementById('annotations');
+
+  let currentScreen = 'shift';
+  let currentSize = 'compact';
+
+  const SIZE_INFO = {
+    'compact': { name: 'Phone Compact', dp: '411 dp', wsc: 'COMPACT', pattern: 'BottomNav · 1 колонка' },
+    'foldclosed': { name: 'Z Fold closed (cover)', dp: '374 dp', wsc: 'COMPACT', pattern: 'BottomNav · 1 колонка (узкий)' },
+    'foldopen': { name: 'Z Fold open landscape', dp: '884 dp', wsc: 'EXPANDED', pattern: 'NavRail · 2 pane' },
+    'tab11': { name: 'Tab 11"', dp: '933 dp', wsc: 'EXPANDED', pattern: 'NavRail · 2 pane' },
+    'tabxl': { name: 'Tab S Ultra 14.6"', dp: '1232 dp', wsc: 'XLARGE', pattern: 'NavRail · 3 pane' },
+  };
+
+  const SCREEN_INFO = {
+    'shift': 'ShiftScreen',
+    'curator-dashboard': 'CuratorMain · Обзор',
+    'curator-tickets': 'CuratorMain · Тикеты',
+    'curator-photos': 'CuratorMain · Фото',
+    'foreman': 'ForemanMain',
+  };
+
+  const ANNOTATIONS = {
+    'shift|compact': {
+      title: 'ShiftScreen на Phone Compact',
+      items: [
+        '<strong>Навигация</strong>: BottomNavigation внизу (4 пункта)',
+        '<strong>Контент</strong>: одна колонка во всю ширину',
+        '<strong>Таймер</strong>: крупный индиго-градиент сверху',
+        '<strong>Кнопки</strong>: Пауза + Простой через Row { weight(1f), weight(1f) }',
+        '<strong>Фото-сетка</strong>: 2 столбца (statCardsPerRow=2 для compact)',
+      ],
+    },
+    'shift|foldclosed': {
+      title: 'ShiftScreen на Z Fold closed (cover)',
+      items: [
+        'Cover-экран Z Fold — это <strong>обычный узкий phone</strong> (374 dp)',
+        'Раскладка идентична compact phone',
+        'Фото-сетка тесная — 2 столбца',
+        '<strong>UX-вопрос</strong>: достаточно ли cover-экрана для смены? Возможно есть смысл просить юзера открыть Fold для работы',
+      ],
+    },
+    'shift|foldopen': {
+      title: 'ShiftScreen на Z Fold open landscape',
+      items: [
+        '<strong>NavigationSuiteScaffold</strong> автоматически переключился на NavigationRail слева',
+        '<strong>Two-pane layout</strong>: левая колонка 45% (статус смены) · правая 55% (фото-сетка 3 столбца)',
+        'Таймер занимает компактную карточку, не растягивается',
+        'Фото-сетка <code>GridCells.Adaptive(minSize=120.dp)</code> сама подобрала 3 столбца',
+        'Кнопки Пауза/Простой — рядом в одной колонке',
+      ],
+    },
+    'shift|tab11': {
+      title: 'ShiftScreen на 11" планшете',
+      items: [
+        'Тот же two-pane layout что на Z Fold open',
+        'Чуть больше места на каждую панель → крупнее карточки, больше фото в видимой части',
+        'NavigationRail остаётся слева (стандартный для 933 dp landscape)',
+      ],
+    },
+    'shift|tabxl': {
+      title: 'ShiftScreen на Tab S Ultra 14.6"',
+      items: [
+        '<strong>Three-pane layout</strong>: статус (32%) · фото (42%) · активность/задачи (26%)',
+        'Третья панель показывает активность смены, последние действия, открытые задачи',
+        'Контент НЕ растягивается на 1232 dp — каждая панель имеет осмысленную ширину',
+        'NavigationRail с большими иконками + лейблами',
+      ],
+    },
+    'curator-dashboard|compact': {
+      title: 'Curator Dashboard на Phone Compact',
+      items: [
+        'ScrollableTabRow сверху (8 табов прокручиваются)',
+        'AI-инсайты карточкой сверху (фиолетовый градиент)',
+        'Стат-карточки сетки 2×2 (2+2)',
+      ],
+    },
+    'curator-dashboard|foldclosed': {
+      title: 'Curator Dashboard на Z Fold closed (cover)',
+      items: [
+        'Cover-экран = compact (374 dp)',
+        'То же что и phone — табы прокручиваются',
+      ],
+    },
+    'curator-dashboard|foldopen': {
+      title: 'Curator Dashboard на Z Fold open',
+      items: [
+        '<strong>NavigationRail</strong> слева — все 8 пунктов видны',
+        'Контент в одной широкой панели — стат-карточки <strong>4 в ряд</strong>',
+        'AI-карточка во всю ширину контента',
+        'Карточки команды/эффективности — 2 в ряд',
+      ],
+    },
+    'curator-dashboard|tab11': {
+      title: 'Curator Dashboard на 11" tablet',
+      items: [
+        'Идентично Z Fold open layout',
+        '<code>statCardsPerRow=4</code>',
+      ],
+    },
+    'curator-dashboard|tabxl': {
+      title: 'Curator Dashboard на Tab S Ultra',
+      items: [
+        '<code>statCardsPerRow=4</code> (можно увеличить до 6)',
+        'Карточки в нижнем ряду — <strong>3 в ряд</strong> (Команда / Эффективность / Инструмент)',
+        'Дополнительная карточка «Аналитика недели» развёрнутой',
+        'XLarge не требует 3-pane на дашборде — это контент для просмотра, не для list-detail',
+      ],
+    },
+    'curator-tickets|compact': {
+      title: 'Тикеты на Phone Compact',
+      items: [
+        'Список во всю ширину',
+        '<strong>TriagePriorityBadge</strong> рядом с именем юзера',
+        'Tap на тикет → отдельный screen для conversation',
+      ],
+    },
+    'curator-tickets|foldclosed': {
+      title: 'Тикеты на Z Fold closed',
+      items: ['Identical к compact phone (374 dp)'],
+    },
+    'curator-tickets|foldopen': {
+      title: 'Тикеты на Z Fold open — list-detail',
+      items: [
+        '<strong>Это где раскладка реально меняет UX</strong>',
+        'Слева 35% — список тикетов с AI-приоритетами',
+        'Справа 65% — выбранный тикет: заголовок + conversation + кнопки',
+        'Куратор НЕ переключается между экранами — всё видно сразу',
+        '<strong>Реализация</strong>: <code>NavigableListDetailPaneScaffold</code> из Material 3 Adaptive',
+      ],
+    },
+    'curator-tickets|tab11': {
+      title: 'Тикеты на 11" tablet',
+      items: ['То же что Z Fold open — 2 pane'],
+    },
+    'curator-tickets|tabxl': {
+      title: 'Тикеты на Tab S Ultra — three-pane',
+      items: [
+        '<strong>3 панели</strong>: список (28%) · conversation (42%) · инспектор (30%)',
+        'Третья панель — карточка юзера, история тикетов, кнопки эскалации',
+        'Куратор работает с тикетом не открывая другие экраны',
+      ],
+    },
+    'curator-photos|compact': {
+      title: 'Фото на Phone Compact',
+      items: [
+        'Фильтр-табы сверху (Все / На проверке / Одобрено / Отклонено)',
+        'Сетка 2 столбца',
+        'Tap → fullscreen viewer',
+      ],
+    },
+    'curator-photos|foldclosed': {
+      title: 'Фото на Z Fold closed',
+      items: ['Identical к compact'],
+    },
+    'curator-photos|foldopen': {
+      title: 'Фото на Z Fold open — grid + preview',
+      items: [
+        'Слева 55% — сетка 3 столбца',
+        'Справа 45% — preview выбранного: фото + AI-анализ + кнопки',
+        'AI-карточка с фиолетовым градиентом (брендинг 🤖)',
+        'Кнопки Одобрить / Отклонить ниже preview',
+      ],
+    },
+    'curator-photos|tab11': {
+      title: 'Фото на 11" tablet',
+      items: ['То же что Z Fold open — 2 pane'],
+    },
+    'curator-photos|tabxl': {
+      title: 'Фото на Tab S Ultra — 3 pane',
+      items: [
+        'Сетка 50% (4 столбца) · preview 30% · метаданные/действия 20%',
+        'Большая сетка показывает 12+ фото без скролла',
+        'Action-панель содержит approve/reject/история',
+      ],
+    },
+    'foreman|compact': {
+      title: 'ForemanMain на Phone Compact',
+      items: [
+        '<strong>NavigationSuiteScaffold</strong> на compact → BottomNavigation (5 пунктов)',
+        'Стат-карточки 2×2',
+        'Card-список: команда, задачи, фото',
+        'Фото 3 в ряд (compact с тесной сеткой)',
+      ],
+    },
+    'foreman|foldclosed': {
+      title: 'ForemanMain на Z Fold closed',
+      items: ['Identical к compact phone'],
+    },
+    'foreman|foldopen': {
+      title: 'ForemanMain на Z Fold open',
+      items: [
+        'NavigationSuiteScaffold переключился на NavigationRail',
+        '<strong>Two-pane</strong>: статистика+команда+задачи (45%) · фото 24ч (55%)',
+        'Фото-сетка 4 столбца',
+      ],
+    },
+    'foreman|tab11': {
+      title: 'ForemanMain на 11" tablet',
+      items: ['То же что Z Fold open'],
+    },
+    'foreman|tabxl': {
+      title: 'ForemanMain на Tab S Ultra',
+      items: [
+        '<strong>Three-pane</strong>: статистика (30%) · фото (40%) · активность+чат (30%)',
+        'Чат-карточка в правой панели даёт быстрый доступ к последним сообщениям',
+      ],
+    },
+  };
+
+  function getActiveContentFor(screen, size) {
+    const matches = document.querySelectorAll(`.screen-content[data-screen="${screen}"]`);
+    for (const el of matches) {
+      const sizes = el.dataset.size.split(' ');
+      if (sizes.includes(size)) return el;
+    }
+    return null;
+  }
+
+  function render() {
+    // Update device size class
+    device.className = 'device size-' + currentSize;
+
+    // Show only matching content
+    document.querySelectorAll('.screen-content').forEach(el => el.classList.remove('active'));
+    const target = getActiveContentFor(currentScreen, currentSize);
+    if (target) target.classList.add('active');
+
+    // Update info
+    const info = SIZE_INFO[currentSize];
+    stageInfo.innerHTML = `<strong>${SCREEN_INFO[currentScreen]}</strong> на <strong>${info.name}</strong> · <code>${info.dp}</code> · ${info.wsc} · ${info.pattern}`;
+
+    // Update annotations
+    const key = `${currentScreen}|${currentSize}`;
+    const ann = ANNOTATIONS[key];
+    if (ann) {
+      annotations.innerHTML = `<h4>${ann.title}</h4><ul>${ann.items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+    } else {
+      annotations.innerHTML = `<h4>${SCREEN_INFO[currentScreen]} на ${info.name}</h4><p>Раскладка в разработке.</p>`;
+    }
+  }
+
+  screenPills.forEach(p => p.addEventListener('click', () => {
+    screenPills.forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    currentScreen = p.dataset.screen;
+    render();
+  }));
+
+  sizePills.forEach(p => p.addEventListener('click', () => {
+    sizePills.forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    currentSize = p.dataset.size;
+    render();
+  }));
+
+  render();
+</script>
+
+</body>
+</html>

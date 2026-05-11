@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BELSI · Виды интерфейса (1.2.5-driver)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#F8FAFC; --surface:#FFFFFF; --border:#E2E8F0;
+    --text:#0F172A; --muted:#64748B;
+    --installation:#4F46E5; --logistics:#0EA5E9;
+    --production:#D97706; --observer:#8B5CF6;
+    --emerald:#10B981; --rose:#F43F5E; --amber:#F59E0B;
+  }
+  *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); line-height:1.5; }
+  code { font-family:'JetBrains Mono',monospace; font-size:.85em; }
+
+  .container { max-width:1280px; margin:0 auto; padding:48px 24px; }
+
+  .hero { padding:48px; background:linear-gradient(135deg,#1E293B,#0F172A); color:#fff; border-radius:24px; margin-bottom:48px; }
+  .hero h1 { font-size:2.5rem; font-weight:800; letter-spacing:-.02em; margin-bottom:8px; }
+  .hero .sub { color:rgba(255,255,255,.7); margin-bottom:16px; }
+  .hero .meta { display:flex; gap:24px; padding-top:16px; border-top:1px solid rgba(255,255,255,.1); font-size:.85rem; color:rgba(255,255,255,.6); flex-wrap:wrap; }
+  .hero .meta strong { color:#fff; display:block; font-size:1.4rem; font-weight:800; }
+
+  h2 { font-size:1.7rem; font-weight:800; margin:48px 0 8px; letter-spacing:-.01em; }
+  h2 .badge { font-size:.7rem; padding:4px 10px; border-radius:99px; vertical-align:middle; margin-left:12px; font-weight:600; }
+  .badge.installation { background:#EEF2FF; color:var(--installation); }
+  .badge.logistics { background:#E0F2FE; color:var(--logistics); }
+  .badge.production { background:#FEF3C7; color:var(--production); }
+  .badge.observer { background:#EDE9FE; color:var(--observer); }
+  .badge.auth { background:#F1F5F9; color:#475569; }
+  .lead { color:var(--muted); margin-bottom:24px; max-width:780px; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+
+  /* Phone-mock */
+  .phone {
+    background:#000; border-radius:30px; padding:8px;
+    box-shadow:0 12px 24px -8px rgba(15,23,42,.15);
+  }
+  .phone .screen {
+    background:var(--bg); border-radius:24px; overflow:hidden;
+    height:540px; position:relative;
+  }
+  .phone .topbar {
+    background:var(--surface); padding:12px 16px;
+    border-bottom:1px solid var(--border);
+    font-weight:600; font-size:.9rem;
+  }
+  .phone .topbar .role {
+    font-size:.7rem; color:var(--muted); font-weight:500;
+    text-transform:uppercase; letter-spacing:.06em;
+  }
+  .phone .body {
+    padding:14px; height:calc(100% - 50px - 60px);
+    overflow:hidden; font-size:.78rem;
+  }
+  .phone .bottom {
+    position:absolute; bottom:0; left:0; right:0;
+    padding:10px 14px; background:var(--surface);
+    border-top:1px solid var(--border); height:60px;
+  }
+  .phone .bottom .btn {
+    display:block; padding:12px; text-align:center;
+    background:var(--installation); color:#fff;
+    border-radius:10px; font-weight:600; font-size:.8rem;
+  }
+  .phone .bottom .btn.amber { background:var(--production); }
+  .phone .bottom .btn.violet { background:var(--observer); }
+  .phone .bottom .btn.sky { background:var(--logistics); }
+  .phone .bottom .btn.error { background:var(--rose); }
+
+  /* Card with screen + caption */
+  .scr {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:14px;
+  }
+  .scr h3 { font-size:.95rem; margin-bottom:4px; font-weight:700; }
+  .scr .desc { color:var(--muted); font-size:.78rem; margin-bottom:12px; }
+  .scr .tag {
+    font-family:'JetBrains Mono',monospace; font-size:.65rem;
+    color:var(--muted); margin-top:8px;
+  }
+
+  /* Quick blocks inside phones */
+  .row { padding:10px 12px; background:var(--surface); border:1px solid var(--border); border-radius:10px; margin-bottom:6px; }
+  .row.amber { background:#FEF3C7; }
+  .row.sky { background:#E0F2FE; }
+  .row.indigo { background:#EEF2FF; }
+  .row.rose { background:#FEE2E2; }
+  .row.emerald { background:#D1FAE5; }
+  .row.warn { background:#FEE2E2; border-color:#F43F5E; }
+  .row strong { font-weight:700; display:block; }
+  .row span { color:var(--muted); font-size:.7rem; }
+
+  .pill { display:inline-block; padding:2px 8px; border-radius:99px; background:#F1F5F9; font-size:.65rem; font-weight:600; color:#475569; }
+  .pill.amber { background:#FEF3C7; color:#92400E; }
+  .pill.emerald { background:#D1FAE5; color:#065F46; }
+  .pill.sky { background:#E0F2FE; color:#0369A1; }
+
+  .stat-row { display:flex; gap:6px; margin-bottom:8px; }
+  .stat-row .stat-mini { flex:1; padding:8px; border-radius:8px; }
+  .stat-row .stat-mini .num { font-size:1.4rem; font-weight:800; line-height:1; }
+  .stat-row .stat-mini .lbl { font-size:.65rem; color:var(--muted); }
+  .stat-row .stat-mini.green { background:#D1FAE5; }
+  .stat-row .stat-mini.green .num { color:var(--emerald); }
+  .stat-row .stat-mini.red { background:#FEE2E2; }
+  .stat-row .stat-mini.red .num { color:var(--rose); }
+  .stat-row .stat-mini.amber { background:#FEF3C7; }
+  .stat-row .stat-mini.amber .num { color:var(--production); }
+  .stat-row .stat-mini.sky { background:#E0F2FE; }
+  .stat-row .stat-mini.sky .num { color:var(--logistics); }
+
+  .pipeline {
+    display:flex; gap:4px; margin:8px 0;
+    align-items:center;
+  }
+  .pipeline .step {
+    flex:1; height:6px; background:var(--border); border-radius:3px;
+  }
+  .pipeline .step.done { background:var(--emerald); }
+  .pipeline .step.active { background:var(--production); }
+
+  .timer-big {
+    font-size:2rem; font-weight:800; color:var(--production);
+    letter-spacing:-.02em; line-height:1;
+    font-feature-settings:'tnum';
+  }
+
+  .footer { margin-top:64px; padding-top:32px; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; text-align:center; }
+
+  .info {
+    background:#FEF3C7; border-left:4px solid var(--amber);
+    padding:14px 16px; border-radius:8px; margin-bottom:24px;
+    font-size:.9rem;
+  }
+  .info strong { color:#92400E; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <h1>📱 Виды интерфейса BELSI</h1>
+  <p class="sub">Все экраны нового APK 1.2.5-driver · 11 ролей · 3 домена · регистрация V2</p>
+  <div class="meta">
+    <span><strong>30+</strong> экранов</span>
+    <span><strong>11</strong> ролей</span>
+    <span><strong>5</strong> доменов <small>(монтаж/логистика/производство/куратор/auth)</small></span>
+    <span><strong>40 МБ</strong> APK</span>
+    <span><strong>05 мая 2026</strong></span>
+  </div>
+</div>
+
+<div class="info">
+  <strong>Адаптивный UI:</strong> на всех формах добавлены <code>imePadding()</code> +
+  <code>navigationBarsPadding()</code> + <code>verticalScroll</code> — кнопки больше не уходят за клавиатуру или системную панель навигации.
+  Особенно критичные экраны (RoleSelect/BatchDetail/BatchCreate/IdleReasons) используют <code>Scaffold.bottomBar</code>
+  — кнопка ВСЕГДА видна снизу, не зависит от scroll.
+</div>
+
+<!-- =================================================== -->
+<h2>🔐 Авторизация и регистрация <span class="badge auth">5 экранов</span></h2>
+<p class="lead">Вход по телефону+SMS, по паролю, через Yandex; самостоятельная регистрация V1; выбор ролей V2.</p>
+<div class="grid">
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Auth</div>BELSI.Монтаж</div>
+      <div class="body">
+        <div style="text-align:center; padding:30px 0 20px">
+          <div style="font-weight:800; font-size:1.5rem">BELSI</div>
+          <div style="color:var(--muted); font-size:.78rem">Твой лучший помощник</div>
+        </div>
+        <div class="row">📱 +7 (___) ___-__-__</div>
+        <div style="margin-top:14px">
+          <div class="pill amber" style="display:block; padding:14px; text-align:center; background:var(--installation); color:#fff; font-weight:600">Продолжить</div>
+        </div>
+        <div style="text-align:center; margin-top:14px; color:var(--muted); font-size:.7rem">Войти по паролю · Создать аккаунт</div>
+        <hr style="margin:16px 0; border:0; border-top:1px solid var(--border)">
+        <div class="row">🔴 Я · Войти через Яндекс</div>
+        <div class="row">⚫ S · Войти через Сбер ID</div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">AuthPhoneScreen</h3>
+    <p class="desc">Главный вход. Кнопки «Создать аккаунт» (V1) + Yandex / Sber.</p>
+    <div class="tag">imePadding+windowInsets · вход OK</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Login</div>Вход по паролю</div>
+      <div class="body">
+        <div style="margin-bottom:14px"><strong style="font-size:1.3rem">Телефон, email или логин</strong></div>
+        <div class="row">+79159828631</div>
+        <div class="row">••••••••• 👁</div>
+        <div style="margin-top:14px">
+          <div class="pill" style="display:block; padding:14px; text-align:center; background:var(--installation); color:#fff; font-weight:600">Войти</div>
+        </div>
+        <div style="text-align:center; margin-top:14px; color:var(--muted); font-size:.7rem">Войти по SMS · Создать аккаунт</div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">LoginScreen</h3>
+    <p class="desc">Логин по паролю (для Антоненковой / ЗСО / Снежаны и др).</p>
+    <div class="tag">imePadding ✅</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Шаг 1 из 3</div>Регистрация</div>
+      <div class="body">
+        <div style="background:var(--installation); height:6px; width:33%; border-radius:3px; margin-bottom:14px"></div>
+        <strong style="font-size:1.1rem; display:block; margin-bottom:8px">Телефон и пароль</strong>
+        <div class="row">+7 (___) ___-__-__</div>
+        <div class="row">Пароль 8+ симв 👁</div>
+        <div class="row">Повторите пароль 👁</div>
+        <div style="font-size:.7rem; color:var(--muted); margin-top:8px">Минимум: 8 символов, буква, цифра</div>
+      </div>
+      <div class="bottom"><div class="btn">Далее</div></div>
+    </div></div>
+    <h3 style="margin-top:12px">SignUpScreen — Шаг 1</h3>
+    <p class="desc">Самостоятельная регистрация V1 (3 шага). Backend задеплоен.</p>
+    <div class="tag">imePadding+navigationBarsPadding ✅</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Шаг 2 из 3</div>Регистрация</div>
+      <div class="body">
+        <div style="background:var(--installation); height:6px; width:66%; border-radius:3px; margin-bottom:14px"></div>
+        <strong style="font-size:1.1rem; display:block; margin-bottom:8px">Имя и фамилия</strong>
+        <div class="row">Имя · Иван</div>
+        <div class="row">Фамилия · Петров</div>
+        <div class="row">Email <span style="float:right; color:var(--muted)">опционально</span></div>
+      </div>
+      <div class="bottom"><div class="btn">Далее</div></div>
+    </div></div>
+    <h3 style="margin-top:12px">SignUpScreen — Шаг 2</h3>
+    <p class="desc">ФИО + опциональный email.</p>
+    <div class="tag">3-шаговый wizard</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Регистрация V2</div>Выбор роли</div>
+      <div class="body">
+        <strong style="font-size:1.1rem; display:block; margin-bottom:6px">Кем вы работаете?</strong>
+        <p style="font-size:.7rem; color:var(--muted); margin-bottom:10px">Можно выбрать до 3 ролей.</p>
+
+        <div class="pill" style="background:var(--installation); color:#fff; padding:3px 8px; margin-bottom:6px">🔨 МОНТАЖ</div>
+        <div class="row" style="display:flex; align-items:center; gap:8px"><span style="font-size:1.2rem">🔨</span><div style="flex:1"><strong style="font-size:.8rem">Монтажник</strong><span style="font-size:.65rem">Работает на объектах</span></div><div style="background:var(--installation); width:18px; height:18px; border-radius:9px; color:#fff; text-align:center; line-height:18px">✓</div></div>
+        <div class="row" style="display:flex; align-items:center; gap:8px"><span style="font-size:1.2rem">🛠</span><div style="flex:1"><strong style="font-size:.8rem">Бригадир <span style="background:#FEF3C7; color:#92400E; font-size:.55rem; padding:1px 4px; border-radius:99px">🔒 одобр.</span></strong><span style="font-size:.65rem">Руководит командой</span></div></div>
+
+        <div class="pill" style="background:var(--production); color:#fff; padding:3px 8px; margin-bottom:6px; margin-top:8px">🏭 ПРОИЗВОДСТВО</div>
+        <div class="row" style="display:flex; align-items:center; gap:8px"><span style="font-size:1.2rem">👷</span><div style="flex:1"><strong style="font-size:.8rem">Работник</strong><span style="font-size:.65rem">Базовая роль на фабрике</span></div></div>
+      </div>
+      <div class="bottom" style="padding:8px 14px; height:80px">
+        <div style="font-size:.7rem; margin-bottom:4px"><strong>Выбрано: 1 из 3</strong></div>
+        <div class="btn">Продолжить →</div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">RoleSelectScreenV2 ⭐</h3>
+    <p class="desc">Sticky bottomBar — кнопка «Продолжить» ВСЕГДА видна, индикатор «N/3», блокирует если >3.</p>
+    <div class="tag">solved: кнопка не пропадает</div>
+  </div>
+</div>
+
+<!-- =================================================== -->
+<h2>🔨 Монтаж <span class="badge installation">3 роли · 4 главных</span></h2>
+<p class="lead">Installer / Foreman / Coordinator + Curator (наблюдатель). Это базовый 1.2.5 + новая вкладка «Партии».</p>
+<div class="grid">
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Монтажник</div>Смена</div>
+      <div class="body">
+        <div style="background:#EEF2FF; padding:14px; border-radius:12px; margin-bottom:10px">
+          <div style="font-size:.65rem; color:var(--muted)">📍 Смена идёт</div>
+          <div class="timer-big" style="color:var(--installation)">04:23:14</div>
+          <div style="display:flex; gap:4px; margin-top:6px">
+            <span class="pill emerald">7ч работа</span>
+            <span class="pill">28мин пауза</span>
+          </div>
+        </div>
+        <div class="row">📷 Сделать часовое фото</div>
+        <div class="row">⚠️ Простой</div>
+        <div class="row">⏸ Пауза</div>
+        <div class="row" style="background:#FEF3C7"><strong>Задача от бригадира</strong><span>Установить окно №3</span></div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">ShiftScreen (1.2.5)</h3>
+    <p class="desc">Смена монтажника. Перенесена 1:1 из прода 1.2.5.</p>
+    <div class="tag">прод</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Бригадир</div>Команда · 7</div>
+      <div class="body">
+        <div style="background:var(--surface); padding:8px 10px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px; display:flex; gap:6px; align-items:center">
+          <div style="width:30px; height:30px; background:var(--installation); border-radius:15px; color:#fff; text-align:center; line-height:30px; font-weight:700">К</div>
+          <div style="flex:1"><strong style="font-size:.8rem">Киселёв А.</strong><span style="font-size:.65rem; color:var(--emerald)">На смене 4ч 12мин</span></div>
+          <div style="width:8px; height:8px; background:var(--emerald); border-radius:4px"></div>
+        </div>
+        <div style="background:var(--surface); padding:8px 10px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px">
+          <strong style="font-size:.8rem">Денисов А.</strong><span style="font-size:.65rem; color:var(--muted); display:block">Перерыв 6мин</span>
+        </div>
+        <div class="pill amber" style="margin-top:8px">Команда · Фото · Задачи · Партии · Инструм. · Чат</div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">ForemanMainScreen + tab «Партии»</h3>
+    <p class="desc"><strong>NEW:</strong> вкладка Партии — Pipeline на этом объекте.</p>
+    <div class="tag">+ ForemanTab.BATCHES</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Координатор</div>Belsi 📜 📦 ⚙️</div>
+      <div class="body">
+        <strong style="font-size:1rem">Школа №7, Коломенская 16</strong>
+        <p style="font-size:.7rem; color:var(--muted); margin-bottom:10px">Активный объект</p>
+        <div class="stat-row">
+          <div class="stat-mini amber"><div class="num">3</div><div class="lbl">Бригадиров</div></div>
+          <div class="stat-mini green"><div class="num">12</div><div class="lbl">Монтажников</div></div>
+        </div>
+        <div class="row">📜 История объекта <span style="float:right">→</span></div>
+        <div class="row">📦 Партии (4) <span style="float:right">→</span></div>
+        <div class="row">📋 Запросы материалов</div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">CoordinatorMainScreen + 2 кнопки в шапке</h3>
+    <p class="desc"><strong>NEW:</strong> «История объекта» + «Партии» в TopAppBar.</p>
+    <div class="tag">прямой переход на ObjectHistory</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Куратор</div>Дашборд</div>
+      <div class="body">
+        <div class="stat-row">
+          <div class="stat-mini green"><div class="num">17</div><div class="lbl">На смене</div></div>
+          <div class="stat-mini red"><div class="num">2</div><div class="lbl">Простой</div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-mini sky"><div class="num">4</div><div class="lbl">Маршрутов</div></div>
+          <div class="stat-mini amber"><div class="num">8</div><div class="lbl">Партий</div></div>
+        </div>
+        <div class="row warn"><strong>⚠️ Алексей М. — простой 14мин</strong><span>жду материалы · UGL-0040</span></div>
+        <div class="row">📷 Лента всех фото</div>
+        <div class="row">📦 Партии (все) <span style="float:right; color:var(--observer)">NEW</span></div>
+        <div class="row">📜 История объекта <span style="float:right; color:var(--observer)">NEW</span></div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">CuratorMainScreen + DropdownMenu</h3>
+    <p class="desc">Видит ВСЁ. Push на любой простой во всех доменах.</p>
+    <div class="tag">+ Партии (все) · История объекта</div>
+  </div>
+</div>
+
+<!-- =================================================== -->
+<h2>🏭 Производство <span class="badge production">5 ролей · BELSI.Команда</span></h2>
+<p class="lead">5 главных экранов производства мебели. Ставит задачи, формирует партии, ведёт смены с раздельными перекур/обед/простой.</p>
+<div class="grid">
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Работник · Углич</div>Смена ⇄</div>
+      <div class="body">
+        <div style="background:#FEF3C7; padding:14px; border-radius:12px; margin-bottom:10px">
+          <div style="font-size:.65rem; color:var(--muted)">📍 Смена идёт</div>
+          <div class="timer-big">08:23:14</div>
+          <div style="display:flex; gap:4px; margin-top:6px">
+            <span class="pill emerald">7ч 12мин работа</span>
+            <span class="pill amber">14мин перекур</span>
+            <span class="pill">30мин обед</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; margin-bottom:10px">
+          <div style="flex:1; background:#FEF3C7; border:1px solid #FBBF24; border-radius:10px; padding:14px 8px; text-align:center"><div style="font-size:1.3rem">☕</div><strong style="font-size:.7rem; color:var(--amber)">Перекур</strong></div>
+          <div style="flex:1; background:#FEF3C7; border:1px solid var(--production); border-radius:10px; padding:14px 8px; text-align:center"><div style="font-size:1.3rem">🍱</div><strong style="font-size:.7rem; color:var(--production)">Обед</strong></div>
+          <div style="flex:1; background:#FEE2E2; border:1px solid var(--rose); border-radius:10px; padding:14px 8px; text-align:center"><div style="font-size:1.3rem">⚠️</div><strong style="font-size:.7rem; color:var(--rose)">Простой</strong></div>
+        </div>
+        <div class="row">📷 Сделать фото</div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">WorkerMainScreen ⭐</h3>
+    <p class="desc">Раздельные кнопки перекур/обед/простой — реально вызывают <code>/shift/break/start</code>.</p>
+    <div class="tag">VM: WorkerShiftViewModel</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Старший работник</div>Группа · 5</div>
+      <div class="body">
+        <div class="stat-row">
+          <div class="stat-mini amber"><div class="num">5</div><div class="lbl">Группа</div></div>
+          <div class="stat-mini green"><div class="num">3</div><div class="lbl">На смене</div></div>
+          <div class="stat-mini red"><div class="num">1</div><div class="lbl">Простой</div></div>
+        </div>
+        <div class="row" style="display:flex; gap:8px; align-items:center"><div style="width:30px; height:30px; background:var(--production); border-radius:15px; color:#fff; text-align:center; line-height:30px; font-weight:700">И</div><div style="flex:1"><strong style="font-size:.8rem">Иван Петров</strong><span style="color:var(--emerald)">Партия UGL-0042</span></div></div>
+        <div class="row warn" style="display:flex; gap:8px; align-items:center"><div style="width:30px; height:30px; background:var(--rose); border-radius:15px; color:#fff; text-align:center; line-height:30px; font-weight:700">А</div><div style="flex:1"><strong style="font-size:.8rem">Алексей М.</strong><span style="color:var(--rose)">Простой 14мин · материалы</span></div></div>
+      </div>
+      <div class="bottom"><div class="btn amber">+ Задача группе</div></div>
+    </div></div>
+    <h3 style="margin-top:12px">SeniorWorkerMainScreen</h3>
+    <p class="desc">Группа / Моя смена / Партии — табы. FAB «Задача группе».</p>
+    <div class="tag">3 таба + FAB</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Начальник производства</div>Углич ⇄ 🔔1</div>
+      <div class="body">
+        <div class="stat-row">
+          <div class="stat-mini green"><div class="num">12/14</div><div class="lbl">На смене</div></div>
+          <div class="stat-mini red"><div class="num">1</div><div class="lbl">Простой</div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-mini amber"><div class="num">3</div><div class="lbl">В работе</div></div>
+          <div class="stat-mini sky"><div class="num">2</div><div class="lbl">Готовы</div></div>
+        </div>
+        <div class="row warn"><strong>⏸ Алексей Морозов</strong><span>Жду материалы · 14 мин</span></div>
+        <div class="row amber" style="display:flex; align-items:center"><strong style="flex:1; font-size:.78rem">📦 UGL-0042</strong><span style="font-weight:700; color:var(--production)">20 шт</span></div>
+        <div class="row sky" style="display:flex; align-items:center"><strong style="flex:1; font-size:.78rem">📦 UGL-0041 ready</strong><span style="font-weight:700; color:var(--logistics)">8 шт</span></div>
+      </div>
+      <div class="bottom"><div class="btn amber">+ Создать партию</div></div>
+    </div></div>
+    <h3 style="margin-top:12px">ProductionChiefMainScreen ⭐</h3>
+    <p class="desc">4 таба: Дашборд / Партии / Фото / Отчёты. FAB → BatchCreate.</p>
+    <div class="tag">+ переключатель фабрик в шапке</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Комплектатор</div>Склад · 3 запроса</div>
+      <div class="body">
+        <div class="row warn"><strong>🔴 Срочно · Иван Петров</strong>ЛДСП белая 16мм, 5 листов</div>
+        <div class="row"><strong>Сергей Иванов</strong>Кромка ПВХ 0.4мм, 30 м</div>
+        <div class="row"><strong>Алексей Морозов</strong>Конфирмат 6.4×50, 200 шт</div>
+      </div>
+      <div class="bottom" style="padding:8px 14px"><div style="display:flex; gap:6px"><div style="flex:1; background:var(--surface); border:1px solid var(--border); padding:10px; text-align:center; border-radius:8px; font-size:.7rem">Отказать</div><div style="flex:2" class="btn amber">📷 Выдать + фото</div></div></div>
+    </div></div>
+    <h3 style="margin-top:12px">SupplierMainScreen</h3>
+    <p class="desc">Запросы / Журнал / Смена. Срочные — красным badge.</p>
+    <div class="tag">обязательное фото при выдаче</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Инженер</div>Чертежи 📐</div>
+      <div class="body">
+        <div class="row" style="display:flex; gap:6px; align-items:center"><span class="pill amber">В работе</span><strong style="flex:1; font-size:.78rem">Чертёж шкафа Б</strong></div>
+        <div class="row" style="display:flex; gap:6px; align-items:center"><span class="pill emerald">Готово</span><strong style="flex:1; font-size:.78rem">Раскрой ЛДСП дуб</strong></div>
+        <div class="row" style="display:flex; gap:6px; align-items:center"><span class="pill" style="background:#E0E7FF; color:var(--installation)">Открыто</span><strong style="flex:1; font-size:.78rem">Замер угла</strong><span style="font-size:.6rem">→ Петрову</span></div>
+      </div>
+      <div class="bottom"><div class="btn amber">+ Тех.задача рабочему</div></div>
+    </div></div>
+    <h3 style="margin-top:12px">EngineerMainScreen</h3>
+    <p class="desc">Self-tasks / Тех.задачи / Чертежи. Все видны Начальнику.</p>
+    <div class="tag">3 таба + FAB</div>
+  </div>
+</div>
+
+<!-- =================================================== -->
+<h2>📦 Pipeline партии <span class="badge production">3 экрана · через все домены</span></h2>
+<p class="lead">Партия движется от Начальника производства через Логиста и Водителя до Бригадира на объекте. Каждый шаг подсвечен цветом своего домена.</p>
+<div class="grid">
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Партии</div>← 🔍</div>
+      <div class="body">
+        <div style="display:flex; gap:4px; margin-bottom:10px; overflow-x:auto">
+          <span class="pill amber">Все</span>
+          <span class="pill">📝 draft</span>
+          <span class="pill">🔨 в работе</span>
+          <span class="pill amber">📦 готовы</span>
+        </div>
+        <div class="row amber" style="border-left:3px solid var(--production)">📦 <strong>Подоконники белые</strong><span>→ Школа №7 · 20 шт · сегодня 14:00</span><div class="pill amber" style="margin-top:4px; font-size:.6rem">В работе</div></div>
+        <div class="row sky" style="border-left:3px solid var(--logistics)">🚛 <strong>Шкафы серия А</strong><span>→ ЖК Солнечный · 8 шт · завтра 10:00</span><div class="pill sky" style="margin-top:4px; font-size:.6rem">Готова</div></div>
+        <div class="row indigo" style="border-left:3px solid var(--installation)">📍 <strong>Полки навесные</strong><span>→ Школа №7 · 30 шт</span><div class="pill" style="margin-top:4px; font-size:.6rem; background:#E0E7FF; color:var(--installation)">Доставлена</div></div>
+      </div>
+      <div class="bottom"><div class="btn amber">+ Создать</div></div>
+    </div></div>
+    <h3 style="margin-top:12px">BatchListScreen</h3>
+    <p class="desc">Фильтр-чипы по статусам. Цвет карточки = текущий домен партии.</p>
+    <div class="tag">VM: BatchListViewModel · fallback на mock</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Партия</div>UGL-2026-0042</div>
+      <div class="body">
+        <div style="background:#FEF3C7; padding:12px; border-radius:10px; margin-bottom:8px">
+          <strong>📦 Подоконники белые 1.5м</strong>
+          <div style="display:flex; gap:8px; margin-top:6px; font-size:.7rem"><span>20 шт</span><span>·</span><span>сегодня 14:00</span></div>
+        </div>
+        <div style="font-size:.7rem; color:var(--muted); margin-bottom:6px; font-weight:700">ЖИЗНЕННЫЙ ЦИКЛ</div>
+        <div class="pipeline">
+          <div class="step done"></div>
+          <div class="step active"></div>
+          <div class="step"></div>
+          <div class="step"></div>
+          <div class="step"></div>
+        </div>
+        <div style="font-size:.7rem; color:var(--muted); display:flex; justify-content:space-between">
+          <span>В работе</span><span>Готова</span><span>В пути</span><span>Доставка</span><span>Монтаж</span>
+        </div>
+        <div style="margin-top:10px; font-size:.7rem; color:var(--muted); font-weight:700">ИСТОРИЯ</div>
+        <div style="font-size:.7rem; padding:6px 0">• 09:00 Создана · Начальник<br>• 09:15 В работе · Старший Петров</div>
+      </div>
+      <div class="bottom"><div class="btn amber">Готова к отгрузке</div></div>
+    </div></div>
+    <h3 style="margin-top:12px">BatchDetailScreen ⭐</h3>
+    <p class="desc">Pipeline 5 шагов с подсветкой текущего. Кнопка реально двигает партию через VM.</p>
+    <div class="tag">changeStatus → /production/batches/{id}/status</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Новая партия</div>←</div>
+      <div class="body">
+        <p style="font-size:.7rem; color:var(--muted); margin-bottom:10px">Партия попадёт в очередь производства.</p>
+        <div class="row">Название · Подоконники белые 1.5м</div>
+        <div class="row">Количество (шт) · 20</div>
+        <div class="row">Объект-цель · Школа №7, Коломенская 16</div>
+        <div class="row">Дедлайн · 06.05.2026 14:00</div>
+      </div>
+      <div class="bottom"><div class="btn amber">Создать партию</div></div>
+    </div></div>
+    <h3 style="margin-top:12px">BatchCreateScreen</h3>
+    <p class="desc">Форма создания. Submit через VM, после успеха popBackStack автоматически.</p>
+    <div class="tag">VM: BatchCreateViewModel · реальный POST</div>
+  </div>
+</div>
+
+<!-- =================================================== -->
+<h2>🚛 Логистика <span class="badge logistics">2 роли · sandbox</span></h2>
+<p class="lead">Driver / Logistician — пока в Playground, готовы к выходу в основной flow по нажатию кнопки.</p>
+<div class="grid">
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Водитель</div>Маршрут</div>
+      <div class="body">
+        <div class="stat-row">
+          <div class="stat-mini sky"><div class="num">3</div><div class="lbl">Точек</div></div>
+          <div class="stat-mini green"><div class="num">1/3</div><div class="lbl">Выполнено</div></div>
+        </div>
+        <div class="row" style="border-left:3px solid var(--emerald)"><strong style="text-decoration:line-through">📍 Углич — склад</strong><span>09:00 ✓ загружено</span></div>
+        <div class="row sky" style="border-left:3px solid var(--logistics)"><strong>📍 Коломенская 16</strong><span>14:00 · Бригадир Хрулёв</span></div>
+        <div class="row"><strong>📍 ЖК Парус</strong><span>17:00</span></div>
+      </div>
+      <div class="bottom"><div class="btn sky">📷 Фото выгрузки</div></div>
+    </div></div>
+    <h3 style="margin-top:12px">DriverHomeScreen</h3>
+    <p class="desc">Маршрут на день, точки PICKUP/DELIVERY, фото.</p>
+    <div class="tag">Playground · готов к API</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Логист</div>Дашборд</div>
+      <div class="body">
+        <div class="stat-row">
+          <div class="stat-mini sky"><div class="num">5</div><div class="lbl">Заявок</div></div>
+          <div class="stat-mini green"><div class="num">3</div><div class="lbl">Маршрутов</div></div>
+        </div>
+        <div class="row amber"><strong>📦 Партии к отгрузке</strong><span>Готовы на фабриках, ждут водителя →</span></div>
+        <div style="font-size:.7rem; color:var(--muted); font-weight:700; margin:8px 0 4px">ОТКРЫТЫЕ ЗАЯВКИ</div>
+        <div class="row">12 окон · Коломенская 16 · 14:00</div>
+        <div class="row">Профиль · Годовикова · 11:00</div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">LogisticianHomeScreen + «Партии к отгрузке»</h3>
+    <p class="desc">Карточка-ссылка на BatchList с фильтром ready_to_ship.</p>
+    <div class="tag">+ onBatchesClick</div>
+  </div>
+</div>
+
+<!-- =================================================== -->
+<h2>📜 Связки и история <span class="badge observer">2 экрана</span></h2>
+<p class="lead">История объекта — сквозная лента событий через все 3 домена. Список причин простоя — реактивно из API по домену.</p>
+<div class="grid">
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">История объекта</div>Школа №7 ⤴</div>
+      <div class="body">
+        <div class="stat-row">
+          <div class="stat-mini sky"><div class="num">4/5</div><div class="lbl">Получено</div></div>
+          <div class="stat-mini green"><div class="num">3</div><div class="lbl">Установлено</div></div>
+          <div class="stat-mini amber"><div class="num">60%</div><div class="lbl">Готовность</div></div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px"><div style="width:24px; height:24px; background:var(--production); border-radius:12px; color:#fff; text-align:center; line-height:24px">📦</div><div style="flex:1; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px"><strong style="font-size:.7rem; color:var(--production)">04 мая 09:00</strong><div style="font-size:.7rem">Партия UGL-0042 создана</div></div></div>
+        <div style="display:flex; gap:8px; margin-top:6px"><div style="width:24px; height:24px; background:var(--logistics); border-radius:12px; color:#fff; text-align:center; line-height:24px">🚛</div><div style="flex:1; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px"><strong style="font-size:.7rem; color:var(--logistics)">05 мая 06:30</strong><div style="font-size:.7rem">Партия в маршруте</div></div></div>
+        <div style="display:flex; gap:8px; margin-top:6px"><div style="width:24px; height:24px; background:var(--installation); border-radius:12px; color:#fff; text-align:center; line-height:24px">🔧</div><div style="flex:1; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px"><strong style="font-size:.7rem; color:var(--installation)">05 мая 14:00</strong><div style="font-size:.7rem">Бригадир принял</div></div></div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">ObjectHistoryScreen ⭐</h3>
+    <p class="desc">Timeline по доменам (amber/sky/indigo) — сквозная история объекта от заказа до сдачи.</p>
+    <div class="tag">7 событий по UGL-0042 · экспорт PDF</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Причина простоя</div>← FactoryIdle</div>
+      <div class="body" style="background:#FEE2E2">
+        <p style="font-size:.7rem; color:var(--muted); margin-bottom:10px">Push уйдёт Старшему и Начальнику.</p>
+        <div class="row" style="border:2px solid var(--production); background:#FEF3C7"><strong>● Жду материалы</strong></div>
+        <div class="row">○ Нет работы</div>
+        <div class="row">○ Поломка станка</div>
+        <div class="row">○ Жду комплектатора</div>
+        <div class="row">○ Жду чертежи от инженера</div>
+        <div class="row">○ Жду ОТК / приёмку</div>
+      </div>
+      <div class="bottom" style="padding:8px 14px; height:80px">
+        <div style="font-size:.65rem; color:var(--muted); margin-bottom:4px">⚠️ Push Старшему и Начальнику</div>
+        <div class="btn error">Начать простой</div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">FactoryIdleReasonsScreen ⭐</h3>
+    <p class="desc">Список причин из <code>/shift/idle-reasons?domain=production</code>. Sticky bottom-button. Backend 8 причин.</p>
+    <div class="tag">VM: FactoryIdleReasonsViewModel · fallback</div>
+  </div>
+</div>
+
+<!-- =================================================== -->
+<h2>⚙️ Настройки и переключатели <span class="badge">2 экрана</span></h2>
+<div class="grid">
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Выбор фабрики</div>← FacilitySwitch</div>
+      <div class="body">
+        <p style="font-size:.7rem; color:var(--muted); margin-bottom:10px">Текущая фабрика влияет на ленту смен, партии, команду и push.</p>
+        <div class="row amber" style="border:2px solid var(--production)"><strong>📍 Углич — фабрика №1 <span class="pill amber" style="float:right; font-size:.55rem">Активная</span></strong><span>Ярославская обл., Углич</span></div>
+        <div class="row"><strong>📍 Углич — цех №2</strong><span>новый цех</span></div>
+        <div class="row"><strong>📍 Ростов — площадка А</strong><span>будущая фабрика</span></div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">FactoryFacilitySwitchScreen</h3>
+    <p class="desc">Переключатель производственных площадок. Меняет ленту, партии, команду.</p>
+    <div class="tag">ActiveRoleManager.setActiveFacility</div>
+  </div>
+
+  <div class="scr">
+    <div class="phone"><div class="screen">
+      <div class="topbar"><div class="role">Сменить пароль</div>← Password</div>
+      <div class="body">
+        <p style="font-size:.7rem; color:var(--muted); margin-bottom:10px">Введите текущий пароль и придумайте новый. Минимум 6 символов.</p>
+        <div class="row">Текущий пароль 👁</div>
+        <div class="row">Новый пароль 👁</div>
+        <div class="row">Повторите новый 👁</div>
+        <div style="margin-top:14px"><div class="btn">Сохранить</div></div>
+      </div>
+    </div></div>
+    <h3 style="margin-top:12px">ChangePasswordScreen ⭐</h3>
+    <p class="desc"><strong>FIX:</strong> добавлен <code>imePadding+verticalScroll</code> — кнопка не теряется под клавиатурой.</p>
+    <div class="tag">imePadding ✅</div>
+  </div>
+</div>
+
+<!-- =================================================== -->
+<h2>🎨 Дизайн-система — цвета доменов</h2>
+<p class="lead">Каждое действие подсвечено цветом своего домена. Куратор видит timeline в этих 4 цветах.</p>
+<div class="grid">
+  <div class="scr"><div style="height:100px; background:var(--installation); border-radius:8px"></div><h3 style="margin-top:8px">Монтаж</h3><p class="desc">indigo · #4F46E5</p></div>
+  <div class="scr"><div style="height:100px; background:var(--logistics); border-radius:8px"></div><h3 style="margin-top:8px">Логистика</h3><p class="desc">sky · #0EA5E9</p></div>
+  <div class="scr"><div style="height:100px; background:var(--production); border-radius:8px"></div><h3 style="margin-top:8px">Производство</h3><p class="desc">amber · #D97706</p></div>
+  <div class="scr"><div style="height:100px; background:var(--observer); border-radius:8px"></div><h3 style="margin-top:8px">Куратор</h3><p class="desc">violet · #8B5CF6</p></div>
+</div>
+
+<div class="footer">
+  BELSI · Виды интерфейса · 1.2.5-driver build · 05 мая 2026<br>
+  10 коммитов на feature/driver-integration · APK 40 МБ · 30+ экранов · 11 ролей
+</div>
+
+</div>
+</body>
+</html>

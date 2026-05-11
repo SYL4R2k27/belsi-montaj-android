@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BELSI · Экосистема стройки и производства · Позиционирование</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --indigo-50:#EEF2FF; --indigo-100:#E0E7FF; --indigo-200:#C7D2FE;
+    --indigo-300:#A5B4FC; --indigo-400:#818CF8; --indigo-500:#6366F1;
+    --indigo-600:#4F46E5; --indigo-700:#4338CA; --indigo-800:#3730A3;
+    --indigo-900:#312E81; --indigo-950:#1E1B4B;
+    --slate-50:#F8FAFC; --slate-100:#F1F5F9; --slate-200:#E2E8F0;
+    --slate-300:#CBD5E1; --slate-400:#94A3B8; --slate-500:#64748B;
+    --slate-600:#475569; --slate-700:#334155; --slate-800:#1E293B;
+    --slate-900:#0F172A; --slate-950:#020617;
+    --steel-top:#5A7186; --steel-deep:#324859;
+    --emerald-500:#10B981; --emerald-600:#059669;
+    --amber-500:#F59E0B; --amber-600:#D97706;
+    --rose-500:#F43F5E;
+    --sky-500:#0EA5E9;
+    --violet-500:#8B5CF6;
+
+    --primary: var(--indigo-600);
+    --bg: #FFFFFF;
+    --bg-alt: var(--slate-50);
+    --text: var(--slate-900);
+    --muted: var(--slate-500);
+    --border: var(--slate-200);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+    font-feature-settings: "cv02","cv03","cv04","cv11";
+  }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+
+  /* ─── Layout ─── */
+  .container { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+
+  /* ─── Header / Navbar ─── */
+  .navbar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0;
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+  .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -0.4px; }
+  .logo-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--steel-top), var(--steel-deep));
+    color: white; font-size: 14px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a {
+    color: var(--slate-700);
+    text-decoration: none; font-size: 14px; font-weight: 500;
+    transition: color .12s;
+  }
+  .nav-links a:hover { color: var(--primary); }
+  @media (max-width: 768px) { .nav-links { display: none; } }
+
+  /* ─── Hero ─── */
+  .hero {
+    background:
+      radial-gradient(ellipse at top, rgba(79,70,229,.08), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(139,92,246,.05), transparent 50%),
+      var(--bg);
+    padding: 120px 0 100px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-grid {
+    background-image:
+      linear-gradient(rgba(79,70,229,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,70,229,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    position: absolute;
+    inset: 0;
+    mask-image: radial-gradient(ellipse 80% 60% at center, black, transparent);
+  }
+  .hero-content { position: relative; max-width: 880px; }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    background: var(--indigo-50);
+    border: 1px solid var(--indigo-100);
+    border-radius: 999px;
+    font-size: 13px; font-weight: 600;
+    color: var(--indigo-700);
+    margin-bottom: 24px;
+  }
+  .hero-eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald-500); animation: pulse 2s infinite; }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,.6); }
+    50% { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+  }
+
+  .hero h1 {
+    font-size: clamp(48px, 7vw, 86px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -2.4px;
+    margin-bottom: 28px;
+    color: var(--text);
+  }
+  .hero h1 .accent {
+    background: linear-gradient(135deg, var(--indigo-600), var(--violet-500));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero-lead {
+    font-size: 22px;
+    line-height: 1.5;
+    color: var(--slate-600);
+    max-width: 720px;
+    margin-bottom: 40px;
+  }
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: inherit; font-size: 15px; font-weight: 600;
+    padding: 14px 24px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    cursor: pointer; text-decoration: none;
+    transition: all .15s;
+  }
+  .btn-primary { background: var(--text); color: white; }
+  .btn-primary:hover { background: var(--slate-700); transform: translateY(-1px); }
+  .btn-secondary { background: white; color: var(--text); border-color: var(--border); }
+  .btn-secondary:hover { border-color: var(--slate-400); }
+
+  .hero-meta {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+    gap: 32px;
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+  }
+  .hero-meta-item .num {
+    font-size: 36px; font-weight: 800;
+    line-height: 1.1; letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--indigo-600), var(--indigo-400));
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+  }
+  .hero-meta-item .label {
+    font-size: 14px; color: var(--slate-600);
+    margin-top: 4px;
+  }
+
+  /* ─── Sections ─── */
+  section { padding: 100px 0; scroll-margin-top: 80px; }
+  section.alt { background: var(--bg-alt); }
+  section.dark {
+    background: var(--slate-950);
+    color: var(--slate-100);
+  }
+  section.dark h2, section.dark h3 { color: white; }
+  section.dark p { color: var(--slate-300); }
+
+  .section-eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600;
+    color: var(--primary);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 16px;
+  }
+  .section-eyebrow::before {
+    content: ''; display: inline-block;
+    width: 18px; height: 1px; background: var(--primary);
+  }
+  h2 {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -1.4px;
+    margin-bottom: 20px;
+    max-width: 920px;
+  }
+  h3 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    margin: 48px 0 16px;
+  }
+  .section-lead {
+    font-size: 19px;
+    color: var(--slate-600);
+    max-width: 720px;
+    margin-bottom: 56px;
+    line-height: 1.6;
+  }
+  section.dark .section-lead { color: var(--slate-400); }
+
+  /* ─── Manifesto ─── */
+  .manifesto-quote {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.8px;
+    color: var(--text);
+    max-width: 920px;
+  }
+  .manifesto-quote .h-light { color: var(--slate-400); font-weight: 400; }
+  .manifesto-quote .h-mark {
+    background: linear-gradient(180deg, transparent 65%, rgba(79,70,229,.18) 65%);
+    padding: 0 4px;
+  }
+
+  /* ─── Problem cards ─── */
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 24px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px,1fr)); gap: 32px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 20px; }
+
+  .pain-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: all .15s;
+  }
+  .pain-card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -8px rgba(15,23,42,.08); }
+  .pain-icon {
+    font-size: 28px; line-height: 1;
+    margin-bottom: 16px;
+  }
+  .pain-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.2px; }
+  .pain-text { font-size: 14px; color: var(--slate-600); line-height: 1.55; }
+
+  /* ─── Roles ─── */
+  .role-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    transition: all .15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .role-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--accent, var(--primary));
+  }
+  .role-card:hover { transform: translateY(-2px); box-shadow: 0 16px 32px -12px rgba(15,23,42,.1); }
+  .role-emoji { font-size: 40px; margin-bottom: 16px; line-height: 1; }
+  .role-name { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 6px; }
+  .role-tagline { font-size: 14px; color: var(--slate-600); margin-bottom: 20px; }
+  .role-features { list-style: none; }
+  .role-features li {
+    font-size: 14px; padding: 8px 0;
+    border-top: 1px solid var(--slate-100);
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .role-features li::before {
+    content: '✓'; color: var(--emerald-500);
+    font-weight: 700; flex-shrink: 0;
+  }
+
+  /* ─── Flow diagram ─── */
+  .flow-diagram {
+    background: linear-gradient(135deg, white, var(--slate-50));
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px;
+    margin: 32px 0;
+  }
+  .flow-row {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    gap: 24px; align-items: center;
+    margin-bottom: 24px;
+  }
+  .flow-row:last-child { margin-bottom: 0; }
+  @media (max-width: 768px) { .flow-row { grid-template-columns: 1fr; } .flow-arrow { transform: rotate(90deg); } }
+  .flow-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .flow-card .who { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; font-weight: 600; }
+  .flow-card .what { font-size: 16px; font-weight: 600; line-height: 1.4; margin-bottom: 6px; }
+  .flow-card .detail { font-size: 13px; color: var(--slate-500); }
+  .flow-arrow {
+    width: 60px; height: 24px;
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+  }
+
+  /* ─── Features ─── */
+  .feature-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+  }
+  .feature-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: var(--indigo-50);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-bottom: 18px;
+  }
+  .feature-title { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; margin-bottom: 6px; }
+  .feature-text { font-size: 14px; color: var(--slate-600); line-height: 1.55; }
+
+  /* ─── Numbers ─── */
+  .numbers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+    gap: 32px;
+  }
+  .number-block { text-align: center; }
+  .number-value {
+    font-size: 64px; font-weight: 800;
+    line-height: 1; letter-spacing: -2px;
+    background: linear-gradient(135deg, white, var(--slate-400));
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+    margin-bottom: 8px;
+  }
+  .number-label { font-size: 14px; color: var(--slate-400); }
+
+  /* ─── Comparison ─── */
+  .compare {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin: 32px 0;
+  }
+  .compare-row {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-row:last-child { border-bottom: 0; }
+  .compare-row.head {
+    background: var(--slate-50);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--slate-600);
+  }
+  .compare-cell { padding: 14px 18px; font-size: 14px; border-right: 1px solid var(--border); }
+  .compare-cell:last-child { border-right: 0; }
+  .compare-row.us .compare-cell:last-child { background: var(--indigo-50); font-weight: 600; color: var(--indigo-700); }
+  .compare-cell .check { color: var(--emerald-600); font-weight: 700; }
+  .compare-cell .cross { color: var(--rose-500); font-weight: 700; }
+  .compare-cell .partial { color: var(--amber-600); }
+
+  /* ─── Brand panel ─── */
+  .brand-panel {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+  }
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px,1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .swatch-item {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .swatch-color { height: 60px; }
+  .swatch-meta { padding: 10px 12px; }
+  .swatch-name { font-size: 12px; font-weight: 600; }
+  .swatch-hex { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+
+  .type-row {
+    display: grid; grid-template-columns: 200px 1fr;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--slate-100);
+    gap: 24px;
+  }
+  .type-meta { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .type-meta b { color: var(--text); font-family: inherit; font-size: 13px; display: block; margin-bottom: 2px; }
+
+  /* ─── Voice ─── */
+  .voice-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 24px;
+  }
+  @media (max-width: 768px) { .voice-grid { grid-template-columns: 1fr; } }
+  .voice-block {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .voice-do { border-color: var(--emerald-500); border-width: 1px; }
+  .voice-do .voice-head { color: var(--emerald-600); }
+  .voice-dont { border-color: var(--rose-500); }
+  .voice-dont .voice-head { color: var(--rose-500); }
+  .voice-head { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; }
+  .voice-block ul { list-style: none; }
+  .voice-block li { font-size: 14px; padding: 6px 0; line-height: 1.5; }
+  .voice-block li::before { content: '— '; color: var(--muted); }
+
+  /* ─── Use cases ─── */
+  .scenario {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .scenario-title { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 12px; }
+  .scenario-actors { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .actor-chip {
+    background: var(--slate-100);
+    color: var(--slate-700);
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+  }
+  .scenario-steps { list-style: none; counter-reset: step; }
+  .scenario-steps li {
+    counter-increment: step;
+    display: flex; gap: 16px;
+    padding: 12px 0;
+    border-top: 1px solid var(--slate-100);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .scenario-steps li::before {
+    content: counter(step);
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    background: var(--indigo-100);
+    color: var(--indigo-700);
+    border-radius: 50%;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ─── Roadmap ─── */
+  .roadmap {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .roadmap-row {
+    display: grid; grid-template-columns: 140px 1fr auto;
+    gap: 24px; padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .roadmap-row:last-child { border-bottom: 0; }
+  .roadmap-status {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    padding: 4px 10px; border-radius: 999px;
+    text-align: center;
+  }
+  .status-shipped { background: rgba(16,185,129,.12); color: var(--emerald-600); }
+  .status-progress { background: rgba(245,158,11,.12); color: var(--amber-600); }
+  .status-planned { background: rgba(99,102,241,.12); color: var(--indigo-600); }
+  .status-research { background: var(--slate-100); color: var(--slate-600); }
+  .roadmap-feature { font-size: 16px; font-weight: 600; }
+  .roadmap-detail { font-size: 13px; color: var(--slate-500); margin-top: 4px; }
+  .roadmap-when { font-size: 13px; color: var(--slate-500); }
+
+  /* ─── Footer ─── */
+  footer {
+    background: var(--slate-950);
+    color: var(--slate-400);
+    padding: 64px 0 32px;
+    font-size: 14px;
+  }
+  footer h4 { color: white; font-size: 14px; font-weight: 700; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.6px; }
+  .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+  @media (max-width: 768px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+  footer ul { list-style: none; }
+  footer li { padding: 4px 0; }
+  footer a { color: var(--slate-400); text-decoration: none; }
+  footer a:hover { color: white; }
+  .footer-meta {
+    border-top: 1px solid var(--slate-800);
+    padding-top: 24px;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    font-size: 12px;
+    color: var(--slate-500);
+  }
+
+  /* ─── Mini-screenshot mock ─── */
+  .mini-app {
+    background: black;
+    border-radius: 20px;
+    padding: 8px;
+    width: 280px;
+    margin: 0 auto;
+  }
+  .mini-screen {
+    background: var(--bg-alt);
+    border-radius: 16px;
+    overflow: hidden;
+    height: 480px;
+    position: relative;
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container nav-inner">
+    <div class="nav-logo">
+      <div class="logo-icon">B</div>
+      <span>BELSI</span>
+    </div>
+    <div class="nav-links">
+      <a href="#manifest">Манифест</a>
+      <a href="#problem">Проблема</a>
+      <a href="#solution">Экосистема</a>
+      <a href="#roles">11 ролей</a>
+      <a href="#flow">Pipeline</a>
+      <a href="#multirole">Мульти-роль</a>
+      <a href="#brand">Бренд</a>
+      <a href="#roadmap">Roadmap</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ───── HERO ───── -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="container hero-content">
+    <div class="hero-eyebrow">
+      <span class="hero-eyebrow-dot"></span>
+      Экосистема BELSI · v1.3 в разработке · 2026
+    </div>
+    <h1>
+      Производство, доставка, монтаж — <span class="accent">одна нить<br>событий.</span>
+    </h1>
+    <p class="hero-lead">
+      BELSI — единая экосистема для всей цепочки: от фабрики до объекта-заказчика.<br>
+      Производство собирает партию, логист формирует маршрут, водитель довозит, бригада монтирует.
+      Куратор видит каждый шаг от первой доски до последнего шурупа.
+    </p>
+    <div class="hero-cta">
+      <a href="#solution" class="btn btn-primary">Как устроена экосистема →</a>
+      <a href="#flow" class="btn btn-secondary">Pipeline партии</a>
+    </div>
+
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <div class="num">11</div>
+        <div class="label">ролей в одном приложении</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="num">3</div>
+        <div class="label">домена: производство · логистика · монтаж</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="num">3</div>
+        <div class="label">роли на одного человека одновременно</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="num">1</div>
+        <div class="label">APK с RoleSwitcher · общий backend</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── MANIFEST ───── -->
+<section id="manifest" class="alt">
+  <div class="container">
+    <div class="section-eyebrow">Манифест</div>
+    <p class="manifesto-quote">
+      Партия рождается на <span class="h-mark">фабрике в Угличе.</span>
+      Через двенадцать часов она <span class="h-light">едет в кузове</span>
+      на школу в <span class="h-mark">Коломенской 16.</span>
+      Там её разгружают и ставят бригадой, <span class="h-light">которую вы не нанимали лично.</span>
+      <br><br>
+      Между этими событиями — <span class="h-mark">десятки людей</span> в трёх разных доменах.
+      Раньше они говорили в WhatsApp, теряли заявки в 1С и переделывали работу
+      <span class="h-light">потому что никто не запомнил.</span>
+      <br><br>
+      <span class="h-mark">Мы делаем экосистему,</span> где <span class="h-mark">объект — это нить.</span>
+      На неё нанизаны заказ, партия, маршрут, доставка, монтаж — и каждое событие фиксировано фото.
+      <span class="h-mark">От первой доски до последнего шурупа.</span>
+    </p>
+  </div>
+</section>
+
+<!-- ───── PROBLEM ───── -->
+<section id="problem">
+  <div class="container">
+    <div class="section-eyebrow">Что мы видим в индустрии</div>
+    <h2>Между фабрикой и объектом — пропасть из звонков и тетрадок</h2>
+    <p class="section-lead">
+      Производство, склад, водитель, бригада — каждый в своей вселенной.
+      Партия рождается без связи с маршрутом. Маршрут не знает, ждёт ли его бригада.
+      Когда что-то ломается — никто не отвечает.
+    </p>
+
+    <div class="grid-3">
+      <div class="pain-card">
+        <div class="pain-icon">🏭</div>
+        <div class="pain-title">Производство в тетрадях</div>
+        <div class="pain-text">Начальник производства считает выработку на бумаге. Сколько подоконников за смену — никто не помнит. Простой работника — ускользает.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">📊</div>
+        <div class="pain-title">Excel и Google-таблицы</div>
+        <div class="pain-text">Координатор ведёт объекты в одной таблице, логист маршруты — в другой, производство — в третьей. Версии расходятся.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">💬</div>
+        <div class="pain-title">Чаты в WhatsApp</div>
+        <div class="pain-text">«Где материалы?» — в трёх группах одновременно. Через час: всё-таки не привезли. История теряется.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">🚛</div>
+        <div class="pain-title">Доставка вслепую</div>
+        <div class="pain-text">Водитель не знает что везёт и для какой бригады. Бригада не знает, когда приедет груз. Опоздание = простой.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">📷</div>
+        <div class="pain-title">Фото в галерее телефона</div>
+        <div class="pain-text">Работник снял партию, монтажник отчёт. Всё теряется среди мемов. К концу недели не понять что когда сделано.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">📁</div>
+        <div class="pain-title">История объекта рассыпана</div>
+        <div class="pain-text">«Что было с заказом для школы 12 апреля?» — придётся обзвонить пятерых, открыть три таблицы и сверить две папки.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── SOLUTION ───── -->
+<section id="solution" class="alt">
+  <div class="container">
+    <div class="section-eyebrow">Экосистема</div>
+    <h2>BELSI — единая операционка от склада до объекта</h2>
+    <p class="section-lead">
+      Одно приложение, общий backend, одиннадцать ролей. Три домена работают параллельно,
+      куратор видит сквозь них. Каждое событие — фото, время, автор. Объект — центральная сущность,
+      на которую нанизана вся история.
+    </p>
+
+    <!-- Three domains overview -->
+    <div class="grid-3" style="margin-bottom:32px">
+      <div class="brand-panel" style="border-top:4px solid #F59E0B">
+        <div class="section-eyebrow" style="color:#D97706">🏭 Производство</div>
+        <h3 style="margin-top:8px; font-size:20px">Углич и другие фабрики</h3>
+        <p style="color:var(--slate-600); font-size:14px; margin:0">
+          Начальник производства, Старший работник, Работник, Комплектатор, Инженер.
+          Делают мебель, формируют партии, фотографируют каждый этап.
+        </p>
+      </div>
+      <div class="brand-panel" style="border-top:4px solid #0EA5E9">
+        <div class="section-eyebrow" style="color:#0284C7">🚛 Логистика</div>
+        <h3 style="margin-top:8px; font-size:20px">Маршруты и доставки</h3>
+        <p style="color:var(--slate-600); font-size:14px; margin:0">
+          Логист собирает партии в маршрут, водитель везёт на объект, отчитывается фото загрузки и
+          выгрузки. GPS-точки по пути.
+        </p>
+      </div>
+      <div class="brand-panel" style="border-top:4px solid #4F46E5">
+        <div class="section-eyebrow" style="color:#4338CA">🔨 Монтаж</div>
+        <h3 style="margin-top:8px; font-size:20px">На объектах-целях</h3>
+        <p style="color:var(--slate-600); font-size:14px; margin:0">
+          Координатор объекта, Бригадир, Монтажник. Принимают партию, ставят, фиксируют этапы
+          часовыми фото, закрывают объект.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="brand-panel">
+        <div class="section-eyebrow" style="margin-bottom:8px">Что меняется</div>
+        <h3 style="margin-top:0">Объект становится осью</h3>
+        <p style="color:var(--slate-600); margin-bottom:20px">
+          Раньше объект был папкой в общем диске. Теперь — это нить, на которой висят все события:
+          от первой партии в Угличе до последнего шурупа на школе. Открыл «Коломенская 16» —
+          увидел всё.
+        </p>
+        <ul class="role-features" style="list-style:none">
+          <li>Производство собирает партию для конкретного объекта</li>
+          <li>Логист подбирает маршрут под партию</li>
+          <li>Водитель везёт и снимает выгрузку</li>
+          <li>Бригадир принимает, ставит на учёт</li>
+          <li>Монтаж идёт с часовыми фото</li>
+          <li>Куратор видит всю нить в одном экране</li>
+        </ul>
+      </div>
+      <div class="brand-panel" style="background:linear-gradient(135deg, var(--indigo-50), white)">
+        <div class="section-eyebrow" style="margin-bottom:8px">Главная фишка</div>
+        <h3 style="margin-top:0">История объекта — лента событий</h3>
+        <p style="color:var(--slate-600); margin-bottom:20px">
+          Один экран показывает <strong>всю</strong> хронологию объекта от заказа до готовности:
+        </p>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; gap:10px; align-items:center; font-size:13px; padding:8px 12px; background:white; border-radius:10px; border:1px solid var(--border); border-left:3px solid #F59E0B">
+            <span>🏭</span><span><strong>04 мая 09:00</strong> · Партия UGL-0042 в работе на Угличе</span>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; font-size:13px; padding:8px 12px; background:white; border-radius:10px; border:1px solid var(--border); border-left:3px solid #F59E0B">
+            <span>📦</span><span><strong>04 мая 18:30</strong> · 20 подоконников готовы к отгрузке</span>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; font-size:13px; padding:8px 12px; background:white; border-radius:10px; border:1px solid var(--border); border-left:3px solid #0EA5E9">
+            <span>🚛</span><span><strong>05 мая 07:15</strong> · Иванов выехал из Углича</span>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; font-size:13px; padding:8px 12px; background:white; border-radius:10px; border:1px solid var(--border); border-left:3px solid #4F46E5">
+            <span>🔨</span><span><strong>05 мая 14:00</strong> · Хрулёв принял партию, монтаж начат</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── ROLES ───── -->
+<section id="roles">
+  <div class="container">
+    <div class="section-eyebrow">Одиннадцать ролей</div>
+    <h2>Три домена. Один наблюдатель. Каждой роли — свой экран.</h2>
+    <p class="section-lead">
+      Жёсткая сегрегация UI: монтажник не видит производство, водитель не видит монтажа.
+      Куратор — единственное исключение. У одного пользователя может быть до 3 ролей,
+      переключаемых RoleSwitcher.
+    </p>
+
+    <h3 style="margin-top:48px; color:#D97706">🏭 Производство</h3>
+    <div class="grid-3" style="margin-bottom:24px">
+      <div class="role-card" style="--accent: #F59E0B">
+        <div class="role-emoji">🏭</div>
+        <div class="role-name">Начальник производства</div>
+        <div class="role-tagline">Главный на фабрике. Ставит задачи, формирует партии, видит всё.</div>
+        <ul class="role-features">
+          <li>Лента всех смен фабрики в real-time</li>
+          <li>Создание партий → отгрузка</li>
+          <li>Лента фото всех работников</li>
+          <li>Push на любой простой</li>
+        </ul>
+      </div>
+      <div class="role-card" style="--accent: #F59E0B">
+        <div class="role-emoji">👥</div>
+        <div class="role-name">Старший работник</div>
+        <div class="role-tagline">Аналог бригадира на стройке. Группа 3-7 человек.</div>
+        <ul class="role-features">
+          <li>Своя смена + смены подчинённых</li>
+          <li>Постановка задач группе</li>
+          <li>Приёмка материалов от Комплектатора</li>
+          <li>Видит отчёты своих</li>
+        </ul>
+      </div>
+      <div class="role-card" style="--accent: #F59E0B">
+        <div class="role-emoji">👷</div>
+        <div class="role-name">Работник</div>
+        <div class="role-tagline">Базовая роль на фабрике. Привязан к адресу — Углич.</div>
+        <ul class="role-features">
+          <li>Смена + перекур / обед / простой</li>
+          <li>Фото с обязательным комментарием</li>
+          <li>Закрытие задач</li>
+          <li>Автоген отчёта по окончанию</li>
+        </ul>
+      </div>
+      <div class="role-card" style="--accent: #F59E0B">
+        <div class="role-emoji">📦</div>
+        <div class="role-name">Комплектатор</div>
+        <div class="role-tagline">Кладовщик. Выдаёт материалы и инструмент.</div>
+        <ul class="role-features">
+          <li>Запросы на материалы</li>
+          <li>Журнал выдач с фото</li>
+          <li>Выдача инструмента</li>
+          <li>История по работнику</li>
+        </ul>
+      </div>
+      <div class="role-card" style="--accent: #F59E0B">
+        <div class="role-emoji">📐</div>
+        <div class="role-name">Инженер</div>
+        <div class="role-tagline">Чертежи и тех.задачи для всех ролей производства.</div>
+        <ul class="role-features">
+          <li>Self-tasks с чек-листом</li>
+          <li>Прикрепление чертежей</li>
+          <li>Постановка задач Работникам, Старшим, Комплектатору</li>
+          <li>Все задачи видны Начальнику</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:32px; color:#0284C7">🚛 Логистика</h3>
+    <div class="grid-3" style="margin-bottom:24px">
+      <div class="role-card" style="--accent: #0EA5E9">
+        <div class="role-emoji">💼</div>
+        <div class="role-name">Водитель</div>
+        <div class="role-tagline">Везёт партии от Углича на объекты-цели.</div>
+        <ul class="role-features">
+          <li>Карта маршрута на день</li>
+          <li>Фото загрузки + выгрузки</li>
+          <li>Простой: поломка / пробка / ожидание</li>
+          <li>Подпись бригадира на приёмке</li>
+        </ul>
+      </div>
+      <div class="role-card" style="--accent: #0EA5E9">
+        <div class="role-emoji">🚛</div>
+        <div class="role-name">Логист</div>
+        <div class="role-tagline">Партии → маршруты → водители.</div>
+        <ul class="role-features">
+          <li>Партии готовые к отгрузке</li>
+          <li>Создание маршрутов</li>
+          <li>Назначение водителей</li>
+          <li>Запросы от координаторов</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:32px; color:#4338CA">🔨 Монтаж</h3>
+    <div class="grid-3" style="margin-bottom:24px">
+      <div class="role-card" style="--accent: #4F46E5">
+        <div class="role-emoji">🔨</div>
+        <div class="role-name">Монтажник</div>
+        <div class="role-tagline">Делает работу руками на объекте-цели.</div>
+        <ul class="role-features">
+          <li>Смена в один тап</li>
+          <li>Почасовые фотоотчёты</li>
+          <li>Пауза / простой / завершение</li>
+          <li>Связь с бригадиром</li>
+        </ul>
+      </div>
+      <div class="role-card" style="--accent: #4F46E5">
+        <div class="role-emoji">🛠</div>
+        <div class="role-name">Бригадир</div>
+        <div class="role-tagline">Старший на стройке. Ведёт команду.</div>
+        <ul class="role-features">
+          <li>Дашборд смен команды</li>
+          <li>Подтверждение приёмки партий</li>
+          <li>Выдача инструмента</li>
+          <li>Закрытие монтажа</li>
+        </ul>
+      </div>
+      <div class="role-card" style="--accent: #4F46E5">
+        <div class="role-emoji">📋</div>
+        <div class="role-name">Координатор объекта</div>
+        <div class="role-tagline">Отвечает за конкретный объект-цель.</div>
+        <ul class="role-features">
+          <li>История объекта (вся хронология)</li>
+          <li>Запросы на материалы</li>
+          <li>Команда бригадиров</li>
+          <li>Экспорт PDF для заказчика</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:32px; color:#7C3AED">👑 Наблюдатель</h3>
+    <div class="grid-3">
+      <div class="role-card" style="--accent: #8B5CF6">
+        <div class="role-emoji">👑</div>
+        <div class="role-name">Куратор</div>
+        <div class="role-tagline">Видит ВСЁ во всех трёх доменах. Реагирует на сигналы.</div>
+        <ul class="role-features">
+          <li>Сквозной дашборд по всем доменам</li>
+          <li>Push на любой простой</li>
+          <li>Управление ролями (выдача / отзыв)</li>
+          <li>Аналитика и аудит</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── FLOW ───── -->
+<section id="flow" class="alt">
+  <div class="container">
+    <div class="section-eyebrow">Главный поток</div>
+    <h2>От заявки до доставки — без звонков</h2>
+    <p class="section-lead">
+      Двухуровневая модель: <strong>Заявка</strong> описывает потребность,
+      <strong>Маршрут</strong> описывает её исполнение. Координатор не думает о водителях —
+      это работа логиста.
+    </p>
+
+    <div class="flow-diagram">
+      <div class="flow-row">
+        <div class="flow-card" style="border-left:3px solid #F59E0B">
+          <div class="who" style="color:#D97706">🏭 Начальник производства</div>
+          <div class="what">Создаёт партию</div>
+          <div class="detail">«20 подоконников для Коломенской 16, дедлайн 05.05 14:00»</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-card" style="border-left:3px solid #F59E0B">
+          <div class="who" style="color:#D97706">👷 Работники + Старший</div>
+          <div class="what">Делают изделия</div>
+          <div class="detail">Каждый этап с фото и комментарием. Простой → push.</div>
+        </div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-card" style="border-left:3px solid #F59E0B">
+          <div class="who" style="color:#D97706">🏭 Начальник производства</div>
+          <div class="what">Партия готова к отгрузке</div>
+          <div class="detail">Статус <code>ready_to_ship</code>. Фото готовых изделий.</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-card" style="border-left:3px solid #0EA5E9">
+          <div class="who" style="color:#0284C7">🚛 Логист</div>
+          <div class="what">Включает в маршрут</div>
+          <div class="detail">Назначает водителя. Время выезда. Цепочка точек.</div>
+        </div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-card" style="border-left:3px solid #0EA5E9">
+          <div class="who" style="color:#0284C7">💼 Водитель</div>
+          <div class="what">Загрузка на Угличе</div>
+          <div class="detail">Фото партии в кузове. GPS-чек-ин на фабрике.</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-card" style="border-left:3px solid #0EA5E9">
+          <div class="who" style="color:#0284C7">💼 Водитель</div>
+          <div class="what">Доставка на объект</div>
+          <div class="detail">Фото выгрузки + GPS на адресе цели.</div>
+        </div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-card" style="border-left:3px solid #4F46E5">
+          <div class="who" style="color:#4338CA">🛠 Бригадир / 📋 Координатор</div>
+          <div class="what">Подпись приёмки</div>
+          <div class="detail">«Принял 20 подоконников». Партия попадает в монтажный пайплайн.</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-card" style="border-left:3px solid #4F46E5">
+          <div class="who" style="color:#4338CA">🔨 Монтажники</div>
+          <div class="what">Установка</div>
+          <div class="detail">Часовые фото, отчёт смены, статусы задач.</div>
+        </div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-card" style="border-left:3px solid #4F46E5">
+          <div class="who" style="color:#4338CA">🛠 Бригадир</div>
+          <div class="what">Партия установлена</div>
+          <div class="detail">Закрытие монтажа. История объекта пополняется.</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-card" style="border-left:3px solid #8B5CF6">
+          <div class="who" style="color:#7C3AED">👑 Куратор</div>
+          <div class="what">Видит всю нить</div>
+          <div class="detail">От создания партии до установки — в одном экране, с фото каждого шага.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── MULTIROLE ───── -->
+<section id="multirole" class="alt">
+  <div class="container">
+    <div class="section-eyebrow">Мульти-роль</div>
+    <h2>Один человек — до трёх ролей. Один таб клавиатуры.</h2>
+    <p class="section-lead">
+      В реальной жизни один работник часто и кроит мебель, и развозит её, и помогает на монтаже.
+      Раньше это была боль для учёта. Теперь — одна учётка, до 3 ролей из разных доменов,
+      переключение через RoleSwitcher. Все таймеры идут в фоне, ничего не теряется.
+    </p>
+
+    <div class="grid-2">
+      <div class="brand-panel" style="background:linear-gradient(135deg, white, var(--indigo-50))">
+        <h3 style="margin-top:0">Пример: Иван</h3>
+        <p style="color:var(--slate-600); font-size:14px; margin-bottom:16px">
+          У Ивана три роли. Открыл приложение — выбрал роль на сегодня. Захотел переключиться — RoleSwitcher → новая роль → весь интерфейс меняется.
+        </p>
+        <div style="display:flex; flex-direction:column; gap:8px">
+          <div style="padding:10px 14px; background:#FEF3C7; border-radius:10px; border-left:3px solid #F59E0B; font-size:14px">
+            <strong>👷 Работник</strong> · Углич, фабрика<br><span style="color:var(--slate-600); font-size:13px">Будние дни 08:00–17:00</span>
+          </div>
+          <div style="padding:10px 14px; background:#E0F2FE; border-radius:10px; border-left:3px solid #0EA5E9; font-size:14px">
+            <strong>💼 Водитель</strong> · Маршруты по выходным<br><span style="color:var(--slate-600); font-size:13px">Сб-Вс</span>
+          </div>
+          <div style="padding:10px 14px; background:#EEF2FF; border-radius:10px; border-left:3px solid #4F46E5; font-size:14px">
+            <strong>🔨 Монтажник</strong> · Подработка вечерами<br><span style="color:var(--slate-600); font-size:13px">Когда ребята зовут</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="brand-panel">
+        <h3 style="margin-top:0">Что не путается</h3>
+        <ul class="role-features" style="list-style:none">
+          <li>Каждая роль — отдельная смена, отдельный отчёт</li>
+          <li>Часы работника не суммируются с часами монтажника — каждый домен учитывается раздельно</li>
+          <li>Таймеры идут в фоне: переключился на водителя — смена работника на паузе</li>
+          <li>Куратор видит все три истории по одному пользователю</li>
+          <li>Лимит 3 — жёсткий, в БД триггер. Чтобы получить 4-ю — отзови одну</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="brand-panel" style="margin-top:32px">
+      <h3 style="margin-top:0; margin-bottom:8px">Типичные комбинации</h3>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; padding-top:8px;">
+        <span class="actor-chip">🔨 + 💼 — Монтажник-водитель</span>
+        <span class="actor-chip">👷 + 💼 — Работник-водитель</span>
+        <span class="actor-chip">🛠 + 🔨 — Бригадир-практик</span>
+        <span class="actor-chip">📋 + 🚛 — Координатор-диспетчер</span>
+        <span class="actor-chip">📐 + 🔨 — Инженер-монтажник</span>
+        <span class="actor-chip">👑 + 🚛 — Главный + диспетчер</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── FEATURES ───── -->
+<section>
+  <div class="container">
+    <div class="section-eyebrow">Что внутри</div>
+    <h2>Что объединяет всю экосистему</h2>
+
+    <div class="grid-3" style="margin-top:32px">
+      <div class="feature-card">
+        <div class="feature-icon">🧶</div>
+        <div class="feature-title">Объект как нить</div>
+        <div class="feature-text">Партии, маршруты, смены, фото — всё нанизано на конкретный объект. История от заказа до сдачи в одном экране.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔁</div>
+        <div class="feature-title">Мульти-роль до 3</div>
+        <div class="feature-text">Один аккаунт — Работник, Водитель и Монтажник. RoleSwitcher переключает интерфейс целиком.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏭</div>
+        <div class="feature-title">Мульти-фабрика</div>
+        <div class="feature-text">Сегодня одна фабрика, завтра пять. Переключатель «Текущая фабрика» — лента и партии меняются под выбранную.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📷</div>
+        <div class="feature-title">Обязательные фото</div>
+        <div class="feature-text">Каждое действие — фото с комментарием. На производстве, в дороге, на объекте. Никакой бумаги.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⏱</div>
+        <div class="feature-title">Раздельные счётчики</div>
+        <div class="feature-text">Работа · перекур · обед · простой — четыре отдельных таймера. Реальный учёт без споров.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚨</div>
+        <div class="feature-title">Простой = сигнал</div>
+        <div class="feature-text">Любой простой в любом домене → push куратору и руководителю домена. Реакция вместо потерянных часов.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <div class="feature-title">Партия как сущность</div>
+        <div class="feature-text">draft → in_production → ready_to_ship → in_route → delivered → installed. Каждый статус виден соответствующей роли.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📜</div>
+        <div class="feature-title">Audit log сквозной</div>
+        <div class="feature-text">Все правки смен, маршрутов, партий — с автором и причиной. Никаких «кто что менял».</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚀</div>
+        <div class="feature-title">Force-update</div>
+        <div class="feature-text">Критичный фикс — одной кнопкой всем пользователям. Не «через 2 недели в Play Market».</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── NUMBERS ───── -->
+<section class="dark">
+  <div class="container">
+    <div class="section-eyebrow" style="color: var(--indigo-300)">Эффект</div>
+    <h2 style="color: white">Что меняется в цифрах</h2>
+    <p class="section-lead">
+      По опыту внедрения у первых клиентов. Цифры зависят от исходного бардака,
+      но порядок везде один.
+    </p>
+
+    <div class="numbers-grid" style="margin-top:48px">
+      <div class="number-block">
+        <div class="number-value">−30%</div>
+        <div class="number-label">времени реакции на простой<br><span style="opacity:.6">от факта до помощи</span></div>
+      </div>
+      <div class="number-block">
+        <div class="number-value">100%</div>
+        <div class="number-label">покрытие фото<br><span style="opacity:.6">фабрика и стройка без бумаги</span></div>
+      </div>
+      <div class="number-block">
+        <div class="number-value">≤2с</div>
+        <div class="number-label">старт смены<br><span style="opacity:.6">кнопка → таймер</span></div>
+      </div>
+      <div class="number-block">
+        <div class="number-value">≥90%</div>
+        <div class="number-label">отчёты автогенерируются<br><span style="opacity:.6">без ручного ввода</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── COMPARE ───── -->
+<section>
+  <div class="container">
+    <div class="section-eyebrow">Сравнение</div>
+    <h2>Чем отличается от того что у вас сейчас</h2>
+
+    <div class="compare">
+      <div class="compare-row head">
+        <div class="compare-cell">Возможность</div>
+        <div class="compare-cell">Excel + WhatsApp</div>
+        <div class="compare-cell">Bitrix24 / 1С</div>
+        <div class="compare-cell">BELSI</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">Учёт смен с фото и комментарием</div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="partial">частично</span></div>
+        <div class="compare-cell"><span class="check">✓</span></div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">Производство, логистика, монтаж в одной системе</div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="cross">✗ (модули врозь)</span></div>
+        <div class="compare-cell"><span class="check">✓</span></div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">До 3 ролей на одном аккаунте</div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="check">✓ RoleSwitcher</span></div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">Партия: производство → доставка → монтаж</div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="check">✓ единая нить</span></div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">История объекта от заказа до сдачи</div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="check">✓</span></div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">Раздельные перерывы (перекур / обед / простой)</div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="check">✓ 4 счётчика</span></div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">Push на простой → руководителю</div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="check">✓</span></div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">Audit log правок</div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="partial">только основные</span></div>
+        <div class="compare-cell"><span class="check">✓</span></div>
+      </div>
+      <div class="compare-row us">
+        <div class="compare-cell" style="font-weight:600">Заточено под цикл «производство → монтаж»</div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="cross">✗</span></div>
+        <div class="compare-cell"><span class="check">✓ из коробки</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── SCENARIOS ───── -->
+<section class="alt">
+  <div class="container">
+    <div class="section-eyebrow">Реальные сценарии</div>
+    <h2>Один день из жизни команды</h2>
+
+    <div class="scenario">
+      <div class="scenario-title">Полный цикл: партия из Углича на Коломенскую 16</div>
+      <div class="scenario-actors">
+        <span class="actor-chip">🏭 Начальник производства</span>
+        <span class="actor-chip">👷 Работник</span>
+        <span class="actor-chip">🚛 Логист</span>
+        <span class="actor-chip">💼 Водитель</span>
+        <span class="actor-chip">🛠 Бригадир</span>
+        <span class="actor-chip">👑 Куратор</span>
+      </div>
+      <ol class="scenario-steps">
+        <li><strong>04 мая 09:00 ·</strong> Начальник производства Углича создаёт партию: «20 подоконников для Коломенской 16, дедлайн 05 мая 14:00». Старший работник видит партию в задачах группы.</li>
+        <li><strong>04 мая 10–18 ·</strong> Работники режут, кромят, собирают. Каждый этап — фото с комментарием. Один простой («жду материалы», 12 минут) → push Старшему, через 8 минут материалы привёз Комплектатор.</li>
+        <li><strong>04 мая 18:30 ·</strong> Партия готова. Начальник переводит в <code>ready_to_ship</code>. Логист видит партию у себя на дашборде.</li>
+        <li><strong>04 мая 19:00 ·</strong> Логист собирает маршрут: партия + ещё 2 заказа на соседние объекты. Назначает Иванова, выезд 05 мая 06:30.</li>
+        <li><strong>05 мая 06:30 ·</strong> Иванов в Угличе, грузится. Фото груза в кузове, GPS-чек-ин на территории фабрики. Партия → <code>in_route</code>.</li>
+        <li><strong>05 мая 13:50 ·</strong> Иванов на Коломенской 16. Фото выгрузки. Бригадир Хрулёв получает push «Иванов прибыл с партией UGL-0042» → жмёт «Принял». Партия → <code>delivered</code>.</li>
+        <li><strong>05 мая 14:15 ·</strong> Монтажники Хрулёва открывают смену, начинают установку. Часовые фото. Партия → <code>installed</code> к 17:00.</li>
+        <li><strong>05 мая 17:30 ·</strong> Куратор открывает «Историю объекта Коломенская 16» — видит ВСЮ нить событий: создание партии в 09:00 04 мая → монтаж в 17:00 05 мая. Каждый шаг с фото, временем и автором.</li>
+      </ol>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-title">Иван — три роли, один день</div>
+      <div class="scenario-actors">
+        <span class="actor-chip">👷 + 💼 + 🔨 Иван</span>
+        <span class="actor-chip">🛠 Бригадир</span>
+      </div>
+      <ol class="scenario-steps">
+        <li><strong>08:00 ·</strong> Иван открывает приложение → выбирает «👷 Работник, Углич». Старт смены, идёт в цех.</li>
+        <li><strong>15:30 ·</strong> Закрывает рабочую смену в Угличе (7ч работы, 30мин обед). Выходит из роли Работника.</li>
+        <li><strong>16:00 ·</strong> Жмёт RoleSwitcher → «💼 Водитель». Видит назначенный маршрут на сегодня. Едет в Углич, грузится.</li>
+        <li><strong>19:30 ·</strong> Привёз партию на школу. Фото выгрузки, подпись бригадира. Маршрут закрыт.</li>
+        <li><strong>19:45 ·</strong> Бригадир: «Иван, останься помочь до 21». Иван жмёт RoleSwitcher → «🔨 Монтажник» → подключается в смену.</li>
+        <li><strong>21:00 ·</strong> Закрывает монтажную смену (1ч 15мин). Едет домой.</li>
+        <li><strong>22:00 ·</strong> Куратор видит в профиле Ивана: 7ч производства · 3ч 30мин логистики · 1ч 15мин монтажа. Каждая роль — отдельный отчёт. Никаких «1С-разборок» с зарплатой.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ───── BRAND ───── -->
+<section id="brand">
+  <div class="container">
+    <div class="section-eyebrow">Бренд</div>
+    <h2>Визуальный язык</h2>
+    <p class="section-lead">
+      Профессиональный, спокойный, инструментальный. Похоже на Linear, Stripe, Notion —
+      но для людей в касках.
+    </p>
+
+    <h3>Цветовая палитра</h3>
+    <div class="grid-2">
+      <div class="brand-panel">
+        <h4 style="margin-bottom:12px; font-size:14px; color:var(--slate-600); text-transform:uppercase; letter-spacing:0.6px;">Primary · Indigo</h4>
+        <div class="swatch-grid">
+          <div class="swatch-item"><div class="swatch-color" style="background:#EEF2FF"></div><div class="swatch-meta"><div class="swatch-name">indigo-50</div><div class="swatch-hex">#EEF2FF</div></div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#A5B4FC"></div><div class="swatch-meta"><div class="swatch-name">indigo-300</div><div class="swatch-hex">#A5B4FC</div></div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#4F46E5; position:relative"><span style="position:absolute; top:6px; right:6px; background:white; color:#4F46E5; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700">★</span></div><div class="swatch-meta"><div class="swatch-name">indigo-600</div><div class="swatch-hex">#4F46E5</div></div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#312E81"></div><div class="swatch-meta"><div class="swatch-name">indigo-900</div><div class="swatch-hex">#312E81</div></div></div>
+        </div>
+      </div>
+      <div class="brand-panel">
+        <h4 style="margin-bottom:12px; font-size:14px; color:var(--slate-600); text-transform:uppercase; letter-spacing:0.6px;">Semantic</h4>
+        <div class="swatch-grid">
+          <div class="swatch-item"><div class="swatch-color" style="background:#10B981"></div><div class="swatch-meta"><div class="swatch-name">success</div><div class="swatch-hex">#10B981</div></div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#F59E0B"></div><div class="swatch-meta"><div class="swatch-name">warning</div><div class="swatch-hex">#F59E0B</div></div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#F43F5E"></div><div class="swatch-meta"><div class="swatch-name">error</div><div class="swatch-hex">#F43F5E</div></div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#0EA5E9"></div><div class="swatch-meta"><div class="swatch-name">info</div><div class="swatch-hex">#0EA5E9</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Типографика</h3>
+    <div class="brand-panel">
+      <p style="font-size:14px; color:var(--slate-600); margin-bottom:16px;">Inter Variable — single font, all weights 100–900. Тот же что в Linear / Stripe / Notion.</p>
+      <div class="type-row">
+        <div class="type-meta"><b>Display</b>56sp · 800 · −1.6</div>
+        <div style="font-size:48px; font-weight:800; letter-spacing:-1.6px; line-height:1.05;">BELSI.Команда</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><b>Headline</b>32sp · 700 · −0.6</div>
+        <div style="font-size:30px; font-weight:700; letter-spacing:-0.6px;">Все объекты в одном приложении</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><b>Title</b>20sp · 600 · −0.2</div>
+        <div style="font-size:20px; font-weight:600; letter-spacing:-0.2px;">Коломенская набережная 16</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><b>Body</b>16sp · 400</div>
+        <div style="font-size:16px;">Привезти к 14:00. Бригадир Хрулёв подтвердит приёмку.</div>
+      </div>
+      <div class="type-row" style="border-bottom:none">
+        <div class="type-meta"><b>Label</b>11sp · 600 · UPPER</div>
+        <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; color:var(--muted)">АКТИВНАЯ РОЛЬ</div>
+      </div>
+    </div>
+
+    <h3>Слоганы</h3>
+    <div class="grid-2">
+      <div class="brand-panel" style="background:linear-gradient(135deg, var(--indigo-600), var(--indigo-800)); color:white">
+        <div style="font-size:13px; font-weight:600; opacity:0.85; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px">Главный слоган</div>
+        <div style="font-size:28px; font-weight:700; line-height:1.2; letter-spacing:-0.4px;">Все объекты<br>в одном приложении</div>
+      </div>
+      <div class="brand-panel" style="background:var(--slate-900); color:white">
+        <div style="font-size:13px; font-weight:600; opacity:0.7; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px">Вспомогательный</div>
+        <div style="font-size:28px; font-weight:700; line-height:1.2; letter-spacing:-0.4px;">От производства<br>до объекта — без потерь</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── VOICE ───── -->
+<section class="alt">
+  <div class="container">
+    <div class="section-eyebrow">Voice & Tone</div>
+    <h2>Как мы говорим</h2>
+    <p class="section-lead">
+      Точно, без воды. Уважаем время людей в касках. Показываем, не объясняем.
+    </p>
+
+    <div class="voice-grid">
+      <div class="voice-block voice-do">
+        <div class="voice-head">✓ Так</div>
+        <ul>
+          <li>«Привезли 12 окон» — что произошло, конкретно, без оценок.</li>
+          <li>«Маршрут изменён, новая точка через 25 минут» — что сделать сейчас.</li>
+          <li>«В фоне открыта смена 2:14» — факт, измеримая информация.</li>
+          <li>«Логист подберёт водителя» — кто что делает дальше.</li>
+        </ul>
+      </div>
+      <div class="voice-block voice-dont">
+        <div class="voice-head">✗ Не так</div>
+        <ul>
+          <li>«Управляйте бригадой эффективно с помощью революционной платформы»</li>
+          <li>«Облачное решение нового поколения для оптимизации бизнес-процессов»</li>
+          <li>«Откройте для себя возможности» — пустота без действия.</li>
+          <li>«Мы заботимся о ваших данных» — корпоративные банальности.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── ROADMAP ───── -->
+<section id="roadmap">
+  <div class="container">
+    <div class="section-eyebrow">Roadmap</div>
+    <h2>Что есть, что в работе, что планируется</h2>
+
+    <div class="roadmap" style="margin-top: 32px">
+      <div class="roadmap-row">
+        <div class="roadmap-status status-shipped">SHIPPED</div>
+        <div>
+          <div class="roadmap-feature">Монтаж 1.0 — installer / foreman / coordinator / curator</div>
+          <div class="roadmap-detail">Полный flow смен, фото, объектов, чатов, инструмента, задач. В проде.</div>
+        </div>
+        <div class="roadmap-when">осень 2025</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-status status-shipped">SHIPPED</div>
+        <div>
+          <div class="roadmap-feature">v1.2.5 — Sticky-объект, force-update, audit log</div>
+          <div class="roadmap-detail">Объект на сервере. Куратор re-open/edit смены с историей правок.</div>
+        </div>
+        <div class="roadmap-when">май 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-status status-progress">В РАБОТЕ</div>
+        <div>
+          <div class="roadmap-feature">v1.3 — Логистика (Driver + Logistician) + Capabilities</div>
+          <div class="roadmap-detail">Маршруты, точки PICKUP/DELIVERY, фото загрузки/выгрузки, RoleSwitcher до 2 ролей.</div>
+        </div>
+        <div class="roadmap-when">2 кв. 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-status status-progress">В РАБОТЕ</div>
+        <div>
+          <div class="roadmap-feature">v1.4 — Производство (5 ролей) + мульти-роль до 3</div>
+          <div class="roadmap-detail">Начальник производства, Старший работник, Работник, Комплектатор, Инженер. Партии. Мульти-фабрика. Brandbook BELSI.Команда.</div>
+        </div>
+        <div class="roadmap-when">2 кв. 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-status status-progress">В РАБОТЕ</div>
+        <div>
+          <div class="roadmap-feature">Self-signup + Yandex enrich</div>
+          <div class="roadmap-detail">Самостоятельная регистрация (V1 без подтверждения, V2 с одобрением). Авто-обогащение профиля из Яндекса (ФИО, email, телефон, ДР, аватар).</div>
+        </div>
+        <div class="roadmap-when">май 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-status status-planned">ПЛАН</div>
+        <div>
+          <div class="roadmap-feature">Pipeline партии — production → logistics → installation</div>
+          <div class="roadmap-detail">Связка трёх доменов через сущность «Партия». История объекта от заказа до сдачи.</div>
+        </div>
+        <div class="roadmap-when">3 кв. 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-status status-planned">ПЛАН</div>
+        <div>
+          <div class="roadmap-feature">iOS-версия (паритет с Android)</div>
+          <div class="roadmap-detail">Тестируется. TestFlight после стабилизации.</div>
+        </div>
+        <div class="roadmap-when">2 кв. 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-status status-planned">ПЛАН</div>
+        <div>
+          <div class="roadmap-feature">Аудит и переделка системы статистики</div>
+          <div class="roadmap-detail">Сейчас расчёт времени и аналитики «кошмар» (цитата). Полный пересмотр под единую модель счётчиков по доменам.</div>
+        </div>
+        <div class="roadmap-when">3 кв. 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-status status-research">RESEARCH</div>
+        <div>
+          <div class="roadmap-feature">1С-мост — заявки и партии автоматом</div>
+          <div class="roadmap-detail">Не вручную создавать партии — они приходят из 1С / Битрикс по плану производства.</div>
+        </div>
+        <div class="roadmap-when">4 кв. 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-status status-research">RESEARCH</div>
+        <div>
+          <div class="roadmap-feature">AI-ассистент куратора</div>
+          <div class="roadmap-detail">Аномалии, подозрительные фото, прогноз сроков. Частично есть в curator AI Dashboard.</div>
+        </div>
+        <div class="roadmap-when">обсуждается</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── FOOTER ───── -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="nav-logo" style="margin-bottom:16px; color:white">
+          <div class="logo-icon">B</div>
+          <span>BELSI</span>
+        </div>
+        <p style="font-size:14px; line-height:1.55; max-width: 360px;">
+          Единая экосистема для всей цепочки: производство мебели, доставка, монтаж.
+          11 ролей, 3 домена, до 3 ролей на одного человека. Куратор видит всё.
+        </p>
+      </div>
+      <div>
+        <h4>Продукт</h4>
+        <ul>
+          <li><a href="#solution">Экосистема</a></li>
+          <li><a href="#roles">11 ролей</a></li>
+          <li><a href="#flow">Pipeline</a></li>
+          <li><a href="#multirole">Мульти-роль</a></li>
+          <li><a href="#roadmap">Roadmap</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Brandbook'и</h4>
+        <ul>
+          <li><a href="../brandbook-ecosystem/">Экосистема — полный</a></li>
+          <li><a href="../brandbook-belsi-komanda/">BELSI.Команда</a></li>
+          <li><a href="../driver-integration/">Driver integration</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Скачать</h4>
+        <ul>
+          <li><a href="https://api.belsi.ru/update">Android (актуальная)</a></li>
+          <li><a href="https://api.belsi.ru/">Лендинг</a></li>
+          <li>iOS — скоро</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-meta">
+      <span>BELSI · Позиционирование экосистемы · v2.0 · 04 мая 2026</span>
+      <span>Документ обсуждения. Имена подбрендов («BELSI.Команда», «BELSI.Драйвер») — рабочие, утверждаются по ходу.</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

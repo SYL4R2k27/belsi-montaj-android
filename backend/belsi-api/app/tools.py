@@ -1,0 +1,470 @@
+"""
+Обновленный tools.py с поддержкой самовыдачи для installer
+Заменить существующий /opt/belsi-api/app/tools.py
+"""
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_, and_
+from uuid import UUID
+from typing import List, Optional
+from datetime import datetime
+
+from .db import get_db
+from .auth import get_current_user
+from .models import Tool, ToolTransaction, User
+from .schemas_tools import (
+    ToolOut,
+    ToolCreate,
+    ToolsListResponse,
+    ToolIssueRequest,
+    ToolReturnRequest,
+    ToolTransactionOut,
+    ToolTransactionsListResponse,
+    ToolPhotoUploadResponse
+)
+from .storage import upload_file
+
+router = APIRouter(prefix="/tools", tags=["tools"])
+
+
+@router.get("", response_model=ToolsListResponse)
+def get_tools_catalog(
+    status: Optional[str] = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """
+    Получить каталог всех инструментов
+
+    Доступ:
+    - foreman: видит свои инструменты
+    - installer: видит свои инструменты
+    - curator: видит все инструменты
+    
+    Query Parameters:
+    - status: optional filter by tool status (available, issued, lost, repair)
+    """
+    query = db.query(Tool)
+
+    # ИЗМЕНЕНО: Все инструменты доступны всем пользователям
+    # Количество неограниченно - это система учета, а не инвентаризации
+    # Curator, foreman и installer видят все инструменты в системе
+
+    # Фильтрация по статусу
+    if status:
+        query = query.filter(Tool.status == status)
+
+    tools = query.options(joinedload(Tool.foreman)).order_by(Tool.created_at.desc()).all()
+    return ToolsListResponse(items=tools)
+
+
+@router.post("", response_model=ToolOut)
+def create_tool(
+    tool_data: ToolCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """
+    Создать новый инструмент в каталоге
+
+    Доступ: foreman, installer, curator
+    Владелец инструмента = текущий пользователь
+    """
+    if user.role not in ["foreman", "installer", "curator"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only foreman, installer and curator can create tools"
+        )
+
+    # Проверка уникальности серийного номера (в рамках владельца)
+    if tool_data.serial_number:
+        existing = db.query(Tool).filter(
+            Tool.serial_number == tool_data.serial_number,
+            Tool.foreman_id == user.id
+        ).first()
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Tool with serial number {tool_data.serial_number} already exists"
+            )
+
+    # Создание инструмента
+    # foreman_id используется как owner_id (владелец может быть foreman, installer или curator)
+    tool = Tool(
+        name=tool_data.name,
+        description=tool_data.description,
+        serial_number=tool_data.serial_number,
+        photo_url=tool_data.photo_url,
+        foreman_id=user.id,  # Владелец (может быть foreman, installer или curator)
+        status="available"
+    )
+
+    db.add(tool)
+    db.commit()
+    db.refresh(tool)
+
+    # Загружаем связанные данные
+    db.refresh(tool)
+    tool.foreman  # Загружаем владельца
+
+    return tool
+
+
+@router.get("/my", response_model=ToolTransactionsListResponse)
+def get_my_tools(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """
+    Получить активные инструменты текущего пользователя
+
+    Доступ: installer
+    Возвращает только активные транзакции (issued)
+    """
+    if user.role != "installer":
+        raise HTTPException(status_code=403, detail="Only installer can view their tools")
+
+    transactions = (
+        db.query(ToolTransaction)
+        .filter(
+            ToolTransaction.installer_id == user.id,
+            ToolTransaction.status == "issued"
+        )
+        .order_by(ToolTransaction.issued_at.desc())
+        .all()
+    )
+
+    return ToolTransactionsListResponse(items=transactions)
+
+
+@router.post("/issue", response_model=ToolTransactionOut)
+def issue_tool(
+    request: ToolIssueRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """
+    Выдать инструмент монтажнику
+
+    Доступ: foreman, installer (может выдать себе), curator
+
+    Процесс:
+    1. Проверить что инструмент доступен (status = available)
+    2. Если installer - может выдать только себе свои инструменты
+    3. Если foreman - может выдать монтажникам из своей команды
+    4. Если curator - может выдать кому угодно
+    5. Создать транзакцию
+    6. Обновить статус инструмента на issued
+    """
+    if user.role not in ["foreman", "installer", "curator"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only foreman, installer and curator can issue tools"
+        )
+
+    # Проверка инструмента
+    tool = db.query(Tool).filter(Tool.id == request.tool_id).first()
+    if not tool:
+        raise HTTPException(status_code=404, detail="Tool not found")
+
+    # Проверка владельца инструмента
+    if user.role == "installer":
+        # Installer может выдавать только свои инструменты
+        if tool.foreman_id != user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only issue your own tools"
+            )
+
+        # Installer может выдать только себе
+        if request.installer_id != user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only issue tools to yourself"
+            )
+    elif user.role == "foreman":
+        # Foreman может выдавать только свои инструменты
+        if tool.foreman_id != user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only issue your own tools"
+            )
+    # curator может выдавать любые инструменты кому угодно
+
+    # Проверка статуса инструмента
+    if tool.status != "available":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Tool is not available (current status: {tool.status})"
+        )
+
+    # Проверка монтажника
+    installer = db.query(User).filter(User.id == request.installer_id).first()
+    if not installer:
+        raise HTTPException(status_code=404, detail="Installer not found")
+
+    if installer.role != "installer":
+        raise HTTPException(
+            status_code=400,
+            detail="Target user is not an installer"
+        )
+
+    # Если foreman - проверяем что монтажник в команде (кроме случая самовыдачи)
+    if user.role == "foreman" and request.installer_id != user.id:
+        from .models import ForemanMembership
+        membership = (
+            db.query(ForemanMembership)
+            .filter(
+                ForemanMembership.foreman_user_id == user.id,
+                ForemanMembership.installer_user_id == request.installer_id
+            )
+            .first()
+        )
+        if not membership:
+            raise HTTPException(
+                status_code=403,
+                detail="Installer is not in your team"
+            )
+
+    # Создание транзакции
+    transaction = ToolTransaction(
+        tool_id=request.tool_id,
+        installer_id=request.installer_id,
+        issued_by=user.id,
+        issued_at=datetime.utcnow(),
+        issue_comment=request.comment,
+        issue_photo_url=request.photo_url,
+        status="issued"
+    )
+
+    # Обновление статуса инструмента
+    tool.status = "issued"
+
+    db.add(transaction)
+    db.commit()
+    db.refresh(transaction)
+
+    return transaction
+
+
+@router.post("/transactions/{transaction_id}/return", response_model=ToolTransactionOut)
+def return_tool(
+    transaction_id: UUID,
+    request: ToolReturnRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """
+    Вернуть инструмент
+
+    Доступ:
+    - foreman: может принять возврат своих инструментов
+    - installer: может вернуть инструменты, которые ему выдали
+    - curator: может принять возврат любых инструментов
+
+    Процесс:
+    1. Проверить что транзакция существует и активна
+    2. Обновить транзакцию (returned_at, condition, comment, photo)
+    3. Обновить статус инструмента на available
+    """
+    # Получение транзакции
+    transaction = db.query(ToolTransaction).filter(
+        ToolTransaction.id == transaction_id
+    ).first()
+
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    if transaction.status != "issued":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Transaction is not active (status: {transaction.status})"
+        )
+
+    # Проверка прав
+    tool = db.query(Tool).filter(Tool.id == transaction.tool_id).first()
+
+    is_curator = user.role == "curator"
+    is_foreman = user.role == "foreman" and tool.foreman_id == user.id
+    is_installer = user.role == "installer" and transaction.installer_id == user.id
+
+    if not (is_curator or is_foreman or is_installer):
+        raise HTTPException(
+            status_code=403,
+            detail="You can only return tools that were issued to you or by you"
+        )
+
+    # Обновление транзакции
+    transaction.returned_at = datetime.utcnow()
+    transaction.returned_to = user.id
+    transaction.return_condition = request.condition
+    transaction.return_comment = request.comment
+    transaction.return_photo_url = request.photo_url
+    transaction.status = "returned"
+
+    # Обновление статуса инструмента
+    tool.status = "available"
+
+    db.commit()
+    db.refresh(transaction)
+
+    return transaction
+
+
+@router.get("/transactions", response_model=ToolTransactionsListResponse)
+def get_tool_transactions(
+    installer_id: Optional[UUID] = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """
+    Получить историю транзакций инструментов
+
+    Доступ:
+    - foreman: видит транзакции своих инструментов
+    - curator: видит все транзакции
+    - installer: видит только свои транзакции
+
+    Query params:
+    - installer_id: фильтр по монтажнику (только для foreman/curator)
+    """
+    query = db.query(ToolTransaction)
+
+    if user.role == "installer":
+        # Монтажник видит только свои транзакции
+        query = query.filter(ToolTransaction.installer_id == user.id)
+    elif user.role == "foreman":
+        # Бригадир видит транзакции своих инструментов
+        query = query.join(Tool).filter(Tool.foreman_id == user.id)
+
+        if installer_id:
+            query = query.filter(ToolTransaction.installer_id == installer_id)
+    elif user.role == "curator":
+        # Куратор видит все
+        if installer_id:
+            query = query.filter(ToolTransaction.installer_id == installer_id)
+    else:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    transactions = query.order_by(ToolTransaction.issued_at.desc()).all()
+
+    return ToolTransactionsListResponse(items=transactions)
+
+
+@router.post("/photos", response_model=ToolPhotoUploadResponse)
+async def upload_tool_photo(
+    photo: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+):
+    """
+    Загрузить фото инструмента
+
+    Доступ: foreman, installer, curator
+    Возвращает URL загруженного фото
+    """
+    if user.role not in ["foreman", "installer", "curator"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only foreman, installer and curator can upload photos"
+        )
+
+    # Проверка типа файла
+    if not photo.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+
+    # Загрузка файла
+    try:
+        content = await photo.read()
+        file_url = await upload_file(content, filename=photo.filename, prefix="tools")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Ошибка загрузки фото")
+
+    return ToolPhotoUploadResponse(photoUrl=file_url)
+
+
+# ============= GET /tools/{tool_id}/transactions =============
+
+@router.get("/{tool_id}/transactions")
+def get_tool_transaction_history(
+    tool_id: UUID,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """
+    Get transaction history for a specific tool
+    Access: foreman (own tools), curator (all), installer (own transactions)
+    """
+    tool = db.query(Tool).filter(Tool.id == tool_id).first()
+    if not tool:
+        raise HTTPException(status_code=404, detail="Tool not found")
+
+    transactions = (
+        db.query(ToolTransaction)
+        .filter(ToolTransaction.tool_id == tool_id)
+        .order_by(ToolTransaction.issued_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": str(t.id),
+            "tool_id": str(t.tool_id),
+            "installer_id": str(t.installer_id),
+            "issued_by": str(t.issued_by),
+            "issued_at": t.issued_at.isoformat() if t.issued_at else None,
+            "issue_comment": t.issue_comment,
+            "issue_photo_url": t.issue_photo_url,
+            "returned_at": t.returned_at.isoformat() if t.returned_at else None,
+            "returned_to": str(t.returned_to) if t.returned_to else None,
+            "return_condition": t.return_condition,
+            "return_comment": t.return_comment,
+            "return_photo_url": t.return_photo_url,
+            "status": str(t.status.value) if hasattr(t.status, "value") else str(t.status),
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+        }
+        for t in transactions
+    ]
+
+
+# ============= GET /tools/transactions/installer/{installer_id} =============
+
+@router.get("/transactions/installer/{installer_id}")
+def get_installer_tool_transactions(
+    installer_id: UUID,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """
+    Get tool transaction history for a specific installer
+    Access: foreman (own team), curator (all)
+    """
+    role = (user.role or "").lower()
+    if role not in ["foreman", "curator"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    transactions = (
+        db.query(ToolTransaction)
+        .filter(ToolTransaction.installer_id == installer_id)
+        .order_by(ToolTransaction.issued_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": str(t.id),
+            "tool_id": str(t.tool_id),
+            "installer_id": str(t.installer_id),
+            "issued_by": str(t.issued_by),
+            "issued_at": t.issued_at.isoformat() if t.issued_at else None,
+            "issue_comment": t.issue_comment,
+            "issue_photo_url": t.issue_photo_url,
+            "returned_at": t.returned_at.isoformat() if t.returned_at else None,
+            "returned_to": str(t.returned_to) if t.returned_to else None,
+            "return_condition": t.return_condition,
+            "return_comment": t.return_comment,
+            "return_photo_url": t.return_photo_url,
+            "status": str(t.status.value) if hasattr(t.status, "value") else str(t.status),
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+        }
+        for t in transactions
+    ]

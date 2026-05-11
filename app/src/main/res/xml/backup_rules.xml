@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Backup rules for API < 31 (Android < 12).
+    Exclude sensitive auth/crypto data from cloud backup.
+-->
+<full-backup-content>
+    <!-- Exclude encrypted shared preferences (auth tokens, passwords) -->
+    <exclude domain="sharedpref" path="belsi_secure_prefs.xml" />
+    <!-- Exclude FCM token prefs -->
+    <exclude domain="sharedpref" path="fcm_prefs.xml" />
+    <!-- Exclude OTP cache -->
+    <exclude domain="sharedpref" path="otp_prefs.xml" />
+    <!-- Exclude crypto master key -->
+    <exclude domain="sharedpref" path="androidx.security.crypto.encrypted_prefs_key_keyset.xml" />
+    <exclude domain="sharedpref" path="androidx.security.crypto.encrypted_prefs_value_keyset.xml" />
+    <!-- Exclude Room database (re-syncs from server) -->
+    <exclude domain="database" path="belsi_work_db" />
+    <exclude domain="database" path="belsi_work_db-wal" />
+    <exclude domain="database" path="belsi_work_db-shm" />
+    <!-- Exclude temporary cache -->
+    <exclude domain="external" path="." />
+</full-backup-content>
