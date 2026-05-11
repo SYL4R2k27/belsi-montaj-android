@@ -12,6 +12,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
@@ -117,7 +118,19 @@ class MainActivity : ComponentActivity() {
                         pendingDeepLink.value = null
                     }
 
-                    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+                    // FIX(2026-05-11) BELSI 2.0.0: ГЛОБАЛЬНЫЙ imePadding на root.
+                    // Причина: enableEdgeToEdge() в onCreate отключает работу
+                    // android:windowSoftInputMode="adjustResize" из Manifest — Compose
+                    // нужно явно подвинуть контент над клавиатурой. Применяем на root,
+                    // покрывает все 33 экрана с TextField которые раньше уезжали под
+                    // клавиатуру. У 6 экранов с локальным imePadding (Login/AuthPhone/
+                    // OTP/SignUp/ChangePassword/InstallerChat/CuratorChat) — двойного
+                    // отступа НЕ будет (Compose consume'ит insets автоматически).
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .imePadding()
+                    ) {
                         AppNavHost(
                             navController = navController,
                             startDestination = startDestination
