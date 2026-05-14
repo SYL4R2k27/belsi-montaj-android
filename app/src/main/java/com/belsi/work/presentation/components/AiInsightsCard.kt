@@ -7,12 +7,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TrendingUp
@@ -21,16 +22,17 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.belsi.work.data.remote.dto.curator.CuratorDashboardDto
 import com.belsi.work.data.remote.dto.curator.CuratorForemanDto
 import com.belsi.work.data.remote.dto.curator.CuratorInstallerDto
@@ -38,8 +40,6 @@ import com.belsi.work.presentation.theme.Amber500
 import com.belsi.work.presentation.theme.Emerald500
 import com.belsi.work.presentation.theme.Rose500
 import com.belsi.work.presentation.theme.Sky500
-import com.belsi.work.presentation.theme.Violet500
-import com.belsi.work.presentation.theme.Violet600
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
@@ -62,6 +62,20 @@ data class AiInsight(
     enum class Severity { INFO, POSITIVE, WARNING, CRITICAL }
 }
 
+/**
+ * FIX(2026-05-11) BELSI 2.0.0 build7: новый дизайн AI инсайтов на дашборде куратора.
+ *
+ * Brandbook р.07 «AI sweep»: сводка дня показывается как surface-карточка
+ * (не violet-gradient), с заголовком «AI-сводка дня · ✨», иконкой XeroCode
+ * и списком найденных событий. Тот же визуальный язык что AI-аналитика
+ * (AiDailySummarySection) — единый стиль приложения.
+ *
+ * Каждая строка показана как мини-чип:
+ *   ┌──────────────────────────────────────────┐
+ *   │ [ico] Заголовок                          │  ← icon с цветом severity
+ *   │       подсказка/детали                   │
+ *   └──────────────────────────────────────────┘
+ */
 @Composable
 fun AiInsightsCard(
     insights: List<AiInsight>,
@@ -69,40 +83,37 @@ fun AiInsightsCard(
 ) {
     if (insights.isEmpty()) return
 
-    val gradient = Brush.linearGradient(colors = listOf(Violet500, Violet600))
-
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(MaterialTheme.shapes.large)
-                .background(gradient)
-                .padding(16.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                // Header — ⚡ + title
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.Bolt,
-                        null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "AI инсайты",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Header — ✨ + title
+            // FIX(2026-05-12) build19 hotfix: убран бейдж "XeroCode" (выглядит как реклама).
+            // Имя AI-провайдера остаётся в LegalTexts (согласие) и AboutScreen (документация).
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.AutoAwesome,
+                    null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "AI-сводка дня",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
 
-                // Insights list (max 4)
+            Spacer(Modifier.height(12.dp))
+
+            // Insights list (max 4)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 insights.take(4).forEach { insight ->
                     InsightRow(insight)
                 }
@@ -130,22 +141,31 @@ private fun InsightRow(insight: AiInsight) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.12f))
+            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            icon,
-            null,
-            tint = accent,
-            modifier = Modifier.size(18.dp)
-        )
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(accent.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                icon,
+                null,
+                tint = accent,
+                modifier = Modifier.size(16.dp),
+            )
+        }
         Spacer(Modifier.width(12.dp))
         Text(
             insight.text,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White,
-            modifier = Modifier.weight(1f)
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+            fontSize = 13.sp,
         )
     }
 }
@@ -181,8 +201,39 @@ object CuratorInsightsBuilder {
     ): List<AiInsight> {
         val out = mutableListOf<AiInsight>()
 
+        // FIX(2026-05-12) build19 hotfix: первый буллет — сырые цифры из БД,
+        // чтобы AI-нарратив не мог их «затереть» галлюцинацией. Если есть
+        // активные смены/часы — рисуем их явно.
+        summary.rawStats?.let { s ->
+            if (s.activeNow > 0 || s.startedToday > 0) {
+                val parts = mutableListOf<String>()
+                if (s.activeNow > 0) parts += "${s.activeNow} активн. сейчас"
+                if (s.startedToday > 0) parts += "${s.startedToday} нач. сегодня"
+                if (s.finishedToday > 0) parts += "${s.finishedToday} закрыто"
+                if (s.workHours > 0) parts += "${s.workHours} ч работы"
+                out += AiInsight(
+                    text = parts.joinToString(" · "),
+                    severity = AiInsight.Severity.INFO,
+                )
+            }
+        }
+
+        // FIX(2026-05-12) build19 hotfix: фильтруем аномалии у которых нет
+        // осмысленного контента. Раньше AI иногда возвращал {type:"x", value:"0"} или
+        // {type:"raw_stats", value:0.0} — UI рисовал "0" и "0.0" как буллеты.
+        // Если у аномалии нет ни user ни object и value — это просто число — скипаем.
+        fun hasUsefulContent(a: com.belsi.work.data.models.AiAnomalyDto): Boolean {
+            if (!a.user.isNullOrBlank()) return true
+            if (!a.`object`.isNullOrBlank()) return true
+            val v = a.value?.trim().orEmpty()
+            if (v.isBlank()) return false
+            // Чистое число (вкл. "0", "0.0", "12", "3.5") — без user/object бесполезно.
+            if (v.toDoubleOrNull() != null) return false
+            return true
+        }
+
         // Аномалии (главное содержание)
-        for (anomaly in summary.anomalies) {
+        for (anomaly in summary.anomalies.filter { hasUsefulContent(it) }) {
             val severity = when (anomaly.type.lowercase()) {
                 "critical", "blocker", "outage" -> AiInsight.Severity.CRITICAL
                 "long_idle", "overwork", "no_photos", "warning" -> AiInsight.Severity.WARNING

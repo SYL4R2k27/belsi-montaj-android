@@ -124,23 +124,41 @@ private fun MiniStat(label: String, value: String, color: Color = MaterialTheme.
 
 @Composable
 private fun TransactionCard(t: CuratorToolTransactionDto) {
+    // FIX(2026-05-12) build17 P1: показываем имена инструмента и монтажника
+    // вместо обрезанных UUID. Backend в build17 отдаёт tool_name/installer_name.
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically) {
-                Text("Инструмент", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    t.toolName ?: "Инструмент",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
                 StatusChip(t.status)
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Icon(Icons.Default.Tag, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("ID: ${t.toolId.take(8)}...", style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            t.toolSerialNumber?.let { sn ->
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(Icons.Default.Tag, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("S/N: $sn", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Icon(Icons.Default.Person, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Монтажник: ${t.installerId.take(8)}...", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    "Монтажник: ${t.installerName ?: t.installerPhone ?: "ID ${t.installerId.take(8)}…"}",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            t.issuedByName?.let { name ->
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(Icons.Default.SupervisorAccount, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Выдал: $name", style = MaterialTheme.typography.bodySmall)
+                }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {

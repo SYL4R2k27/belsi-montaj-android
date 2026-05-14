@@ -17,6 +17,13 @@ interface UserApi {
     @GET("user/me")
     suspend fun getProfile(): Response<User>
 
+    /**
+     * GET /user/me/rate → реальный hourly_rate с сервера (build18).
+     * Раньше Reports хардкодил 500 руб/час.
+     */
+    @GET("user/me/rate")
+    suspend fun getMyRate(): Response<MyRateResponse>
+
     /** PUT /user/me → обновить профиль (user_names.py) */
     @PUT("user/me")
     suspend fun updateProfile(
@@ -164,6 +171,16 @@ data class AvatarUploadResponse(
 data class SetCurrentObjectRequest(
     @kotlinx.serialization.SerialName("site_object_id")
     val siteObjectId: String? = null
+)
+
+@kotlinx.serialization.Serializable
+data class MyRateResponse(
+    @kotlinx.serialization.SerialName("hourly_rate")
+    val hourlyRate: Double,
+    val role: String,
+    val currency: String = "RUB",
+    @kotlinx.serialization.SerialName("is_default")
+    val isDefault: Boolean = false,
 )
 
 @kotlinx.serialization.Serializable

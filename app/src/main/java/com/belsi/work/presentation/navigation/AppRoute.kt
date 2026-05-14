@@ -2,7 +2,7 @@ package com.belsi.work.presentation.navigation
 
 sealed class AppRoute(val route: String) {
     // Auth Flow
-    object Splash : AppRoute("splash")
+    // FIX(2026-05-12) build19: Splash удалён — используется installSplashScreen() в MainActivity (системный).
     object AuthPhone : AppRoute("auth_phone")
     object Login : AppRoute("login")
     object SignUp : AppRoute("signup")
@@ -15,7 +15,7 @@ sealed class AppRoute(val route: String) {
     object Terms : AppRoute("terms")
     object Instructions : AppRoute("instructions")
     object InstallerInvite : AppRoute("installer_invite")
-    object ProfileSetup : AppRoute("profile_setup")
+    // FIX(2026-05-12) build17: ProfileSetup был объявлен, но composable не зарегистрирован — удалён.
     
     // Main App
     object Main : AppRoute("main")
@@ -23,8 +23,24 @@ sealed class AppRoute(val route: String) {
     object CoordinatorMain : AppRoute("coordinator_main")
     object CuratorMain : AppRoute("curator_main")
 
-    // Driver Integration (Этап A — sandbox с мок-данными)
-    object DriverPlayground : AppRoute("driver_playground")
+    // FIX(2026-05-13) release/2.0.1-internal: убран DriverPlayground (sandbox-route).
+    // Production routes для Driver/Logistician ниже.
+    object DriverHome : AppRoute("driver/home")
+    object DriverPointDetail : AppRoute("driver/point/{pointId}") {
+        fun createRoute(pointId: String) = "driver/point/$pointId"
+    }
+    object LogisticianHome : AppRoute("logistician/home")
+    object LogistDriverList : AppRoute("logistician/drivers")
+    object LogistDriverDetail : AppRoute("logistician/driver/{driverId}") {
+        fun createRoute(driverId: String) = "logistician/driver/$driverId"
+    }
+    object LogistRouteDetail : AppRoute("logistician/route/{routeId}") {
+        fun createRoute(routeId: String) = "logistician/route/$routeId"
+    }
+    object LogistCreateRoute : AppRoute("logistician/route/new")
+    object LogistRequestDetail : AppRoute("logistician/request/{requestId}") {
+        fun createRoute(requestId: String) = "logistician/request/$requestId"
+    }
     
     // Shift
     object ShiftDetail : AppRoute("shift_detail/{shiftId}") {
@@ -57,10 +73,9 @@ sealed class AppRoute(val route: String) {
     object TicketDetail : AppRoute("ticket_detail/{ticketId}") {
         fun createRoute(ticketId: String) = "ticket_detail/$ticketId"
     }
-    object NewTicket : AppRoute("new_ticket")
     object CreateTicket : AppRoute("create_ticket")
-    object FAQ : AppRoute("faq")
     object About : AppRoute("about")
+    // FIX(2026-05-12) build17: NewTicket / FAQ удалены (composable не было).
 
     // Curator Chat
     object CuratorChatList : AppRoute("curator/chats")
@@ -77,14 +92,10 @@ sealed class AppRoute(val route: String) {
     // Wallet
     object Wallet : AppRoute("wallet")
     object Withdraw : AppRoute("withdraw")
-    object TransactionHistory : AppRoute("transaction_history")
-    
-    // Invite/Team
-    object GenerateInvite : AppRoute("generate_invite")
-    object JoinTeam : AppRoute("join_team/{inviteCode}") {
-        fun createRoute(inviteCode: String) = "join_team/$inviteCode"
-    }
-    object TeamManagement : AppRoute("team_management")
+    // FIX(2026-05-12) build17: TransactionHistory удалён (composable не зарегистрирован).
+
+    // FIX(2026-05-12) build17: GenerateInvite / JoinTeam / TeamManagement удалены
+    // (composable не зарегистрированы; функция инвайтов — через CoordCreateRequest и RedeemInvite).
 
     // Tools
     object ToolsList : AppRoute("tools_list")
@@ -92,9 +103,7 @@ sealed class AppRoute(val route: String) {
     object ToolIssueForInstaller : AppRoute("tool_issue/{installerId}") {
         fun createRoute(installerId: String) = "tool_issue/$installerId"
     }
-    object ToolReturn : AppRoute("tool_return/{transactionId}") {
-        fun createRoute(transactionId: String) = "tool_return/$transactionId"
-    }
+    // FIX(2026-05-12) build17: ToolReturn убран (был placeholder без composable).
     object RequestTool : AppRoute("request_tool/{foremanId}") {
         fun createRoute(foremanId: String) = "request_tool/$foremanId"
     }
@@ -153,10 +162,8 @@ sealed class AppRoute(val route: String) {
     object EngineerMain : AppRoute("factory/engineer_main")
 
     // Экраны производства — общие
-    object FactoryShift : AppRoute("factory/shift")
-    object FactoryShiftReport : AppRoute("factory/shift/report/{shiftId}") {
-        fun createRoute(shiftId: String) = "factory/shift/report/$shiftId"
-    }
+    // FIX(2026-05-12) build19: FactoryShift / FactoryShiftReport удалены — composable не зарегистрированы,
+    // фактически смена производственного работника живёт в WorkerMainScreen.
     object FactoryIdleReasons : AppRoute("factory/idle/reasons")
     object FactoryFacilitySwitch : AppRoute("factory/facility/switch")
 
@@ -169,16 +176,73 @@ sealed class AppRoute(val route: String) {
 
     // Регистрация V2 — выбор доменов и ролей
     object RoleSelectV2 : AppRoute("role_select_v2")
-    object DomainSelect : AppRoute("domain_select")
+    // FIX(2026-05-12) build19: DomainSelect удалён — composable не было, домен выбирается внутри RoleSelectV2.
 
     // История объекта (для координатора и куратора)
     object ObjectHistory : AppRoute("object_history/{objectId}") {
         fun createRoute(objectId: String) = "object_history/$objectId"
     }
 
-    // Лента всех фото фабрики (Начальник производства)
-    object FacilityPhotosFeed : AppRoute("factory/photos_feed")
+    // FIX(2026-05-12) build17: реальный экран создания заявки на доставку координатором.
+    object CoordCreateRequest : AppRoute("coordinator/create_request?batchId={batchId}") {
+        fun createRoute(batchId: String? = null): String {
+            return if (batchId != null) "coordinator/create_request?batchId=$batchId"
+            else "coordinator/create_request"
+        }
+    }
+
+    // FIX(2026-05-12) build18 P2: детальная карточка участника команды координатора.
+    object CoordTeamMemberDetail : AppRoute("coordinator/team_member/{userId}") {
+        fun createRoute(userId: String) = "coordinator/team_member/$userId"
+    }
+
+    // FIX(2026-05-12) build19: FacilityPhotosFeed удалён — composable не зарегистрирован,
+    // лента фото производства живёт внутри ProductionChiefMainScaffold через FacilityPhotosFeedScreen компонент.
 
     // FIX(2026-05-05): Очередь pending-действий (offline-first для шатдаунов)
     object PendingActions : AppRoute("pending_actions")
+
+    // FIX(2026-05-12) build19 hotfix: универсальный просмотрщик юр-документов.
+    // type = tos | privacy | eula | ai_consent (см. LegalTexts.DocumentType).
+    object LegalDocument : AppRoute("legal_document/{type}") {
+        fun createRoute(type: String) = "legal_document/$type"
+    }
+
+    // ─── Tool-transfer pipeline (Этап 3) ─────────────────────────
+    // Универсальный hub: incoming / outgoing / inventory + FAB "Сформировать"
+    object ToolTransferHub : AppRoute("tools/hub?tab={tab}") {
+        fun createRoute(tab: String = "incoming") = "tools/hub?tab=$tab"
+    }
+    // Комплектатор формирует передачу на объект
+    object ToolTransferCreate : AppRoute("tools/transfer/new?siteObjectId={siteObjectId}&batchId={batchId}") {
+        fun createRoute(siteObjectId: String? = null, batchId: String? = null): String {
+            val params = listOfNotNull(
+                siteObjectId?.let { "siteObjectId=$it" },
+                batchId?.let { "batchId=$it" },
+            ).joinToString("&")
+            return if (params.isEmpty()) "tools/transfer/new" else "tools/transfer/new?$params"
+        }
+    }
+    // Приёмщик на объекте — список ожидающих + детали
+    object ToolTransferIncoming : AppRoute("tools/transfers/incoming")
+    object ToolTransferDetail : AppRoute("tools/transfer/{transferId}") {
+        fun createRoute(transferId: String) = "tools/transfer/$transferId"
+    }
+
+    // ─── Return flow (FIX 2026-05-14 BELSI 2.0.1) ─────────────────
+    object ToolReturnRequest : AppRoute("tools/return-request/{transferId}") {
+        fun createRoute(transferId: String) = "tools/return-request/$transferId"
+    }
+    object ToolReturnPickup : AppRoute("tools/return-pickup/{transferId}") {
+        fun createRoute(transferId: String) = "tools/return-pickup/$transferId"
+    }
+    object ToolReturnDeliver : AppRoute("tools/return-deliver/{transferId}") {
+        fun createRoute(transferId: String) = "tools/return-deliver/$transferId"
+    }
+    object ToolReturnAccept : AppRoute("tools/return-accept/{transferId}") {
+        fun createRoute(transferId: String) = "tools/return-accept/$transferId"
+    }
+    object CuratorReturns : AppRoute("curator/returns")
+    /** FIX(2026-05-14) BELSI 2.0.1: единая лента AI-алертов куратора. */
+    object CuratorAlertsFeed : AppRoute("curator/alerts/feed")
 }

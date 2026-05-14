@@ -19,8 +19,18 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import com.belsi.work.presentation.components.role.Severity
+import com.belsi.work.presentation.components.role.colors
+import com.belsi.work.presentation.theme.belsiColors
+import com.belsi.work.data.local.database.dao.ShiftDao
 import com.belsi.work.data.repositories.BatchRepository
+import com.belsi.work.data.repositories.ShiftRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -30,18 +40,135 @@ import javax.inject.Inject
  * Привязан к одной фабрике (Углич), переключатель в шапке.
  */
 /**
- * FIX(2026-05-05): VM для WorkerMainScreen — реальные вызовы /shift/break/start|end.
- * При 404 от сервера ошибка глотается, UI продолжает на локальном state.
- * После деплоя backend — реальные нажатия начнут писать в audit shifts.
+ * FIX(2026-05-12) BELSI 2.0.0 build14: + real timers, + real tasks from /production/engineer/tasks.
+ * См. предыдущий FIX от build9 (shifts через ShiftRepository, breaks через BatchRepository).
  */
 @HiltViewModel
 class WorkerShiftViewModel @Inject constructor(
-    private val repo: BatchRepository,
+    private val batchRepo: BatchRepository,
+    private val shiftRepo: ShiftRepository,
+    private val shiftDao: ShiftDao,
+    // FIX(2026-05-12) build14: задачи и тикер из реальных API
+    private val productionRepo: com.belsi.work.data.repositories.ProductionRepository,
+    // FIX(2026-05-12) build19 hotfix: реальное имя фабрики вместо mock "Углич — фабрика №1"
+    private val activeRoleManager: com.belsi.work.data.local.ActiveRoleManager,
 ) : ViewModel() {
 
-    fun startSmoke() = viewModelScope.launch { repo.startSmokeBreak() }
-    fun startLunch() = viewModelScope.launch { repo.startLunchBreak() }
-    fun endBreak() = viewModelScope.launch { repo.endBreak() }
+    /** FIX(2026-05-12) build14: реальные задачи рабочего (assignee=me) */
+    private val _myTasks = kotlinx.coroutines.flow.MutableStateFlow<List<com.belsi.work.data.models.EngineerTask>>(emptyList())
+    val myTasks: kotlinx.coroutines.flow.StateFlow<List<com.belsi.work.data.models.EngineerTask>> = _myTasks.asStateFlow()
+
+    /** Тикер каждую секунду — для real-time таймеров смены/паузы */
+    private val _now = kotlinx.coroutines.flow.MutableStateFlow(System.currentTimeMillis())
+    val now: kotlinx.coroutines.flow.StateFlow<Long> = _now.asStateFlow()
+
+    /** FIX(2026-05-12) build19 hotfix: имя активной фабрики из API (а не FactoryMockData). */
+    private val _facilityName = MutableStateFlow<String?>(null)
+    val facilityName: StateFlow<String?> = _facilityName.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            productionRepo.getEngineerTasks(mine = true).onSuccess { _myTasks.value = it }
+        }
+        viewModelScope.launch {
+            // Подтягиваем имя активной фабрики из API.
+            // Если activeFacilityId не выбрана — берём первую из listFacilities().
+            var activeId: String? = null
+            activeRoleManager.activeFacilityId.collect { id ->
+                activeId = id
+                productionRepo.listFacilities().onSuccess { list ->
+                    val match = list.firstOrNull { it.id == activeId } ?: list.firstOrNull()
+                    _facilityName.value = match?.name
+                }
+                // Подписываемся постоянно — при переключении фабрики обновится автоматически.
+            }
+        }
+        viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(1000L)
+                _now.value = System.currentTimeMillis()
+            }
+        }
+    }
+
+    fun refreshTasks() {
+        viewModelScope.launch {
+            productionRepo.getEngineerTasks(mine = true).onSuccess { _myTasks.value = it }
+        }
+    }
+
+    fun markTaskDone(taskId: String) {
+        viewModelScope.launch {
+            productionRepo.updateEngineerTaskStatus(taskId, "done")
+                .onSuccess { refreshTasks() }
+        }
+    }
+
+    /** Активная смена производственника (Flow из Room — observable). */
+    val activeShift = shiftDao.getActiveShiftFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    private val _currentBreak = MutableStateFlow<String?>(null)
+    val currentBreak: StateFlow<String?> = _currentBreak.asStateFlow()
+
+    /** FIX(2026-05-12) build14: timestamp начала текущего перерыва для real-time таймера */
+    private val _currentBreakStartedMs = MutableStateFlow<Long>(0L)
+    val currentBreakStartedMs: StateFlow<Long> = _currentBreakStartedMs.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    /** Старт производственной смены — реально создаём shifts в БД. */
+    fun startShift() = viewModelScope.launch {
+        shiftRepo.startShift(siteObjectId = null)
+            .onFailure { e -> _error.value = "Ошибка старта смены: ${e.message}" }
+    }
+
+    /** Конец производственной смены. */
+    fun finishShift() = viewModelScope.launch {
+        val sid = shiftDao.getActiveShift()?.id ?: return@launch
+        shiftRepo.endShift(sid)
+            .onFailure { e -> _error.value = "Ошибка завершения смены: ${e.message}" }
+        _currentBreak.value = null
+    }
+
+    fun startSmoke() = viewModelScope.launch {
+        _currentBreak.value = "smoke"
+        _currentBreakStartedMs.value = System.currentTimeMillis()
+        batchRepo.startSmokeBreak()
+            .onFailure { e ->
+                // OfflineQueuedException — UI остаётся в state перерыва, action в очереди
+                if (e !is com.belsi.work.data.offline.OfflineQueuedException) {
+                    _currentBreak.value = null
+                    _error.value = "Ошибка перекура: ${e.message}"
+                }
+            }
+    }
+
+    fun startLunch() = viewModelScope.launch {
+        _currentBreak.value = "lunch"
+        _currentBreakStartedMs.value = System.currentTimeMillis()
+        batchRepo.startLunchBreak()
+            .onFailure { e ->
+                if (e !is com.belsi.work.data.offline.OfflineQueuedException) {
+                    _currentBreak.value = null
+                    _error.value = "Ошибка обеда: ${e.message}"
+                }
+            }
+    }
+
+    fun endBreak() = viewModelScope.launch {
+        batchRepo.endBreak()
+            .onFailure { e ->
+                if (e !is com.belsi.work.data.offline.OfflineQueuedException) {
+                    _error.value = "Ошибка завершения перерыва: ${e.message}"
+                }
+            }
+        _currentBreak.value = null
+        _currentBreakStartedMs.value = 0L
+    }
+
+    fun clearError() { _error.value = null }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,26 +177,50 @@ fun WorkerMainScreen(
     navController: NavController,
     viewModel: WorkerShiftViewModel = hiltViewModel(),
 ) {
-    val mock = FactoryMockData
+    // FIX(2026-05-12) build19 hotfix: имя фабрики из VM (реальный API) вместо
+    // hardcoded FactoryMockData.FACILITY_NAME = "Углич — фабрика №1".
+    val facilityName by viewModel.facilityName.collectAsState()
 
-    // Состояние смены — local UI state. Backend audit идёт через VM.
-    var shiftActive by remember { mutableStateOf(true) }
-    var currentBreak by remember { mutableStateOf<BreakType?>(null) }
+    // FIX(2026-05-11) BELSI 2.0.0 build9: реальная смена из БД (Room),
+    // не локальный compose var. После старта shifts row создаётся на сервере.
+    val activeShiftEntity by viewModel.activeShift.collectAsState()
+    val shiftActive = activeShiftEntity != null
+    val currentBreakStr by viewModel.currentBreak.collectAsState()
+    val currentBreak: BreakType? = when (currentBreakStr) {
+        "smoke" -> BreakType.SMOKE
+        "lunch" -> BreakType.LUNCH
+        else -> null
+    }
+    val error by viewModel.error.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(error) {
+        error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Column {
                     Text("Работник", fontWeight = FontWeight.Bold)
-                    Text(mock.FACILITY_NAME, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        facilityName ?: "Фабрика не выбрана",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 } },
                 actions = {
-                    IconButton(onClick = { /* facility switch */ }) {
+                    // FIX(2026-05-12) BELSI 2.0.0 build14: реальный facility switch
+                    IconButton(onClick = {
+                        navController.navigate(com.belsi.work.presentation.navigation.AppRoute.FactoryFacilitySwitch.route)
+                    }) {
                         Icon(Icons.Default.SwapHoriz, contentDescription = "Сменить фабрику")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AmberPrimary.copy(alpha = 0.1f)
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                 )
             )
         }
@@ -83,59 +234,80 @@ fun WorkerMainScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // ─── Большая карточка статуса смены ───
+            // FIX(2026-05-12) BELSI 2.0.0 build14: real-time таймер от activeShift.startAt
+            val nowMs by viewModel.now.collectAsState()
             ShiftStatusCard(
                 active = shiftActive,
                 currentBreak = currentBreak,
-                onStartShift = { shiftActive = true },
-                onFinishShift = {
-                    shiftActive = false
-                    currentBreak = null
-                }
+                shiftStartIso = activeShiftEntity?.startAt,
+                nowMs = nowMs,
+                onStartShift = { viewModel.startShift() },
+                onFinishShift = { viewModel.finishShift() }
             )
 
             // ─── 3 кнопки: Перекур · Обед · Простой ───
             if (shiftActive && currentBreak == null) {
+                // FIX(2026-05-12) build19 hotfix: цвета кнопок берутся из Severity.
+                // Перекур/Обед — WARNING (жёлтый), Простой — ERROR (розовый).
+                val (smokeFg, _) = Severity.WARNING.colors()
+                val (lunchFg, _) = Severity.WARNING.colors()
+                val (idleFg, _)  = Severity.ERROR.colors()
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     BreakButton(
                         modifier = Modifier.weight(1f),
-                        label = "Перекур", emoji = "☕", color = Color(0xFFFBBF24),
-                        onClick = {
-                            currentBreak = BreakType.SMOKE
-                            viewModel.startSmoke()  // FIX(2026-05-05): real /shift/break/start
-                        }
+                        label = "Перекур", emoji = "☕", color = smokeFg,
+                        onClick = { viewModel.startSmoke() }
                     )
                     BreakButton(
                         modifier = Modifier.weight(1f),
-                        label = "Обед", emoji = "🍱", color = Color(0xFFF59E0B),
-                        onClick = {
-                            currentBreak = BreakType.LUNCH
-                            viewModel.startLunch()  // FIX(2026-05-05): real /shift/break/start
-                        }
+                        label = "Обед", emoji = "🍱", color = lunchFg,
+                        onClick = { viewModel.startLunch() }
                     )
                     BreakButton(
                         modifier = Modifier.weight(1f),
-                        label = "Простой", emoji = "⚠️", color = Color(0xFFF43F5E),
+                        label = "Простой", emoji = "⚠️", color = idleFg,
                         onClick = { navController.navigate("factory/idle/reasons") }
                     )
                 }
             } else if (currentBreak != null) {
-                ActiveBreakCard(currentBreak!!) {
-                    currentBreak = null
-                    viewModel.endBreak()  // FIX(2026-05-05): real /shift/break/end
-                }
+                val breakStartedMs by viewModel.currentBreakStartedMs.collectAsState()
+                ActiveBreakCard(
+                    breakType = currentBreak!!,
+                    breakStartedMs = breakStartedMs.takeIf { it > 0 } ?: nowMs,
+                    nowMs = nowMs,
+                    onEnd = { viewModel.endBreak() },
+                )
             }
 
             // ─── Камера ───
+            // FIX(2026-05-12) BELSI 2.0.0 build14: реальный переход на Camera screen
             ActionCard(
                 title = "Сделать фото",
                 subtitle = "Обязателен комментарий",
                 icon = Icons.Default.PhotoCamera,
-                onClick = { /* open camera */ }
+                onClick = {
+                    navController.navigate(
+                        com.belsi.work.presentation.navigation.AppRoute.Camera.route
+                    )
+                }
             )
 
-            // ─── Задачи ───
-            SectionHeader("Мои задачи", count = mock.workerTasks.count { !it.done })
-            mock.workerTasks.forEach { TaskRow(it) }
+            // ─── Задачи (build14: реальные из /production/engineer/tasks?mine=true) ───
+            val myTasks by viewModel.myTasks.collectAsState()
+            val openCount = myTasks.count { it.status != "done" && it.status != "cancelled" }
+            SectionHeader("Мои задачи", count = openCount)
+            if (myTasks.isEmpty()) {
+                Text(
+                    "Задач нет",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp),
+                )
+            } else {
+                myTasks.forEach { task ->
+                    RealTaskRow(task, onDone = { viewModel.markTaskDone(task.id) })
+                }
+            }
 
             // ─── Кнопка отчёта смены ───
             // FIX(2026-05-10): убрана навигация на factory/shift/report/{shiftId}
@@ -168,13 +340,16 @@ private enum class BreakType(val label: String, val emoji: String) {
 private fun ShiftStatusCard(
     active: Boolean,
     currentBreak: BreakType?,
+    // FIX(2026-05-12) build14: real-time таймер
+    shiftStartIso: String? = null,
+    nowMs: Long = System.currentTimeMillis(),
     onStartShift: () -> Unit,
     onFinishShift: () -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (active) AmberPrimary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant
+            containerColor = if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant
         ),
         shape = RoundedCornerShape(16.dp),
     ) {
@@ -187,20 +362,25 @@ private fun ShiftStatusCard(
             )
             Spacer(Modifier.height(4.dp))
             if (active) {
+                // FIX(2026-05-12) build14: считаем real time от startAt
+                val startMs = remember(shiftStartIso) {
+                    try {
+                        if (shiftStartIso != null)
+                            java.time.OffsetDateTime.parse(shiftStartIso).toInstant().toEpochMilli()
+                        else nowMs
+                    } catch (e: Exception) { nowMs }
+                }
+                val elapsedSec = ((nowMs - startMs) / 1000).coerceAtLeast(0)
+                val h = elapsedSec / 3600
+                val m = (elapsedSec % 3600) / 60
+                val s = elapsedSec % 60
                 Text(
-                    "08:23:14",
+                    "%02d:%02d:%02d".format(h, m, s),
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold,
-                    color = AmberPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(Modifier.height(8.dp))
-                Row {
-                    StatPill("Работа 7ч 12мин", Color(0xFF10B981))
-                    Spacer(Modifier.width(6.dp))
-                    StatPill("Перекур 14мин", Color(0xFFFBBF24))
-                    Spacer(Modifier.width(6.dp))
-                    StatPill("Обед 30мин", Color(0xFFF59E0B))
-                }
                 Spacer(Modifier.height(12.dp))
                 Button(
                     onClick = onFinishShift,
@@ -212,7 +392,7 @@ private fun ShiftStatusCard(
                 Button(
                     onClick = onStartShift,
                     modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AmberPrimary)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) { Text("Старт смены", fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
             }
         }
@@ -241,9 +421,19 @@ private fun BreakButton(
 }
 
 @Composable
-private fun ActiveBreakCard(breakType: BreakType, onEnd: () -> Unit) {
+private fun ActiveBreakCard(
+    breakType: BreakType,
+    breakStartedMs: Long = System.currentTimeMillis(),
+    nowMs: Long = System.currentTimeMillis(),
+    onEnd: () -> Unit,
+) {
+    // FIX(2026-05-12) build14: real-time таймер паузы
+    val elapsed = ((nowMs - breakStartedMs) / 1000).coerceAtLeast(0)
+    val mm = elapsed / 60
+    val ss = elapsed % 60
+    val (_, warnBg) = Severity.WARNING.colors()
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF3C7)),
+        colors = CardDefaults.cardColors(containerColor = warnBg.copy(alpha = 0.5f)),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -255,7 +445,9 @@ private fun ActiveBreakCard(breakType: BreakType, onEnd: () -> Unit) {
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text("${breakType.label} идёт", fontWeight = FontWeight.Bold)
-                Text("00:08:24", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("%02d:%02d".format(mm, ss), fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold)
             }
             Button(onClick = onEnd) { Text("Вернуться") }
         }
@@ -271,7 +463,7 @@ private fun ActionCard(title: String, subtitle: String?, icon: androidx.compose.
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = AmberPrimary)
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(title, fontWeight = FontWeight.SemiBold)
@@ -290,7 +482,7 @@ private fun SectionHeader(title: String, count: Int? = null) {
             Spacer(Modifier.width(8.dp))
             Box(
                 modifier = Modifier
-                    .background(AmberPrimary, RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(50))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
                 Text("$count", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
@@ -299,28 +491,84 @@ private fun SectionHeader(title: String, count: Int? = null) {
     }
 }
 
+/**
+ * FIX(2026-05-12) BELSI 2.0.0 build14: реальная задача из /production/engineer/tasks.
+ */
 @Composable
-private fun TaskRow(task: FactoryMockData.WorkerTask) {
+private fun RealTaskRow(
+    task: com.belsi.work.data.models.EngineerTask,
+    onDone: () -> Unit,
+) {
+    val done = task.status == "done"
+    val cancelled = task.status == "cancelled"
+    // FIX(2026-05-12) build19 hotfix: priority цвета берутся из Severity.
+    val (priorityColor, _) = when (task.priority) {
+        "urgent" -> Severity.ERROR
+        "high"   -> Severity.WARNING
+        "low"    -> Severity.NEUTRAL
+        else     -> Severity.INFO
+    }.colors()
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (task.done) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
+            containerColor = if (done || cancelled) MaterialTheme.colorScheme.surfaceVariant
+                            else MaterialTheme.colorScheme.surface
         ),
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                if (task.done) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                contentDescription = null,
-                tint = if (task.done) Color(0xFF10B981) else MaterialTheme.colorScheme.onSurfaceVariant,
+            Checkbox(
+                checked = done,
+                onCheckedChange = { if (!done && !cancelled) onDone() },
+                enabled = !done && !cancelled,
             )
-            Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
-                Text(task.title, fontWeight = FontWeight.Medium)
-                Text("${task.from} · ${task.priority}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    task.title,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    textDecoration = if (done) androidx.compose.ui.text.style.TextDecoration.LineThrough else null,
+                    color = if (done) MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.onSurface,
+                )
+                if (!task.description.isNullOrBlank()) {
+                    Text(
+                        task.description,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
+                }
+                Row(modifier = Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (task.priority != "normal") {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = priorityColor.copy(alpha = 0.15f),
+                        ) {
+                            Text(
+                                task.priority.uppercase(),
+                                fontSize = 9.sp,
+                                color = priorityColor,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            )
+                        }
+                    }
+                    task.batchTitle?.let {
+                        Text(
+                            "📦 $it",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
         }
     }
 }
+
+// FIX(2026-05-14) BELSI 2.0.1: удалён мёртвый TaskRow(FactoryMockData.WorkerTask) —
+// никем не вызывался, RealTaskRow выше использует реальную модель TeamMemberTaskDto.
 
 @Composable
 private fun StatPill(text: String, color: Color) {
@@ -333,4 +581,3 @@ private fun StatPill(text: String, color: Color) {
     }
 }
 
-internal val AmberPrimary = Color(0xFFD97706)

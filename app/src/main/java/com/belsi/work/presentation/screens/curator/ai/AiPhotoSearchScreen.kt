@@ -203,8 +203,9 @@ fun AiPhotoSearchScreen(
                             )
                         }
                         Spacer(Modifier.height(4.dp))
+                        // FIX(2026-05-12) build19 hotfix: "XeroCode" убран из UI.
                         Text(
-                            "Найдено: ${r.totalFound}  ·  AI processing · XeroCode",
+                            "Найдено: ${r.totalFound}  ·  AI processing",
                             fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         )

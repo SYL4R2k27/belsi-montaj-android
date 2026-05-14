@@ -9,6 +9,8 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -98,18 +100,36 @@ fun ShiftHistoryScreen(
                 )
             }
             } else {
-                // Shifts List
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(shifts) { shift ->
-                        ShiftCard(shift = shift, viewModel = viewModel)
-                    }
-                }
+                // FIX(2026-05-11) BELSI 2.0.0 build5: AdaptiveListDetail wrapper.
+                // Брендбук foldable-tablet "ShiftHistoryScreen": list 35% / detail 65%
+                // на expanded. На compact — обычный список.
+                // FIX(2026-05-12) build17 P2: ShiftCard кликабельна — открывает ShiftDetail.
+                com.belsi.work.presentation.components.AdaptiveListDetail(
+                    items = shifts,
+                    keyOf = { it.id.toString() },
+                    listItem = { shift, isSelected, onClick ->
+                        Box(modifier = Modifier
+                            .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else androidx.compose.ui.graphics.Color.Transparent)
+                            .clickable(onClick = {
+                                navController.navigate(
+                                    com.belsi.work.presentation.navigation.AppRoute.ShiftDetail.createRoute(shift.id.toString())
+                                )
+                            })
+                            .padding(4.dp)
+                        ) {
+                            ShiftCard(shift = shift, viewModel = viewModel)
+                        }
+                    },
+                    detailContent = { shift ->
+                        LazyColumn(
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            item { ShiftCard(shift = shift, viewModel = viewModel) }
+                        }
+                    },
+                )
             }
         }
     }

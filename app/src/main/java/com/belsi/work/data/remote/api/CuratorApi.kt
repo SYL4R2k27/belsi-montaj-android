@@ -193,6 +193,16 @@ interface CuratorApi {
         @Query("period") period: String = "week"
     ): Response<AnalyticsResponse>
 
+    /**
+     * FIX(2026-05-14) BELSI 2.0.1: единая лента AI-алертов.
+     * Объединяет long_pause/long_idle/return_rejected/bad_photo/stale_order/tool_lost.
+     */
+    @GET("curator/alerts/feed")
+    suspend fun getAlertsFeed(
+        @Query("severity_min") severityMin: String = "info",
+        @Query("limit") limit: Int = 50,
+    ): Response<List<CuratorAlertItemDto>>
+
     /** GET /curator/ai-settings — настройки автоодобрения */
     @GET("curator/ai-settings")
     suspend fun getAiSettings(): Response<AiSettingsResponse>
@@ -382,7 +392,10 @@ data class AiDashboardResponse(
 data class ProblemInstaller(
     @kotlinx.serialization.SerialName("user_id") val userId: String,
     val name: String,
-    @kotlinx.serialization.SerialName("problem_count") val problemCount: Int
+    @kotlinx.serialization.SerialName("problem_count") val problemCount: Int,
+    // FIX(2026-05-13) BELSI 2.0.1: расшифровка категорий проблем + время последнего
+    @kotlinx.serialization.SerialName("category_breakdown") val categoryBreakdown: Map<String, Int> = emptyMap(),
+    @kotlinx.serialization.SerialName("last_problem_at") val lastProblemAt: String? = null,
 )
 
 @kotlinx.serialization.Serializable
@@ -465,4 +478,20 @@ data class ShiftAuditEntry(
     @kotlinx.serialization.SerialName("new_values") val newValues: kotlinx.serialization.json.JsonObject? = null,
     val reason: String? = null,
     @kotlinx.serialization.SerialName("created_at") val createdAt: String? = null,
+)
+
+// FIX(2026-05-14) BELSI 2.0.1: единая лента AI-алертов
+@kotlinx.serialization.Serializable
+data class CuratorAlertItemDto(
+    val id: String,
+    val kind: String,
+    val severity: String,    // info | warning | error | critical
+    val title: String,
+    val description: String,
+    @kotlinx.serialization.SerialName("created_at") val createdAt: String? = null,
+    @kotlinx.serialization.SerialName("actor_user_id") val actorUserId: String? = null,
+    @kotlinx.serialization.SerialName("actor_name") val actorName: String? = null,
+    @kotlinx.serialization.SerialName("resource_id") val resourceId: String? = null,
+    @kotlinx.serialization.SerialName("resource_type") val resourceType: String? = null,
+    @kotlinx.serialization.SerialName("deep_link") val deepLink: String? = null,
 )

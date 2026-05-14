@@ -131,6 +131,16 @@ class ForemanViewModel @Inject constructor(
         loadAllData()
         checkOrCreateForemanShift()
         loadObjects()
+        // FIX(2026-05-11) BELSI 2.0.0 build10: live-обновление пауз/простоев бригады.
+        // Каждые 30 сек дёргаем loadAllData() — обновляются статусы pause/idle монтажников.
+        // Brandbook р.09: бригадир должен видеть текущее состояние команды в реальном времени.
+        // WebSocket — overkill для current scale, polling 30s даёт latency <30 sec без сложности.
+        viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(30_000L)
+                loadAllData()
+            }
+        }
     }
 
     private fun loadObjects() {
@@ -181,6 +191,9 @@ class ForemanViewModel @Inject constructor(
                             startAt = activeShift.startAt
                         )
                         startShiftTimer(activeShift.startAt)
+                        // FIX(2026-05-12) build17 P1: имя текущего объекта из активной смены —
+                        // чтобы UI не показывал «Нажмите для выбора» при существующей смене.
+                        activeShift.siteObjectName?.let { _currentObjectName.value = it }
                     } else {
                         android.util.Log.d("ForemanVM", "No active shift, creating new one...")
                         startForemanShift()

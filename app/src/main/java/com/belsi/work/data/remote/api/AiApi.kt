@@ -14,10 +14,12 @@ import retrofit2.http.*
  */
 interface AiApi {
 
-    /** Ежедневная сводка для куратора (sync, кэш 1 час). */
+    /** Ежедневная сводка для куратора (sync, кэш 1 час).
+     * force_refresh=true — сбросить кэш (для кнопки «↻»). */
     @POST("curator/ai-daily-summary")
     suspend fun getDailySummary(
         @Query("date") date: String? = null,
+        @Query("force_refresh") forceRefresh: Boolean? = null,
     ): Response<AiDailySummaryResponse>
 
     /** NLP-поиск фото (sync). */

@@ -352,39 +352,57 @@ class CoordinatorViewModel @Inject constructor(
         }
     }
 
+    // FIX(2026-05-12) build17 P1: добавлены onFailure ко всем load* — раньше ошибки молча глотались.
     private suspend fun loadPhotos() {
         repository.getPhotos().onSuccess {
             _photos.value = it
+        }.onFailure {
+            android.util.Log.w("CoordinatorVM", "loadPhotos failed: ${it.message}")
         }
     }
 
     private suspend fun loadTasks() {
         repository.getTasks().onSuccess {
             _tasks.value = it
+        }.onFailure {
+            android.util.Log.w("CoordinatorVM", "loadTasks failed: ${it.message}")
         }
     }
 
     private suspend fun loadMyTasks() {
         taskRepository.getMyTasks().onSuccess {
             _myTasks.value = it
+        }.onFailure {
+            android.util.Log.w("CoordinatorVM", "loadMyTasks failed: ${it.message}")
         }
     }
 
     private suspend fun loadTeam() {
         repository.getTeam().onSuccess {
             _team.value = it
+        }.onFailure {
+            android.util.Log.w("CoordinatorVM", "loadTeam failed: ${it.message}")
         }
     }
 
     private suspend fun loadReports() {
         repository.getReports().onSuccess {
             _reports.value = it
+        }.onFailure {
+            android.util.Log.w("CoordinatorVM", "loadReports failed: ${it.message}")
         }
     }
 
     private suspend fun loadSite() {
         repository.getSite().onSuccess {
             _site.value = it
+        }.onFailure {
+            android.util.Log.w("CoordinatorVM", "loadSite failed: ${it.message}")
         }
+    }
+
+    override fun onCleared() {
+        // FIX(2026-05-12) build17 P1: останавливаем polling при уничтожении VM.
+        super.onCleared()
     }
 }

@@ -265,8 +265,9 @@ fun VoiceCaptureSheet(
                             )
                         }
                         Spacer(Modifier.height(8.dp))
+                        // FIX(2026-05-12) build19 hotfix: "XeroCode" убран из UI.
                         Text(
-                            "AI processing · XeroCode (Whisper)",
+                            "AI processing",
                             fontSize = 9.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         )

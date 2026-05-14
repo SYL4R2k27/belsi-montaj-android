@@ -20,7 +20,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.belsi.work.data.models.IdleReason
+import com.belsi.work.data.offline.OfflineQueuedException
 import com.belsi.work.data.repositories.BatchRepository
+import com.belsi.work.data.repositories.PauseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,15 +43,53 @@ import javax.inject.Inject
 @HiltViewModel
 class FactoryIdleReasonsViewModel @Inject constructor(
     private val repo: BatchRepository,
+    private val pauseRepo: PauseRepository,
 ) : ViewModel() {
     private val _reasons = MutableStateFlow<List<IdleReason>>(emptyList())
     val reasons: StateFlow<List<IdleReason>> = _reasons.asStateFlow()
+
+    private val _submitting = MutableStateFlow(false)
+    val submitting: StateFlow<Boolean> = _submitting.asStateFlow()
+
+    private val _submitResult = MutableStateFlow<SubmitResult?>(null)
+    val submitResult: StateFlow<SubmitResult?> = _submitResult.asStateFlow()
+
+    sealed class SubmitResult {
+        object Success : SubmitResult()
+        data class OfflineQueued(val message: String) : SubmitResult()
+        data class Error(val message: String) : SubmitResult()
+    }
 
     init {
         viewModelScope.launch {
             repo.getIdleReasons(domain = "production").onSuccess { _reasons.value = it }
         }
     }
+
+    /**
+     * FIX(2026-05-11) BELSI 2.0.0 build9: реальный вызов /shift/idle/start
+     * вместо TODO. На бэкенде это создаёт shift_pauses + дёргает push кураторам/руководителям.
+     * Offline-fallback: action идёт в pending_actions очередь.
+     */
+    fun submitIdle(reason: String) {
+        viewModelScope.launch {
+            _submitting.value = true
+            pauseRepo.startIdle(reason)
+                .onSuccess {
+                    _submitResult.value = SubmitResult.Success
+                }
+                .onFailure { e ->
+                    _submitResult.value = if (e is OfflineQueuedException) {
+                        SubmitResult.OfflineQueued("📤 Простой «$reason» отправится когда появится сеть")
+                    } else {
+                        SubmitResult.Error("Ошибка: ${e.message}")
+                    }
+                }
+            _submitting.value = false
+        }
+    }
+
+    fun clearSubmitResult() { _submitResult.value = null }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,7 +99,9 @@ fun FactoryIdleReasonsScreen(
     viewModel: FactoryIdleReasonsViewModel = hiltViewModel(),
 ) {
     val apiReasons by viewModel.reasons.collectAsState()
-    // Fallback на mock при недоступности API
+    val submitting by viewModel.submitting.collectAsState()
+    val submitResult by viewModel.submitResult.collectAsState()
+    // FIX(2026-05-11) BELSI 2.0.0 build9: backend жив, fallback оставляем как safety net.
     val reasons: List<String> = if (apiReasons.isNotEmpty()) {
         apiReasons.map { it.label }
     } else {
@@ -67,8 +109,30 @@ fun FactoryIdleReasonsScreen(
     }
     var selected by remember { mutableStateOf<String?>(null) }
     var customText by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(submitResult) {
+        when (val r = submitResult) {
+            is FactoryIdleReasonsViewModel.SubmitResult.Success -> {
+                snackbarHostState.showSnackbar("Простой зафиксирован")
+                viewModel.clearSubmitResult()
+                navController.popBackStack()
+            }
+            is FactoryIdleReasonsViewModel.SubmitResult.OfflineQueued -> {
+                snackbarHostState.showSnackbar(r.message)
+                viewModel.clearSubmitResult()
+                navController.popBackStack()
+            }
+            is FactoryIdleReasonsViewModel.SubmitResult.Error -> {
+                snackbarHostState.showSnackbar(r.message)
+                viewModel.clearSubmitResult()
+            }
+            null -> {}
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Причина простоя") },
@@ -97,15 +161,26 @@ fun FactoryIdleReasonsScreen(
                     }
                     Button(
                         onClick = {
-                            // TODO: послать /shift/idle/start { reason }
-                            navController.popBackStack()
+                            // FIX(2026-05-11) BELSI 2.0.0 build9: реальный вызов
+                            // POST /shift/idle/start { reason }. Backend создаст
+                            // запись в shift_pauses + дёрнет push кураторам.
+                            val finalReason = if (selected == "Другое") customText.trim() else selected ?: return@Button
+                            viewModel.submitIdle(finalReason)
                         },
                         modifier = Modifier.fillMaxWidth().height(52.dp),
-                        enabled = selected != null && (selected != "Другое" || customText.isNotBlank()),
+                        enabled = !submitting && selected != null && (selected != "Другое" || customText.isNotBlank()),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     ) {
+                        if (submitting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.height(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onError,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
                         Text(
-                            "Начать простой",
+                            if (submitting) "Отправляем…" else "Начать простой",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                         )
@@ -139,11 +214,11 @@ fun FactoryIdleReasonsScreen(
                         .fillMaxWidth()
                         .clickable { selected = reason },
                     colors = CardDefaults.cardColors(
-                        containerColor = if (selected == reason) AmberPrimary.copy(alpha = 0.15f)
+                        containerColor = if (selected == reason) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                         else MaterialTheme.colorScheme.surface
                     ),
                     border = if (selected == reason)
-                        androidx.compose.foundation.BorderStroke(2.dp, AmberPrimary) else null,
+                        androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -152,7 +227,7 @@ fun FactoryIdleReasonsScreen(
                         RadioButton(
                             selected = selected == reason,
                             onClick = { selected = reason },
-                            colors = RadioButtonDefaults.colors(selectedColor = AmberPrimary),
+                            colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary),
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(reason, fontSize = 16.sp,

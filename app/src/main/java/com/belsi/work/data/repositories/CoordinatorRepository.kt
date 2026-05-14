@@ -2,13 +2,19 @@ package com.belsi.work.data.repositories
 
 import com.belsi.work.data.remote.api.CoordinatorApi
 import com.belsi.work.data.remote.api.CoordinatorRejectPhotoRequest
+import com.belsi.work.data.remote.api.LogistApi
 import com.belsi.work.data.remote.dto.coordinator.*
+import com.belsi.work.data.remote.dto.driver.DeliveryRequestIn
+import com.belsi.work.data.remote.dto.driver.DeliveryRequestOutDto
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
  * Репозиторий для работы координатора
  * Бэкенд: coordinator.py
+ *
+ * FIX(2026-05-12) build17: добавлены createDeliveryRequest (через LogistApi),
+ * списки объектов (active_batches + recent_photos) — через composite endpoint.
  */
 interface CoordinatorRepository {
     suspend fun getDashboard(): Result<CoordinatorDashboardDto>
@@ -24,12 +30,20 @@ interface CoordinatorRepository {
     suspend fun updateReport(reportId: String, request: UpdateReportRequest): Result<CoordinatorReportDto>
     suspend fun getSite(): Result<CoordinatorSiteDto?>
     suspend fun updateSite(request: UpdateSiteRequest): Result<CoordinatorSiteDto>
+
+    // FIX(2026-05-12) build17 P0: координатор реально создаёт заявку на доставку.
+    suspend fun createDeliveryRequest(request: DeliveryRequestIn): Result<DeliveryRequestOutDto>
 }
 
 @Singleton
 class CoordinatorRepositoryImpl @Inject constructor(
-    private val coordinatorApi: CoordinatorApi
+    private val coordinatorApi: CoordinatorApi,
+    private val logistApi: LogistApi,
 ) : CoordinatorRepository {
+
+    override suspend fun createDeliveryRequest(request: DeliveryRequestIn): Result<DeliveryRequestOutDto> {
+        return safeApiCall("создания заявки") { logistApi.createRequest(request) }
+    }
 
     override suspend fun getDashboard(): Result<CoordinatorDashboardDto> {
         return safeApiCall("дашборда") { coordinatorApi.getDashboard() }

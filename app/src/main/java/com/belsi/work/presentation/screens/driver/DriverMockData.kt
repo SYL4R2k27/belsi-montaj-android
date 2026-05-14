@@ -1,10 +1,15 @@
 package com.belsi.work.presentation.screens.driver
 
+import com.belsi.work.data.remote.dto.driver.RouteOutDto
+import com.belsi.work.data.remote.dto.driver.RoutePointOutDto
 import java.util.UUID
 
 /**
- * FIX(2026-05-03): mock-данные для Этапа A. Без сервера, чисто для демо UX.
- * Удаляется когда подключим реальные endpoint'ы.
+ * FIX(2026-05-03): mock-данные для Этапа A.
+ * FIX(2026-05-11) BELSI 2.0.0: backend (driver_logist.py, 14 endpoint'ов) и Retrofit
+ * клиент (DriverApi/LogistApi + DriverViewModels) подключены.
+ * MockData оставлен как fallback для role-switcher demo (когда у dev-юзера
+ * нет реально назначенных маршрутов) — adapters внизу файла.
  */
 object DriverMockData {
 
@@ -111,5 +116,49 @@ object DriverMockData {
     val historyYesterday = listOf(
         HistoryEvent("18:30", "✅", "Иванов завершил смену", "8 ч 15 мин чистого времени", HistoryType.SHIFT),
         HistoryEvent("10:00", "🏗", "Объект создан", "Координатор: Сибилев · 3 фото осмотра", HistoryType.CREATE),
+    )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FIX(2026-05-11) BELSI 2.0.0: Adapters от backend DTO → DriverMockData type system
+// (для повторного использования существующего UI с реальными данными)
+// ═══════════════════════════════════════════════════════════════════════════
+
+private fun parseHHMM(iso: String?): String =
+    iso?.takeIf { it.length >= 16 }?.substring(11, 16) ?: "—"
+
+fun RoutePointOutDto.toMockPoint(): DriverMockData.RoutePoint = DriverMockData.RoutePoint(
+    id = id,
+    seq = seq,
+    time = scheduledTime ?: "—",
+    type = when (pointType) {
+        "pickup" -> DriverMockData.PointType.PICKUP
+        "delivery" -> DriverMockData.PointType.DELIVERY
+        "transit" -> DriverMockData.PointType.TRANSIT
+        "return" -> DriverMockData.PointType.RETURN
+        else -> DriverMockData.PointType.DELIVERY
+    },
+    address = address,
+    cargo = cargo,
+    status = when (status) {
+        "pending" -> DriverMockData.PointStatus.PENDING
+        "arrived" -> DriverMockData.PointStatus.ARRIVED
+        "delivered", "skipped" -> DriverMockData.PointStatus.DELIVERED
+        else -> DriverMockData.PointStatus.PENDING
+    },
+)
+
+fun RouteOutDto.toMockRoute(): DriverMockData.Route {
+    val initials = (driverName ?: "??").split(" ")
+        .filter { it.isNotBlank() }
+        .take(2)
+        .joinToString("") { it.first().uppercase() }
+        .ifEmpty { "ВД" }
+    return DriverMockData.Route(
+        id = id,
+        driverName = driverName ?: "Водитель",
+        driverInitials = initials,
+        plannedDate = plannedDate.takeLast(5).replace("-", "."),
+        points = points.map { it.toMockPoint() },
     )
 }

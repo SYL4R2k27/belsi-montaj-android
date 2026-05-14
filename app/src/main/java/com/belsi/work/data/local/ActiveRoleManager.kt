@@ -33,6 +33,9 @@ class ActiveRoleManager @Inject constructor(
     private val activeRoleKey = stringPreferencesKey("active_role")
     // FIX(2026-05-05): активная производственная фабрика (site_object_id для production-роли)
     private val activeFacilityKey = stringPreferencesKey("active_facility_id")
+    // FIX(2026-05-11) BELSI 2.0.0 build3: список доступных юзеру ролей (для RoleSwitcher).
+    // Заполняется после /user/me/roles при логине. Разделитель — запятая.
+    private val availableRolesKey = stringPreferencesKey("available_roles")
 
     /**
      * Текущая активная роль. Поток обновляется при переключении.
@@ -77,6 +80,24 @@ class ActiveRoleManager @Inject constructor(
         context.activeRoleDataStore.edit { prefs ->
             prefs.remove(activeRoleKey)
             prefs.remove(activeFacilityKey)
+            prefs.remove(availableRolesKey)
+        }
+    }
+
+    /**
+     * FIX(2026-05-11) BELSI 2.0.0 build3: список доступных ролей юзера.
+     * Заполняется после /user/me/roles. RoleSwitcher показывается если size > 1.
+     */
+    val availableRoles: Flow<List<UserRole>> = context.activeRoleDataStore.data.map { prefs ->
+        val raw = prefs[availableRolesKey] ?: return@map emptyList()
+        raw.split(",").mapNotNull { name ->
+            try { UserRole.valueOf(name.trim()) } catch (_: Exception) { null }
+        }
+    }
+
+    suspend fun setAvailableRoles(roles: List<UserRole>) {
+        context.activeRoleDataStore.edit { prefs ->
+            prefs[availableRolesKey] = roles.joinToString(",") { it.name }
         }
     }
 }

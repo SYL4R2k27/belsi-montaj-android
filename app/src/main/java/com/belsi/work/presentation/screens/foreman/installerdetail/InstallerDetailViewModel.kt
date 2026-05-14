@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.belsi.work.data.remote.api.PauseStatsResponse
 import com.belsi.work.data.remote.api.ReassignResponse
+import com.belsi.work.data.remote.dto.objects.SiteObjectDto
 import com.belsi.work.data.remote.dto.team.InstallerDetailResponse
+import com.belsi.work.data.repositories.ObjectsRepository
 import com.belsi.work.data.repositories.TeamRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,12 +23,16 @@ data class InstallerDetailUiState(
     val pauseStats: PauseStatsResponse? = null,
     val isLoadingPauseStats: Boolean = false,
     val reassignSuccess: String? = null,
-    val isReassigning: Boolean = false
+    val isReassigning: Boolean = false,
+    // FIX(2026-05-12) build17 P0: список объектов для dropdown в ReassignDialog.
+    val availableObjects: List<SiteObjectDto> = emptyList(),
+    val isLoadingObjects: Boolean = false,
 )
 
 @HiltViewModel
 class InstallerDetailViewModel @Inject constructor(
-    private val teamRepository: TeamRepository
+    private val teamRepository: TeamRepository,
+    private val objectsRepository: ObjectsRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InstallerDetailUiState())
@@ -65,6 +71,26 @@ class InstallerDetailViewModel @Inject constructor(
                 onFailure = { e ->
                     android.util.Log.e("InstallerDetailVM", "Ошибка загрузки статистики простоев", e)
                     _uiState.update { it.copy(isLoadingPauseStats = false) }
+                }
+            )
+        }
+    }
+
+    /**
+     * FIX(2026-05-12) build17 P0: грузим список объектов один раз перед открытием
+     * ReassignDialog. Раньше бригадир должен был вводить UUID вручную.
+     */
+    fun loadAvailableObjects() {
+        if (_uiState.value.availableObjects.isNotEmpty() || _uiState.value.isLoadingObjects) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingObjects = true) }
+            objectsRepository.getObjects(status = "active").fold(
+                onSuccess = { list ->
+                    _uiState.update { it.copy(isLoadingObjects = false, availableObjects = list) }
+                },
+                onFailure = { e ->
+                    android.util.Log.e("InstallerDetailVM", "Ошибка загрузки списка объектов", e)
+                    _uiState.update { it.copy(isLoadingObjects = false) }
                 }
             )
         }

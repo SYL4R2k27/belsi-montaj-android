@@ -1,17 +1,14 @@
 package com.belsi.work.presentation.screens.factory
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -19,6 +16,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.belsi.work.data.models.InventoryItem
 import com.belsi.work.data.models.MaterialOrder
+import com.belsi.work.presentation.components.role.RoleEmptyState
+import com.belsi.work.presentation.components.role.RoleStatCard
+import com.belsi.work.presentation.components.role.RoleStatusPill
+import com.belsi.work.presentation.components.role.Severity
+import com.belsi.work.presentation.components.role.colors
 
 /**
  * FIX(2026-05-06): SupplierMainScreen — подключён к API.
@@ -29,9 +31,11 @@ import com.belsi.work.data.models.MaterialOrder
 fun SupplierMainScreen(
     navController: NavController,
     viewModel: SupplierViewModel = hiltViewModel(),
+    // FIX(2026-05-12) BELSI 2.0.0 build14: externally-controlled tab from Scaffold navbar
+    initialTab: Int = 0,
 ) {
     val state by viewModel.state.collectAsState()
-    var tab by remember { mutableStateOf(0) }
+    var tab by remember(initialTab) { mutableStateOf(initialTab) }
 
     Scaffold(
         topBar = {
@@ -45,23 +49,44 @@ fun SupplierMainScreen(
                     )
                 } },
                 actions = {
+                    // FIX(2026-05-12) build19 Этап3+: переход в Tool Transfer Hub
+                    IconButton(onClick = {
+                        navController.navigate(
+                            com.belsi.work.presentation.navigation.AppRoute.ToolTransferHub.createRoute("outgoing")
+                        )
+                    }) {
+                        Icon(Icons.Default.Inventory2, contentDescription = "Передачи инструмента")
+                    }
                     IconButton(onClick = { viewModel.load() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Обновить")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AmberPrimary.copy(alpha = 0.1f))
+            )
+        },
+        floatingActionButton = {
+            // FIX(2026-05-12) build19 Этап3+: главная фича комплектатора — формирование передачи
+            ExtendedFloatingActionButton(
+                onClick = {
+                    navController.navigate(
+                        com.belsi.work.presentation.navigation.AppRoute.ToolTransferCreate.createRoute()
+                    )
+                },
+                icon = { Icon(Icons.Default.Add, null) },
+                text = { Text("Передача") },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
             )
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
 
-            // Стат-карточки
+            // Стат-карточки — единый стиль через RoleStatCard
             Row(
                 modifier = Modifier.padding(16.dp).fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                MiniStatCard("Заявки", "${state.pendingOrders.size}", Color(0xFFFBBF24), Modifier.weight(1f))
-                MiniStatCard("Низкий остаток", "${state.lowStockCount}", Color(0xFFF43F5E), Modifier.weight(1f))
+                RoleStatCard("Заявки", "${state.pendingOrders.size}", Severity.WARNING, modifier = Modifier.weight(1f))
+                RoleStatCard("Низкий остаток", "${state.lowStockCount}", Severity.ERROR, modifier = Modifier.weight(1f))
             }
 
             // FIX(2026-05-10) BELSI 1.3.0: AI-прогноз исчерпания материалов.
@@ -100,12 +125,8 @@ fun SupplierMainScreen(
 @Composable
 private fun OrdersTab(orders: List<MaterialOrder>, viewModel: SupplierViewModel) {
     if (orders.isEmpty()) {
-        Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("✅", fontSize = 56.sp)
-                Spacer(Modifier.height(8.dp))
-                Text("Нет открытых заявок", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            RoleEmptyState(emoji = "✅", title = "Нет открытых заявок")
         }
         return
     }
@@ -170,21 +191,15 @@ private fun OrderCard(order: MaterialOrder, viewModel: SupplierViewModel) {
 
 @Composable
 private fun StatusBadge(status: String) {
-    val (text, color) = when (status) {
-        "pending" -> "Новая" to Color(0xFFFBBF24)
-        "approved" -> "Утверждена" to Color(0xFF6366F1)
-        "ordered" -> "Заказана" to Color(0xFF8B5CF6)
-        "delivered" -> "Доставлена" to Color(0xFF10B981)
-        "cancelled" -> "Отменена" to Color.Gray
-        else -> status to Color.Gray
+    val (text, severity) = when (status) {
+        "pending"   -> "Новая"      to Severity.WARNING
+        "approved"  -> "Утверждена" to Severity.PRIMARY
+        "ordered"   -> "Заказана"   to Severity.AI
+        "delivered" -> "Доставлена" to Severity.SUCCESS
+        "cancelled" -> "Отменена"   to Severity.NEUTRAL
+        else        -> status        to Severity.NEUTRAL
     }
-    Box(
-        modifier = Modifier
-            .background(color.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
-            .padding(horizontal = 8.dp, vertical = 2.dp),
-    ) {
-        Text(text, fontSize = 11.sp, color = color, fontWeight = FontWeight.SemiBold)
-    }
+    RoleStatusPill(text = text, severity = severity)
 }
 
 @Composable
@@ -216,10 +231,14 @@ private fun InventoryTab(items: List<InventoryItem>, viewModel: SupplierViewMode
 
 @Composable
 private fun InventoryRow(item: InventoryItem, viewModel: SupplierViewModel) {
+    val (errFg, errBg) = Severity.ERROR.colors()
+    val (warnFg, _) = Severity.WARNING.colors()
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (item.isLow) Color(0xFFFFF1F2) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+            containerColor = if (item.isLow) errBg.copy(alpha = 0.2f)
+            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
         ),
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -231,7 +250,7 @@ private fun InventoryRow(item: InventoryItem, viewModel: SupplierViewModel) {
                 Text(
                     "${item.quantity} ${item.unit}",
                     fontWeight = FontWeight.Bold,
-                    color = if (item.isLow) Color(0xFFF43F5E) else MaterialTheme.colorScheme.onSurface,
+                    color = if (item.isLow) errFg else MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     "min ${item.minStock}",
@@ -242,22 +261,9 @@ private fun InventoryRow(item: InventoryItem, viewModel: SupplierViewModel) {
             if (item.isLow) {
                 Spacer(Modifier.width(8.dp))
                 IconButton(onClick = { viewModel.createOrderForLowStock(item) }) {
-                    Icon(Icons.Default.AddShoppingCart, contentDescription = "Заявка", tint = Color(0xFFF59E0B))
+                    Icon(Icons.Default.AddShoppingCart, contentDescription = "Заявка", tint = warnFg)
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun MiniStatCard(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
-    ) {
-        Column(Modifier.padding(12.dp)) {
-            Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = color)
         }
     }
 }

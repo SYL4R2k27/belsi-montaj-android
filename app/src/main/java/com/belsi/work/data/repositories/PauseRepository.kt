@@ -1,5 +1,6 @@
 package com.belsi.work.data.repositories
 
+import com.belsi.work.data.local.database.dao.ShiftDao
 import com.belsi.work.data.offline.OfflineQueueRepository
 import com.belsi.work.data.offline.OfflineQueuedException
 import com.belsi.work.data.offline.PendingAction
@@ -23,33 +24,47 @@ class PauseRepositoryImpl @Inject constructor(
     private val pauseApi: PauseApi,
     // FIX(2026-05-05): offline-очередь для шатдаунов мобильного интернета
     private val offlineQueue: OfflineQueueRepository,
+    // FIX(2026-05-11) build8: shiftId из активной смены вместо "current" — для аудита очереди
+    private val shiftDao: ShiftDao,
 ) : PauseRepository {
 
+    /**
+     * FIX(2026-05-11) build8: реальный shiftId активной смены (или "current" если смены нет).
+     * Используется только для трассировки в pending_actions — серверу не передаётся
+     * (backend /shift/pause/start|end находит смену по JWT).
+     */
+    private suspend fun activeShiftId(): String =
+        shiftDao.getActiveShift()?.id ?: "current"
+
     override suspend fun startPause(reason: String?): Result<PauseResponse> {
+        val sid = activeShiftId()
         return safeApiCallWithFallback("начала паузы",
             call = { pauseApi.startPause(StartPauseRequest(reason)) },
-            offlineAction = { PendingAction.StartPause(shiftId = "current") },
+            offlineAction = { PendingAction.StartPause(shiftId = sid) },
         )
     }
 
     override suspend fun endPause(): Result<PauseResponse> {
+        val sid = activeShiftId()
         return safeApiCallWithFallback("завершения паузы",
             call = { pauseApi.endPause() },
-            offlineAction = { PendingAction.EndPause(shiftId = "current") },
+            offlineAction = { PendingAction.EndPause(shiftId = sid) },
         )
     }
 
     override suspend fun startIdle(reason: String): Result<PauseResponse> {
+        val sid = activeShiftId()
         return safeApiCallWithFallback("начала простоя",
             call = { pauseApi.startIdle(StartIdleRequest(reason)) },
-            offlineAction = { PendingAction.StartIdle(shiftId = "current", reason = reason) },
+            offlineAction = { PendingAction.StartIdle(shiftId = sid, reason = reason) },
         )
     }
 
     override suspend fun endIdle(): Result<PauseResponse> {
+        val sid = activeShiftId()
         return safeApiCallWithFallback("завершения простоя",
             call = { pauseApi.endIdle() },
-            offlineAction = { PendingAction.EndIdle(shiftId = "current") },
+            offlineAction = { PendingAction.EndIdle(shiftId = sid) },
         )
     }
 

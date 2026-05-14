@@ -11,18 +11,24 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.belsi.work.data.models.BrigadeMember
+import com.belsi.work.presentation.components.role.RoleEmptyState
+import com.belsi.work.presentation.components.role.RoleStatCard
+import com.belsi.work.presentation.components.role.RoleStatusDot
+import com.belsi.work.presentation.components.role.Severity
+import com.belsi.work.presentation.components.role.colors
 
 /**
- * FIX(2026-05-06): SeniorWorkerMainScreen — подключён к API.
- * Загружает свою бригаду через GET /production/brigades/mine
- * и членов через GET /production/brigades/{id}/members.
+ * SeniorWorkerMainScreen — дашборд старшего работника.
+ *
+ * FIX(2026-05-12) build19 hotfix: переведён на единую дизайн-систему
+ * (RoleStatCard / RoleStatusDot / Severity). Удалены 5 hardcoded Color(0xFF...).
+ * Статусы: на смене=SUCCESS, перерыв=WARNING, простой=ERROR.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +37,8 @@ fun SeniorWorkerMainScreen(
     viewModel: SeniorWorkerViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    val brigade = state.brigade
+    @Suppress("DEPRECATION")
+    val brigade = state.selectedBrigade
 
     Scaffold(
         topBar = {
@@ -39,7 +46,11 @@ fun SeniorWorkerMainScreen(
                 title = { Column {
                     Text("Старший работник", fontWeight = FontWeight.Bold)
                     Text(
-                        brigade?.name ?: "Бригада не назначена",
+                        when {
+                            state.brigades.isEmpty() -> "Бригада не назначена"
+                            state.brigades.size == 1 -> brigade?.name ?: ""
+                            else -> "${brigade?.name ?: "—"} (${state.brigades.size} бригад)"
+                        },
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -49,7 +60,6 @@ fun SeniorWorkerMainScreen(
                         Icon(Icons.Default.Refresh, contentDescription = "Обновить")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AmberPrimary.copy(alpha = 0.1f))
             )
         },
     ) { padding ->
@@ -65,17 +75,10 @@ fun SeniorWorkerMainScreen(
             if (brigade == null) {
                 Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("👷", fontSize = 56.sp)
-                        Spacer(Modifier.height(12.dp))
-                        Text(
-                            "Бригада не назначена",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            "Обратитесь к начальнику производства",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        RoleEmptyState(
+                            emoji = "👷",
+                            title = "Бригада не назначена",
+                            subtitle = "Обратитесь к начальнику производства",
                         )
                         if (state.error != null) {
                             Spacer(Modifier.height(16.dp))
@@ -90,19 +93,39 @@ fun SeniorWorkerMainScreen(
                 return@Column
             }
 
-            // Стат-карточки
+            // FIX(2026-05-14) BELSI 2.0.1: переключатель между бригадами (если >1)
+            if (state.brigades.size > 1) {
+                androidx.compose.foundation.lazy.LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(state.brigades, key = { it.id }) { b ->
+                        val isSelected = b.id == state.selectedBrigadeId
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { viewModel.selectBrigade(b.id) },
+                            label = {
+                                Text("${b.name} (${b.activeCount}/${b.membersCount})")
+                            },
+                        )
+                    }
+                }
+                HorizontalDivider()
+            }
+
+            // Стат-карточки текущей бригады
             Row(
                 modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                MiniStat("В бригаде", "${brigade.membersCount}", AmberPrimary)
-                MiniStat("На смене", "${brigade.activeCount}", Color(0xFF10B981))
-                MiniStat("Простой", "${brigade.idleCount}", Color(0xFFF43F5E))
+                RoleStatCard("В бригаде", "${brigade.membersCount}", Severity.PRIMARY, modifier = Modifier.weight(1f))
+                RoleStatCard("На смене",  "${brigade.activeCount}", Severity.SUCCESS, modifier = Modifier.weight(1f))
+                RoleStatCard("Простой",   "${brigade.idleCount}",   Severity.ERROR,   modifier = Modifier.weight(1f))
             }
 
             HorizontalDivider()
             Text(
-                "Состав бригады",
+                if (state.brigades.size > 1) "Состав «${brigade.name}»" else "Состав бригады",
                 modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 4.dp),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 13.sp,
@@ -122,29 +145,33 @@ fun SeniorWorkerMainScreen(
 
 @Composable
 private fun BrigadeMemberCard(member: BrigadeMember) {
+    val severity = memberSeverity(member)
+    val (statusFg, _) = severity.colors()
+    val statusText = memberStatusText(member)
+    val primaryColor = MaterialTheme.colorScheme.primary
+
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Аватар
+            // Аватар — primary-цвет фирменный
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .background(AmberPrimary.copy(alpha = 0.2f), RoundedCornerShape(20.dp)),
+                    .background(primaryColor.copy(alpha = 0.15f), RoundedCornerShape(20.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     member.fullName.take(1),
                     fontWeight = FontWeight.Bold,
-                    color = AmberPrimary,
+                    color = primaryColor,
                 )
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(member.fullName, fontWeight = FontWeight.SemiBold)
-                val (statusText, statusColor) = memberStatus(member)
-                Text(statusText, fontSize = 12.sp, color = statusColor)
+                Text(statusText, fontSize = 12.sp, color = statusFg)
                 if (member.idleReason != null) {
                     Text(
                         "Причина: ${member.idleReason}",
@@ -153,27 +180,21 @@ private fun BrigadeMemberCard(member: BrigadeMember) {
                     )
                 }
             }
-            Box(modifier = Modifier.size(10.dp).background(memberStatus(member).second, RoundedCornerShape(5.dp)))
+            RoleStatusDot(severity = severity)
         }
     }
 }
 
-private fun memberStatus(member: BrigadeMember): Pair<String, Color> = when {
-    member.onIdle -> "Простой" to Color(0xFFF43F5E)
-    member.onPause -> "Перерыв" to Color(0xFFFBBF24)
-    member.isOnShift -> "На смене" to Color(0xFF10B981)
-    else -> "Не на смене" to Color.Gray
+private fun memberStatusText(member: BrigadeMember): String = when {
+    member.onIdle -> "Простой"
+    member.onPause -> "Перерыв"
+    member.isOnShift -> "На смене"
+    else -> "Не на смене"
 }
 
-@Composable
-private fun RowScope.MiniStat(label: String, value: String, color: Color) {
-    Card(
-        modifier = Modifier.weight(1f),
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
-    ) {
-        Column(Modifier.padding(12.dp)) {
-            Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = color)
-        }
-    }
+private fun memberSeverity(member: BrigadeMember): Severity = when {
+    member.onIdle -> Severity.ERROR
+    member.onPause -> Severity.WARNING
+    member.isOnShift -> Severity.SUCCESS
+    else -> Severity.NEUTRAL
 }

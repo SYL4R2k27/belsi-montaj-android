@@ -1,27 +1,34 @@
 package com.belsi.work.presentation.screens.factory
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.belsi.work.data.models.Brigade
+import com.belsi.work.presentation.components.role.RoleEmptyState
+import com.belsi.work.presentation.components.role.RoleSectionHeader
+import com.belsi.work.presentation.components.role.RoleStatCard
+import com.belsi.work.presentation.components.role.Severity
+import com.belsi.work.presentation.components.role.colors
 
 /**
- * FIX(2026-05-06): ProductionChiefMainScreen — подключён к API.
- * Дашборд фабрики через GET /production/facility/{id}/dashboard.
+ * ProductionChiefMainScreen — дашборд начальника производства.
+ *
+ * FIX(2026-05-12) build19 hotfix: переведён на единую дизайн-систему
+ * (RoleStatCard / Severity). Удалены 12 hardcoded Color(0xFF...) — теперь
+ * все цвета через MaterialTheme.belsiColors + colorScheme. Партии «к
+ * отгрузке/сдано» — Severity.SUCCESS, простой — Severity.ERROR, паузы —
+ * Severity.WARNING, бригады/рабочие — Severity.PRIMARY/INFO.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,11 +52,32 @@ fun ProductionChiefMainScreen(
                     )
                 } },
                 actions = {
+                    IconButton(onClick = {
+                        navController.navigate(
+                            com.belsi.work.presentation.navigation.AppRoute.FactoryFacilitySwitch.route
+                        )
+                    }) {
+                        Icon(Icons.Default.SwapHoriz, contentDescription = "Сменить фабрику")
+                    }
+                    IconButton(onClick = {
+                        navController.navigate(
+                            com.belsi.work.presentation.navigation.AppRoute.CuratorPhotos.route
+                        )
+                    }) {
+                        Icon(Icons.Default.PhotoLibrary, contentDescription = "Лента фабрики")
+                    }
+                    // FIX(2026-05-12) build19 Этап3+: Tool Transfer Hub
+                    IconButton(onClick = {
+                        navController.navigate(
+                            com.belsi.work.presentation.navigation.AppRoute.ToolTransferHub.createRoute("incoming")
+                        )
+                    }) {
+                        Icon(Icons.Default.Inventory2, contentDescription = "Передачи инструмента")
+                    }
                     IconButton(onClick = { viewModel.load() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Обновить")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AmberPrimary.copy(alpha = 0.1f))
             )
         },
     ) { padding ->
@@ -62,20 +90,11 @@ fun ProductionChiefMainScreen(
 
         if (dashboard == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🏭", fontSize = 56.sp)
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        "Фабрика не настроена",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        "Обратитесь к куратору",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                RoleEmptyState(
+                    emoji = "🏭",
+                    title = "Фабрика не настроена",
+                    subtitle = "Обратитесь к куратору",
+                )
             }
             return@Scaffold
         }
@@ -85,51 +104,89 @@ fun ProductionChiefMainScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { SectionTitle("Партии") }
+            item { RoleSectionHeader("Партии") }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatCard("Всего", "${dashboard.batchesTotal}", AmberPrimary, Modifier.weight(1f))
-                    StatCard("В произв.", "${dashboard.batchesInProduction}", Color(0xFF6366F1), Modifier.weight(1f))
+                    RoleStatCard("Всего", "${dashboard.batchesTotal}", Severity.PRIMARY, modifier = Modifier.weight(1f))
+                    RoleStatCard("В произв.", "${dashboard.batchesInProduction}", Severity.INFO, modifier = Modifier.weight(1f))
                 }
             }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatCard("К отгрузке", "${dashboard.batchesReadyToShip}", Color(0xFF10B981), Modifier.weight(1f))
-                    StatCard("Сдано сегодня", "${dashboard.batchesCompletedToday}", Color(0xFF14B8A6), Modifier.weight(1f))
-                }
-            }
-
-            item { SectionTitle("Бригады и рабочие") }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatCard("Бригад", "${dashboard.brigadesCount}", AmberPrimary, Modifier.weight(1f))
-                    StatCard("Рабочих", "${dashboard.workersTotal}", Color(0xFF6366F1), Modifier.weight(1f))
-                    StatCard("На смене", "${dashboard.workersOnShift}", Color(0xFF10B981), Modifier.weight(1f))
-                }
-            }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatCard("На паузе", "${dashboard.workersOnPause}", Color(0xFFFBBF24), Modifier.weight(1f))
-                    StatCard("Простой", "${dashboard.workersOnIdle}", Color(0xFFF43F5E), Modifier.weight(1f))
+                    RoleStatCard("К отгрузке", "${dashboard.batchesReadyToShip}", Severity.SUCCESS, modifier = Modifier.weight(1f))
+                    RoleStatCard("Сдано сегодня", "${dashboard.batchesCompletedToday}", Severity.SUCCESS, modifier = Modifier.weight(1f))
                 }
             }
 
-            item { SectionTitle("Время сегодня") }
+            item { RoleSectionHeader("Бригады и рабочие") }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatCard("Работа", "${dashboard.workHoursToday} ч", Color(0xFF10B981), Modifier.weight(1f))
-                    StatCard("Простой", "${dashboard.idleHoursToday} ч", Color(0xFFF43F5E), Modifier.weight(1f))
+                    RoleStatCard("Бригад", "${dashboard.brigadesCount}", Severity.PRIMARY, modifier = Modifier.weight(1f))
+                    RoleStatCard("Рабочих", "${dashboard.workersTotal}", Severity.INFO, modifier = Modifier.weight(1f))
+                    RoleStatCard("На смене", "${dashboard.workersOnShift}", Severity.SUCCESS, modifier = Modifier.weight(1f))
+                }
+            }
+            // FIX(2026-05-14) BELSI 2.0.1: расширенная разбивка состояний.
+            // Раньше: только pause/idle (на обеде «пропадал из on_shift»).
+            // Теперь: реально работают / пауза / обед / перекур / простой — все независимо.
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    RoleStatCard(
+                        "Работают", "${dashboard.workersActivelyWorking}",
+                        Severity.SUCCESS, modifier = Modifier.weight(1f),
+                    )
+                    RoleStatCard(
+                        "Пауза", "${dashboard.workersOnPause}",
+                        Severity.WARNING, modifier = Modifier.weight(1f),
+                    )
+                    RoleStatCard(
+                        "Простой", "${dashboard.workersOnIdle}",
+                        Severity.ERROR, modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    RoleStatCard(
+                        "🍽 Обед", "${dashboard.workersOnLunch}",
+                        Severity.INFO, modifier = Modifier.weight(1f),
+                    )
+                    RoleStatCard(
+                        "🚬 Перекур", "${dashboard.workersOnSmoke}",
+                        Severity.NEUTRAL, modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+
+            item { RoleSectionHeader("Время сегодня") }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    RoleStatCard("Работа", "${dashboard.workHoursToday} ч", Severity.SUCCESS, modifier = Modifier.weight(1f))
+                    RoleStatCard("Простой", "${dashboard.idleHoursToday} ч", Severity.ERROR, modifier = Modifier.weight(1f))
+                }
+            }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    RoleStatCard(
+                        "🍽 Обеды", "${dashboard.lunchHoursToday} ч",
+                        Severity.INFO, modifier = Modifier.weight(1f),
+                    )
+                    RoleStatCard(
+                        "☕ Перерывы", "${dashboard.breakHoursToday} ч",
+                        Severity.NEUTRAL, modifier = Modifier.weight(1f),
+                    )
                 }
             }
 
             if (dashboard.materialOrdersPending > 0) {
                 item {
+                    val (warnFg, warnBg) = Severity.WARNING.colors()
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)),
+                        colors = CardDefaults.cardColors(containerColor = warnBg.copy(alpha = 0.3f)),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFF59E0B))
+                            Icon(Icons.Default.Warning, contentDescription = null, tint = warnFg)
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
                                 Text("Заявки требуют утверждения", fontWeight = FontWeight.SemiBold)
@@ -145,33 +202,9 @@ fun ProductionChiefMainScreen(
             }
 
             if (state.brigades.isNotEmpty()) {
-                item { SectionTitle("Бригады фабрики") }
+                item { RoleSectionHeader("Бригады фабрики") }
                 items(state.brigades) { brigade -> BrigadeRow(brigade) }
             }
-        }
-    }
-}
-
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 14.sp,
-        modifier = Modifier.padding(top = 8.dp),
-    )
-}
-
-@Composable
-private fun StatCard(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
-    ) {
-        Column(Modifier.padding(12.dp)) {
-            Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(4.dp))
-            Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
         }
     }
 }
@@ -181,12 +214,12 @@ private fun BrigadeRow(brigade: Brigade) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Groups, contentDescription = null, tint = AmberPrimary)
+                Icon(Icons.Default.Groups, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(8.dp))
                 Text(brigade.name, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 Text(
                     "${brigade.activeCount}/${brigade.membersCount}",
-                    color = AmberPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                 )
             }
@@ -203,7 +236,7 @@ private fun BrigadeRow(brigade: Brigade) {
                 Text(
                     "⚠ ${brigade.idleCount} в простое",
                     fontSize = 12.sp,
-                    color = Color(0xFFF43F5E),
+                    color = MaterialTheme.colorScheme.error,
                 )
             }
         }

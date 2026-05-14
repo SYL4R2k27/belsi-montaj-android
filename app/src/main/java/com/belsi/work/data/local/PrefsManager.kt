@@ -121,6 +121,43 @@ class PrefsManager @Inject constructor(
             .apply()
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // FIX(2026-05-12) build19+: «last login context» для personalized
+    // greeting на экране логина. Не очищается при logout — для UX
+    // «С возвращением, Имя» с предзаполненным логином.
+    // Чистится через clearLastLoginContext() при тапе «Сменить» или clearAll().
+    // ─────────────────────────────────────────────────────────────────
+    private val KEY_LAST_LOGIN = "last_login"
+    private val KEY_LAST_USER_NAME = "last_user_name"
+    private val KEY_LAST_USER_PHONE_DISPLAY = "last_user_phone_display"
+    private val KEY_HAS_LAUNCHED = "has_launched_before"
+
+    fun setLastLoginContext(login: String, name: String?, phoneDisplay: String?) {
+        encryptedPrefs.edit()
+            .putString(KEY_LAST_LOGIN, login)
+            .putString(KEY_LAST_USER_NAME, name)
+            .putString(KEY_LAST_USER_PHONE_DISPLAY, phoneDisplay)
+            .putBoolean(KEY_HAS_LAUNCHED, true)
+            .apply()
+    }
+
+    fun getLastLogin(): String? = encryptedPrefs.getString(KEY_LAST_LOGIN, null)
+    fun getLastUserName(): String? = encryptedPrefs.getString(KEY_LAST_USER_NAME, null)
+    fun getLastUserPhoneDisplay(): String? = encryptedPrefs.getString(KEY_LAST_USER_PHONE_DISPLAY, null)
+    fun hasLaunchedBefore(): Boolean = encryptedPrefs.getBoolean(KEY_HAS_LAUNCHED, false)
+
+    fun markLaunched() {
+        encryptedPrefs.edit().putBoolean(KEY_HAS_LAUNCHED, true).apply()
+    }
+
+    fun clearLastLoginContext() {
+        encryptedPrefs.edit()
+            .remove(KEY_LAST_LOGIN)
+            .remove(KEY_LAST_USER_NAME)
+            .remove(KEY_LAST_USER_PHONE_DISPLAY)
+            .apply()
+    }
+
     // User Management
     fun saveUser(user: User) {
         val json = gson.toJson(user)

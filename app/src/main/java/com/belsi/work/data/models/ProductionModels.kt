@@ -76,11 +76,24 @@ data class FacilityDashboard(
     @SerialName("batches_completed_today") val batchesCompletedToday: Int = 0,
     @SerialName("brigades_count") val brigadesCount: Int = 0,
     @SerialName("workers_total") val workersTotal: Int = 0,
+    /** Все рабочие у которых finish_at IS NULL — включая обед, перекур, простой. */
     @SerialName("workers_on_shift") val workersOnShift: Int = 0,
+    /** FIX(2026-05-14) BELSI 2.0.1: реально работают сейчас (без открытых пауз). */
+    @SerialName("workers_actively_working") val workersActivelyWorking: Int = 0,
+    /** Открытая пауза без reason (короткая). */
     @SerialName("workers_on_pause") val workersOnPause: Int = 0,
+    /** Обед (break:lunch). */
+    @SerialName("workers_on_lunch") val workersOnLunch: Int = 0,
+    /** Перекур (break:smoke). */
+    @SerialName("workers_on_smoke") val workersOnSmoke: Int = 0,
+    /** Простой с причиной (idle:*). */
     @SerialName("workers_on_idle") val workersOnIdle: Int = 0,
+    /** Сумма lunch+smoke. */
+    @SerialName("workers_on_break") val workersOnBreak: Int = 0,
     @SerialName("idle_hours_today") val idleHoursToday: Double = 0.0,
     @SerialName("work_hours_today") val workHoursToday: Double = 0.0,
+    @SerialName("break_hours_today") val breakHoursToday: Double = 0.0,
+    @SerialName("lunch_hours_today") val lunchHoursToday: Double = 0.0,
     @SerialName("material_orders_pending") val materialOrdersPending: Int = 0,
 )
 
@@ -199,4 +212,34 @@ data class EngineerTaskCreateRequest(
 @Serializable
 data class EngineerTaskStatusRequest(
     val status: String,  // open / in_progress / done / cancelled
+)
+
+/** FIX(2026-05-14) BELSI 2.0.1: передача задачи другому инженеру. */
+@Serializable
+data class EngineerTaskReassignRequest(
+    @SerialName("new_assignee_id") val newAssigneeId: String,
+    val comment: String? = null,
+)
+
+/** Элемент списка инженеров для UI. */
+@Serializable
+data class EngineerPickItem(
+    val id: String,
+    val name: String? = null,
+    val phone: String? = null,
+    val role: String,            // engineer | senior_worker
+    @SerialName("active_tasks") val activeTasks: Int = 0,
+)
+
+// FIX(2026-05-12) BELSI 2.0.0 build14: реальный tools catalog из tools_catalog таблицы.
+@Serializable
+data class ToolCatalogItem(
+    val id: String,
+    val code: String,
+    val name: String,
+    val category: String,
+    @SerialName("inventory_number") val inventoryNumber: String? = null,
+    val description: String? = null,
+    @SerialName("photo_url") val photoUrl: String? = null,
+    @SerialName("is_consumable") val isConsumable: Boolean = false,
 )

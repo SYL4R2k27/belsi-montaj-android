@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BELSI.Команда — Login Editorial Variants v2</title>
+<style>
+:root {
+    /* BELSI design tokens 1:1 с темой приложения */
+    --indigo-50:  #EEF2FF;
+    --indigo-100: #E0E7FF;
+    --indigo-200: #C7D2FE;
+    --indigo-600: #4F46E5;
+    --indigo-700: #4338CA;
+
+    --slate-50:  #F8FAFC;
+    --slate-100: #F1F5F9;
+    --slate-200: #E2E8F0;
+    --slate-300: #CBD5E1;
+    --slate-400: #94A3B8;
+    --slate-500: #64748B;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1E293B;
+    --slate-900: #0F172A;
+
+    --steel-top:  #5A7186;
+    --steel-mid:  #3A5067;
+    --steel-deep: #324859;
+    --hammer:     #A0A8B0;
+
+    --emerald-500: #10B981;
+    --emerald-600: #059669;
+    --amber-500:   #F59E0B;
+    --rose-500:    #F43F5E;
+    --sky-500:     #0EA5E9;
+    --violet-500:  #8B5CF6;
+
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+
+html, body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+    background: #0e1322;
+    color: var(--slate-100);
+    min-height: 100vh;
+    padding: 32px 24px 80px;
+}
+
+.gallery-header {
+    max-width: 1400px;
+    margin: 0 auto 32px;
+}
+
+.gallery-header h1 {
+    font-size: 36px;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+    font-weight: 800;
+}
+
+.gallery-header p {
+    color: var(--slate-400);
+    font-size: 15px;
+    max-width: 720px;
+    line-height: 1.55;
+}
+
+/* ── State toggle ── */
+.state-toggle {
+    display: inline-flex;
+    background: var(--slate-800);
+    border-radius: 999px;
+    padding: 4px;
+    margin-top: 24px;
+    border: 1px solid var(--slate-700);
+}
+
+.state-toggle button {
+    border: none;
+    background: transparent;
+    color: var(--slate-400);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+
+.state-toggle button.active {
+    background: var(--indigo-600);
+    color: white;
+}
+
+.state-toggle button:hover:not(.active) {
+    color: var(--slate-100);
+}
+
+/* ── Grid ── */
+.gallery {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 32px;
+}
+
+.variant {
+    display: flex;
+    flex-direction: column;
+}
+
+.variant-meta {
+    margin-bottom: 12px;
+}
+
+.variant-tag {
+    display: inline-block;
+    background: var(--slate-800);
+    color: var(--indigo-200);
+    border: 1px solid var(--slate-700);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.variant-meta h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.variant-meta p {
+    color: var(--slate-400);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+/* ── Phone frame ── */
+.phone {
+    width: 100%;
+    aspect-ratio: 375 / 812;
+    border-radius: 36px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.06);
+    position: relative;
+}
+
+.phone-statusbar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--slate-900);
+}
+
+.phone-statusbar.dark { color: white; }
+
+.phone-statusbar svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/*  BELSI brand mark                                              */
+/*  Стилизованная B-монограмма с D-arches.                        */
+/* ────────────────────────────────────────────────────────────── */
+
+.belsi-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(135deg, var(--steel-top) 0%, var(--steel-mid) 55%, var(--steel-deep) 100%);
+}
+
+.belsi-mark.sz-40 { width: 40px; height: 40px; border-radius: 11px; }
+.belsi-mark.sz-48 { width: 48px; height: 48px; border-radius: 13px; }
+.belsi-mark.sz-56 { width: 56px; height: 56px; border-radius: 15px; }
+.belsi-mark.sz-64 { width: 64px; height: 64px; border-radius: 17px; }
+.belsi-mark.sz-72 { width: 72px; height: 72px; border-radius: 19px; }
+.belsi-mark.sz-88 { width: 88px; height: 88px; border-radius: 22px; }
+
+.belsi-mark svg {
+    width: 60%;
+    height: 60%;
+}
+
+.belsi-mark.with-corner-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 20% 18%, rgba(255,255,255,0.32), transparent 50%);
+    pointer-events: none;
+}
+
+/* ── Editorial common ── */
+.editorial-body {
+    flex: 1;
+    padding: 16px 28px 28px;
+    background: var(--slate-50);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.headline {
+    font-weight: 700;
+    color: var(--slate-900);
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+}
+
+.subhead {
+    color: var(--slate-500);
+    line-height: 1.5;
+}
+
+.field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--slate-700);
+    margin-bottom: 6px;
+    letter-spacing: 0.1px;
+}
+
+.field-label .row-link {
+    float: right;
+    color: var(--indigo-600);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.text-field {
+    width: 100%;
+    height: 52px;
+    border: 1px solid var(--slate-200);
+    background: white;
+    border-radius: 12px;
+    padding: 0 16px;
+    font-size: 15px;
+    color: var(--slate-900);
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+}
+
+.text-field:focus,
+.text-field.focused {
+    border-color: var(--slate-900);
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06);
+}
+
+.text-field::placeholder {
+    color: var(--slate-400);
+}
+
+.text-field-row {
+    position: relative;
+}
+
+.text-field-row .icon-right {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--slate-500);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.btn-primary {
+    width: 100%;
+    height: 56px;
+    border: none;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.05s, background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-primary.dark {
+    background: var(--slate-900);
+    color: white;
+}
+
+.btn-primary.dark:hover { background: var(--slate-800); }
+
+.btn-primary.indigo {
+    background: var(--indigo-600);
+    color: white;
+}
+
+.btn-primary.indigo:hover { background: var(--indigo-700); }
+
+.btn-secondary {
+    width: 100%;
+    height: 52px;
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--slate-900);
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.btn-secondary:hover { border-color: var(--slate-400); }
+
+.yandex-mark {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #FF0000;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 13px;
+}
+
+.divider-text {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--slate-400);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+}
+
+.divider-text::before,
+.divider-text::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--slate-200);
+}
+
+.footer-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    flex-wrap: wrap;
+}
+
+.footer-actions .sep {
+    color: var(--slate-300);
+}
+
+.footer-actions a {
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.footer-actions a.indigo { color: var(--indigo-600); }
+.footer-actions a.slate { color: var(--slate-600); }
+
+.footer-sig {
+    text-align: center;
+    color: var(--slate-400);
+    font-size: 11px;
+    margin-top: 6px;
+    letter-spacing: 0.3px;
+}
+
+.spacer-12 { height: 12px; }
+.spacer-16 { height: 16px; }
+.spacer-20 { height: 20px; }
+.spacer-24 { height: 24px; }
+.spacer-28 { height: 28px; }
+.spacer-32 { height: 32px; }
+.spacer-40 { height: 40px; }
+.spacer-flex { flex: 1; min-height: 12px; }
+
+/* ── Variant-specific helpers ── */
+.greeting-name {
+    color: var(--indigo-600);
+}
+
+.avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 14px;
+    margin-bottom: 24px;
+}
+
+.avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--indigo-600), var(--steel-deep));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.avatar-row .col {
+    flex: 1;
+    min-width: 0;
+}
+
+.avatar-row .col .name {
+    font-weight: 600;
+    color: var(--slate-900);
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.avatar-row .col .phone {
+    color: var(--slate-500);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.avatar-row .switch {
+    color: var(--indigo-600);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+/* C2: hero illustration */
+.hero-mesh {
+    position: absolute;
+    top: 16px;
+    right: -40px;
+    width: 220px;
+    height: 220px;
+    pointer-events: none;
+    opacity: 0.55;
+}
+
+/* C3: two-step indicator */
+.step-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--slate-100);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--slate-600);
+}
+
+.step-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--indigo-600);
+}
+
+/* C4: large brand */
+.brand-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.brand-line .text {
+    font-size: 14px;
+    color: var(--slate-700);
+    font-weight: 600;
+    letter-spacing: 0.4px;
+}
+
+/* C5: OTP variant */
+.otp-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.otp-cell {
+    flex: 1;
+    aspect-ratio: 1;
+    max-width: 52px;
+    border: 1px solid var(--slate-200);
+    background: white;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--slate-900);
+    font-family: inherit;
+}
+
+.otp-cell.filled {
+    border-color: var(--slate-900);
+}
+
+.resend-line {
+    color: var(--slate-500);
+    font-size: 13px;
+    text-align: center;
+    margin-top: 8px;
+}
+
+.resend-line .timer { color: var(--slate-700); font-weight: 600; }
+
+.back-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--slate-600);
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    margin-bottom: 12px;
+}
+
+/* state-driven content visibility */
+.state-block { display: none; }
+.state-block.show { display: block; }
+
+/* Annotation badge */
+.annotation {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--slate-800);
+    border: 1px solid var(--slate-700);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--slate-300);
+    line-height: 1.55;
+}
+
+.annotation strong { color: white; font-weight: 600; }
+
+/* Steel chip */
+.steel-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--slate-100);
+    border: 1px solid var(--slate-200);
+    color: var(--slate-700);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.3px;
+}
+
+.steel-chip-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--emerald-500);
+    border-radius: 50%;
+}
+</style>
+</head>
+<body>
+
+<div class="gallery-header">
+    <h1>BELSI.Команда — Login (Editorial+ варианты)</h1>
+    <p>База: вариант C (editorial minimal). Доработка: реальная BELSI-марка, динамическое приветствие, экран входа по СМС в том же стиле. Палитра 1:1 с темой приложения. Переключи состояние ниже чтобы увидеть как ведёт себя экран для разных случаев.</p>
+    <div class="state-toggle">
+        <button data-state="first" class="active">Первый раз → «Добро пожаловать»</button>
+        <button data-state="returning">Возврат → «С возвращением»</button>
+        <button data-state="personal">Возврат + имя → «С возвращением, Влад»</button>
+    </div>
+</div>
+
+<div class="gallery">
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- C1 — REFINED ORIGINAL                                          -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <div class="variant">
+        <div class="variant-meta">
+            <span class="variant-tag">C1 · Refined</span>
+            <h2>Полированный оригинал</h2>
+            <p>Тот же скелет: бренд-марка → headline → форма → CTA → divider → Yandex → footer. Что изменилось: реальная BELSI-монограмма вместо «B»-плашки, динамический заголовок, точные размеры/ритм/spacing.</p>
+        </div>
+        <div class="phone">
+            <div class="phone-statusbar">
+                <span>9:41</span>
+                <span>● ●●●●●</span>
+            </div>
+            <div class="editorial-body">
+
+                <!-- Brand mark with proper BELSI monogram -->
+                <a class="belsi-mark sz-48 with-corner-glow">
+                    <!-- BELSI B-monogram SVG -->
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5,4 h7 a4,4 0 0 1 0,8 h-2 v-2 h2 a2,2 0 0 0 0,-4 h-3 v14 h-2 z M9,11 h3 a4,4 0 0 1 0,8 h-7 v-2 h7 a2,2 0 0 0 0,-4 h-3 z" fill="white"/>
+                    </svg>
+                </a>
+
+                <div class="spacer-32"></div>
+
+                <!-- Dynamic greeting -->
+                <h1 class="state-block show" data-state="first" style="font-size: 38px;">
+                    Добро<br><span class="headline">пожаловать</span>
+                </h1>
+                <h1 class="state-block" data-state="returning" style="font-size: 40px;">
+                    С возвращением
+                </h1>
+                <h1 class="state-block" data-state="personal" style="font-size: 40px;">
+                    С возвращением,<br><span class="greeting-name">Влад</span>
+                </h1>
+
+                <div class="spacer-12"></div>
+
+                <p class="subhead state-block show" data-state="first" style="font-size: 15px;">
+                    Войдите в свой аккаунт или создайте новый — BELSI.Команда
+                </p>
+                <p class="subhead state-block" data-state="returning" style="font-size: 15px;">
+                    Войдите в BELSI.Команда
+                </p>
+                <p class="subhead state-block" data-state="personal" style="font-size: 15px;">
+                    Введите пароль чтобы продолжить
+                </p>
+
+                <div class="spacer-32"></div>
+
+                <!-- Avatar row only in "personal" -->
+                <div class="state-block" data-state="personal">
+                    <div class="avatar-row">
+                        <div class="avatar">ВТ</div>
+                        <div class="col">
+                            <div class="name">Тирских Владимир</div>
+                            <div class="phone">+7 916 685-96-58</div>
+                        </div>
+                        <a class="switch">Сменить</a>
+                    </div>
+                </div>
+
+                <!-- Login field — hidden in personal state -->
+                <div class="state-block show" data-state="first returning">
+                    <label class="field-label">Логин</label>
+                    <div class="text-field-row">
+                        <input class="text-field" placeholder="Телефон, email или логин">
+                    </div>
+                    <div class="spacer-16"></div>
+                </div>
+
+                <label class="field-label">
+                    Пароль
+                    <a class="row-link" href="#">Забыли?</a>
+                </label>
+                <div class="text-field-row">
+                    <input class="text-field" type="password" placeholder="Минимум 6 символов" value="••••••••">
+                    <span class="icon-right">👁</span>
+                </div>
+
+                <div class="spacer-32"></div>
+
+                <button class="btn-primary dark">
+                    <span class="state-block show" data-state="first">Создать аккаунт</span>
+                    <span class="state-block" data-state="returning personal">Войти</span>
+                </button>
+
+                <div class="spacer-20"></div>
+                <div class="divider-text">или продолжить через</div>
+                <div class="spacer-16"></div>
+
+                <button class="btn-secondary">
+                    <span class="yandex-mark">Я</span>
+                    <span>Яндекс ID</span>
+                </button>
+
+                <div class="spacer-flex"></div>
+
+                <div class="footer-actions">
+                    <span class="state-block show" data-state="first" style="color: var(--slate-500);">Уже есть аккаунт?</span>
+                    <span class="state-block" data-state="returning personal" style="color: var(--slate-500);">Нет аккаунта?</span>
+
+                    <a class="indigo state-block show" data-state="first">Войти</a>
+                    <a class="indigo state-block" data-state="returning personal">Создать</a>
+
+                    <span class="sep">·</span>
+                    <a class="slate">Войти по СМС</a>
+                </div>
+                <div class="footer-sig">BELSI.Команда · v 2.0</div>
+
+            </div>
+        </div>
+        <div class="annotation">
+            <strong>Что новое vs текущий:</strong> реальная BELSI-марка с steel-градиентом и corner-glow, динамические headline+subhead+CTA по состоянию (3 варианта), уверенный ритм spacing 32→12→32→16→32.
+        </div>
+    </div>
+
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- C2 — WITH HERO MESH                                            -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <div class="variant">
+        <div class="variant-meta">
+            <span class="variant-tag">C2 · Mesh accent</span>
+            <h2>Декоративный mesh справа</h2>
+            <p>Та же editorial-структура + крупный размытый Steel-blue mesh-blob в правом верхнем углу как «акцент бренда». Атмосферный, но не агрессивный. Делает экран фирменным с одного взгляда.</p>
+        </div>
+        <div class="phone">
+            <div class="phone-statusbar">
+                <span>9:41</span>
+                <span>● ●●●●●</span>
+            </div>
+            <div class="editorial-body" style="position: relative;">
+
+                <!-- Mesh blob -->
+                <svg class="hero-mesh" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="mesh1" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#5A7186" stop-opacity="0.9"/>
+                            <stop offset="60%" stop-color="#324859" stop-opacity="0.4"/>
+                            <stop offset="100%" stop-color="#324859" stop-opacity="0"/>
+                        </radialGradient>
+                        <radialGradient id="mesh2" cx="30%" cy="40%" r="50%">
+                            <stop offset="0%" stop-color="#4F46E5" stop-opacity="0.6"/>
+                            <stop offset="100%" stop-color="#4F46E5" stop-opacity="0"/>
+                        </radialGradient>
+                        <filter id="blur1"><feGaussianBlur stdDeviation="8"/></filter>
+                    </defs>
+                    <circle cx="120" cy="80" r="90" fill="url(#mesh1)" filter="url(#blur1)"/>
+                    <circle cx="80" cy="140" r="60" fill="url(#mesh2)" filter="url(#blur1)"/>
+                </svg>
+
+                <a class="belsi-mark sz-48 with-corner-glow" style="position: relative; z-index: 1;">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5,4 h7 a4,4 0 0 1 0,8 h-2 v-2 h2 a2,2 0 0 0 0,-4 h-3 v14 h-2 z M9,11 h3 a4,4 0 0 1 0,8 h-7 v-2 h7 a2,2 0 0 0 0,-4 h-3 z" fill="white"/>
+                    </svg>
+                </a>
+
+                <div class="spacer-40"></div>
+
+                <h1 class="state-block show" data-state="first" style="font-size: 40px; position: relative; z-index: 1;">
+                    Добро<br>пожаловать
+                </h1>
+                <h1 class="state-block" data-state="returning" style="font-size: 40px; position: relative; z-index: 1;">
+                    С возвращением
+                </h1>
+                <h1 class="state-block" data-state="personal" style="font-size: 40px; position: relative; z-index: 1;">
+                    Привет, <span class="greeting-name">Влад</span>
+                </h1>
+
+                <div class="spacer-12"></div>
+
+                <p class="subhead state-block show" data-state="first">
+                    Создайте аккаунт или войдите в BELSI.Команда
+                </p>
+                <p class="subhead state-block" data-state="returning">
+                    Войдите чтобы продолжить
+                </p>
+                <p class="subhead state-block" data-state="personal">
+                    Введите пароль для входа
+                </p>
+
+                <div class="spacer-32"></div>
+
+                <div class="state-block" data-state="personal">
+                    <div class="avatar-row">
+                        <div class="avatar">ВТ</div>
+                        <div class="col">
+                            <div class="name">Тирских Владимир</div>
+                            <div class="phone">+7 916 685-96-58</div>
+                        </div>
+                        <a class="switch">Сменить</a>
+                    </div>
+                </div>
+
+                <div class="state-block show" data-state="first returning">
+                    <label class="field-label">Логин</label>
+                    <input class="text-field" placeholder="Телефон, email или логин">
+                    <div class="spacer-16"></div>
+                </div>
+
+                <label class="field-label">Пароль<a class="row-link" href="#">Забыли?</a></label>
+                <div class="text-field-row">
+                    <input class="text-field" type="password" placeholder="Минимум 6 символов" value="••••••">
+                    <span class="icon-right">👁</span>
+                </div>
+
+                <div class="spacer-32"></div>
+
+                <button class="btn-primary indigo">
+                    <span class="state-block show" data-state="first">Создать аккаунт</span>
+                    <span class="state-block" data-state="returning personal">Войти</span>
+                </button>
+
+                <div class="spacer-20"></div>
+                <div class="divider-text">или через</div>
+                <div class="spacer-16"></div>
+
+                <button class="btn-secondary">
+                    <span class="yandex-mark">Я</span>
+                    <span>Яндекс ID</span>
+                </button>
+
+                <div class="spacer-flex"></div>
+
+                <div class="footer-actions">
+                    <a class="slate">Войти по СМС</a>
+                    <span class="sep">·</span>
+                    <a class="indigo state-block show" data-state="first">Уже есть аккаунт</a>
+                    <a class="indigo state-block" data-state="returning personal">Создать аккаунт</a>
+                </div>
+                <div class="footer-sig">BELSI.Команда · v 2.0</div>
+            </div>
+        </div>
+        <div class="annotation">
+            <strong>Mesh-blob:</strong> Steel-blue + Indigo radial gradients + SVG-blur — не съедает читаемость, но даёт экрану «личность». CTA — Indigo (фирменный), не чёрный — отличие от C1.
+        </div>
+    </div>
+
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- C3 — TWO-STEP (Login first → Password after)                   -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <div class="variant">
+        <div class="variant-meta">
+            <span class="variant-tag">C3 · Two-step</span>
+            <h2>Двухэтапный вход (Google-style)</h2>
+            <p>Сначала ввод логина → «Далее» → раскрывается поле пароля + контекст (email если знаем). Меньше визуальной нагрузки на этапе 1, а на этапе 2 пользователь уже видит куда идёт.</p>
+        </div>
+        <div class="phone">
+            <div class="phone-statusbar">
+                <span>9:41</span>
+                <span>● ●●●●●</span>
+            </div>
+            <div class="editorial-body">
+
+                <a class="back-pill">← Назад</a>
+
+                <a class="belsi-mark sz-40 with-corner-glow">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5,4 h7 a4,4 0 0 1 0,8 h-2 v-2 h2 a2,2 0 0 0 0,-4 h-3 v14 h-2 z M9,11 h3 a4,4 0 0 1 0,8 h-7 v-2 h7 a2,2 0 0 0 0,-4 h-3 z" fill="white"/>
+                    </svg>
+                </a>
+
+                <div class="spacer-32"></div>
+
+                <div class="step-pill">
+                    <span class="step-dot"></span>
+                    Шаг 2 из 2 · Пароль
+                </div>
+
+                <div class="spacer-16"></div>
+
+                <h1 class="headline state-block show" data-state="first" style="font-size: 36px;">
+                    Введите<br>пароль
+                </h1>
+                <h1 class="headline state-block" data-state="returning" style="font-size: 36px;">
+                    Введите<br>пароль
+                </h1>
+                <h1 class="headline state-block" data-state="personal" style="font-size: 36px;">
+                    Привет,<br><span class="greeting-name">Влад</span>
+                </h1>
+
+                <div class="spacer-16"></div>
+
+                <!-- Context row -- account preview -->
+                <div class="avatar-row" style="margin-bottom: 0;">
+                    <div class="avatar">ВТ</div>
+                    <div class="col">
+                        <div class="name state-block show" data-state="first returning">+7 (916) 685-96-58</div>
+                        <div class="name state-block" data-state="personal">Тирских Владимир</div>
+                        <div class="phone state-block show" data-state="first">Новый аккаунт</div>
+                        <div class="phone state-block" data-state="returning personal">+7 916 685-96-58</div>
+                    </div>
+                    <a class="switch">Сменить</a>
+                </div>
+
+                <div class="spacer-32"></div>
+
+                <label class="field-label">
+                    Пароль
+                    <a class="row-link" href="#">Забыли?</a>
+                </label>
+                <div class="text-field-row">
+                    <input class="text-field focused" type="password" placeholder="Минимум 6 символов" value="••••••••">
+                    <span class="icon-right">👁</span>
+                </div>
+
+                <div class="spacer-32"></div>
+
+                <button class="btn-primary dark">Войти →</button>
+
+                <div class="spacer-20"></div>
+                <div class="divider-text">или через</div>
+                <div class="spacer-16"></div>
+
+                <button class="btn-secondary">
+                    <span class="yandex-mark">Я</span>
+                    <span>Яндекс ID</span>
+                </button>
+
+                <div class="spacer-flex"></div>
+
+                <div class="footer-actions">
+                    <a class="slate">Войти по СМС вместо пароля</a>
+                </div>
+                <div class="footer-sig">BELSI.Команда · v 2.0</div>
+            </div>
+        </div>
+        <div class="annotation">
+            <strong>UX-плюс:</strong> на втором шаге пользователь видит куда идёт + аватар + телефон. Меньше шанс ввести пароль не от того аккаунта. Step-pill «Шаг 2 из 2» подсказывает прогресс. Минус — лишний tap «Далее».
+        </div>
+    </div>
+
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- C4 — DUAL-CTA (Yandex как равный)                              -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <div class="variant">
+        <div class="variant-meta">
+            <span class="variant-tag">C4 · Dual-CTA</span>
+            <h2>Yandex как равный путь</h2>
+            <p>Yandex и логин+пароль — два равноценных пути. Yandex кнопка крупная, цветная, выше формы — «нет аккаунта? ткни в Я». Для тех, кому не важна корпоративная учётка, реально удобно.</p>
+        </div>
+        <div class="phone">
+            <div class="phone-statusbar">
+                <span>9:41</span>
+                <span>● ●●●●●</span>
+            </div>
+            <div class="editorial-body">
+
+                <a class="belsi-mark sz-48 with-corner-glow">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5,4 h7 a4,4 0 0 1 0,8 h-2 v-2 h2 a2,2 0 0 0 0,-4 h-3 v14 h-2 z M9,11 h3 a4,4 0 0 1 0,8 h-7 v-2 h7 a2,2 0 0 0 0,-4 h-3 z" fill="white"/>
+                    </svg>
+                </a>
+
+                <div class="spacer-32"></div>
+
+                <h1 class="state-block show" data-state="first" style="font-size: 36px;">
+                    Добро<br>пожаловать
+                </h1>
+                <h1 class="state-block" data-state="returning" style="font-size: 38px;">
+                    С<br>возвращением
+                </h1>
+                <h1 class="state-block" data-state="personal" style="font-size: 38px;">
+                    Снова в деле,<br><span class="greeting-name">Влад</span>
+                </h1>
+
+                <div class="spacer-12"></div>
+
+                <p class="subhead">Войдите за секунду через Яндекс или используйте логин.</p>
+
+                <div class="spacer-32"></div>
+
+                <!-- Yandex first, large -->
+                <button class="btn-primary" style="background: white; color: var(--slate-900); border: 1.5px solid var(--slate-200); height: 56px;">
+                    <span class="yandex-mark">Я</span>
+                    <span>Войти через Яндекс ID</span>
+                </button>
+
+                <div class="spacer-20"></div>
+                <div class="divider-text">или с паролем</div>
+                <div class="spacer-16"></div>
+
+                <div class="state-block" data-state="personal">
+                    <div class="avatar-row">
+                        <div class="avatar">ВТ</div>
+                        <div class="col">
+                            <div class="name">Тирских Владимир</div>
+                            <div class="phone">+7 916 685-96-58</div>
+                        </div>
+                        <a class="switch">Сменить</a>
+                    </div>
+                </div>
+
+                <div class="state-block show" data-state="first returning">
+                    <input class="text-field" placeholder="Телефон, email или логин">
+                    <div class="spacer-12"></div>
+                </div>
+
+                <div class="text-field-row">
+                    <input class="text-field" type="password" placeholder="Пароль" value="••••••">
+                    <span class="icon-right">👁</span>
+                </div>
+
+                <div class="spacer-20"></div>
+
+                <button class="btn-primary dark">Войти</button>
+
+                <div class="spacer-flex"></div>
+
+                <div class="footer-actions">
+                    <a class="indigo state-block show" data-state="first">Создать аккаунт</a>
+                    <a class="indigo state-block" data-state="returning personal">Создать аккаунт</a>
+                    <span class="sep">·</span>
+                    <a class="slate">Войти по СМС</a>
+                    <span class="sep">·</span>
+                    <a class="slate">Забыли пароль?</a>
+                </div>
+                <div class="footer-sig">BELSI.Команда · v 2.0</div>
+            </div>
+        </div>
+        <div class="annotation">
+            <strong>Bold-выбор:</strong> Yandex поднят в primary-positon. Психологически: «вход за 2 секунды» виден первым. Подходит если у вас много installer/foreman, для которых Yandex быстрее чем помнить пароль.
+        </div>
+    </div>
+
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- C5 — SMS LOGIN (тот же стиль)                                  -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <div class="variant">
+        <div class="variant-meta">
+            <span class="variant-tag">C5 · SMS · Phone step</span>
+            <h2>Вход по СМС — шаг 1 (телефон)</h2>
+            <p>Тот же editorial-стиль. Branding-марка → «Войти по СМС» → ввод телефона → кнопка «Получить код». Никакого визуального скачка с экрана пароля. Внизу — возврат к паролю.</p>
+        </div>
+        <div class="phone">
+            <div class="phone-statusbar">
+                <span>9:41</span>
+                <span>● ●●●●●</span>
+            </div>
+            <div class="editorial-body">
+
+                <a class="back-pill">← К логину и паролю</a>
+
+                <a class="belsi-mark sz-40 with-corner-glow">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5,4 h7 a4,4 0 0 1 0,8 h-2 v-2 h2 a2,2 0 0 0 0,-4 h-3 v14 h-2 z M9,11 h3 a4,4 0 0 1 0,8 h-7 v-2 h7 a2,2 0 0 0 0,-4 h-3 z" fill="white"/>
+                    </svg>
+                </a>
+
+                <div class="spacer-32"></div>
+
+                <h1 class="headline" style="font-size: 38px;">Вход по СМС</h1>
+
+                <div class="spacer-12"></div>
+
+                <p class="subhead">Введите номер телефона — мы отправим код подтверждения.</p>
+
+                <div class="spacer-32"></div>
+
+                <label class="field-label">Номер телефона</label>
+                <input class="text-field focused" placeholder="+7 (___) ___-__-__" value="+7 (916) 685-96-58">
+
+                <div class="spacer-12"></div>
+
+                <div class="steel-chip">
+                    <span class="steel-chip-dot"></span>
+                    Стоимость СМС — 0 руб, оплачивает BELSI
+                </div>
+
+                <div class="spacer-32"></div>
+
+                <button class="btn-primary dark">Получить код →</button>
+
+                <div class="spacer-flex"></div>
+
+                <div class="footer-actions">
+                    <a class="indigo">Вернуться к паролю</a>
+                    <span class="sep">·</span>
+                    <a class="slate">Создать аккаунт</a>
+                </div>
+                <div class="footer-sig">BELSI.Команда · v 2.0</div>
+            </div>
+        </div>
+        <div class="annotation">
+            <strong>Single mode</strong> — здесь приветствие не нужно (это под-флоу от логина), поэтому не зависит от state-toggle. Брендмарка меньше — мы внутри auth-сессии. Steel-chip «стоимость 0₽» снимает страх «спишут деньги за СМС».
+        </div>
+    </div>
+
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- C5b — SMS OTP step (введите код)                               -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <div class="variant">
+        <div class="variant-meta">
+            <span class="variant-tag">C5b · SMS · OTP step</span>
+            <h2>Вход по СМС — шаг 2 (код)</h2>
+            <p>6-значный OTP с дискретными ячейками. Контекст «куда отправили», таймер до повторной отправки. Тот же ритм editorial.</p>
+        </div>
+        <div class="phone">
+            <div class="phone-statusbar">
+                <span>9:41</span>
+                <span>● ●●●●●</span>
+            </div>
+            <div class="editorial-body">
+
+                <a class="back-pill">← Изменить номер</a>
+
+                <a class="belsi-mark sz-40 with-corner-glow">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5,4 h7 a4,4 0 0 1 0,8 h-2 v-2 h2 a2,2 0 0 0 0,-4 h-3 v14 h-2 z M9,11 h3 a4,4 0 0 1 0,8 h-7 v-2 h7 a2,2 0 0 0 0,-4 h-3 z" fill="white"/>
+                    </svg>
+                </a>
+
+                <div class="spacer-32"></div>
+
+                <h1 class="headline" style="font-size: 36px;">Введите код</h1>
+
+                <div class="spacer-12"></div>
+
+                <p class="subhead">
+                    Мы отправили 6-значный код на<br>
+                    <strong style="color: var(--slate-900);">+7 (916) 685-96-58</strong>
+                </p>
+
+                <div class="spacer-32"></div>
+
+                <div class="otp-row">
+                    <input class="otp-cell filled" value="4" maxlength="1">
+                    <input class="otp-cell filled" value="2" maxlength="1">
+                    <input class="otp-cell filled" value="9" maxlength="1">
+                    <input class="otp-cell filled" value="8" maxlength="1">
+                    <input class="otp-cell" maxlength="1">
+                    <input class="otp-cell" maxlength="1">
+                </div>
+
+                <div class="resend-line">Отправить заново через <span class="timer">0:32</span></div>
+
+                <div class="spacer-32"></div>
+
+                <button class="btn-primary dark">Войти</button>
+
+                <div class="spacer-flex"></div>
+
+                <div class="footer-actions">
+                    <a class="indigo">Вернуться к паролю</a>
+                </div>
+                <div class="footer-sig">BELSI.Команда · v 2.0</div>
+            </div>
+        </div>
+        <div class="annotation">
+            <strong>OTP-cells</strong>: M3 не имеет нативного компонента — реализуем 6 OutlinedTextField в Row. Каждая ячейка autofocus next. Filled-state — Slate900 border, чтобы прогресс был очевиден.
+        </div>
+    </div>
+
+</div>
+
+<script>
+const buttons = document.querySelectorAll('.state-toggle button');
+const blocks = document.querySelectorAll('.state-block');
+
+function setState(state) {
+    blocks.forEach(b => {
+        const matches = (b.dataset.state || '').split(' ').includes(state);
+        b.classList.toggle('show', matches);
+    });
+    buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.state === state));
+}
+
+buttons.forEach(btn => {
+    btn.addEventListener('click', () => setState(btn.dataset.state));
+});
+
+// initial
+setState('first');
+</script>
+
+</body>
+</html>

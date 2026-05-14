@@ -56,3 +56,4 @@ INTERNAL_*.md
 
 # Внутренняя AI-документация (детальная). Публичная версия — AI_INTEGRATION_PUBLIC.md
 backend/belsi-api/docs/AI_INTEGRATION.md
+CLAUDE_SESSION_MEMORY.md

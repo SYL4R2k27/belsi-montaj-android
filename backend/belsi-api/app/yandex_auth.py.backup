@@ -1,0 +1,107 @@
+import secrets
+import urllib.parse
+import httpx
+
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import RedirectResponse
+
+from .settings import get_settings
+from .db import SessionLocal
+from .models import User
+
+router = APIRouter(prefix="/auth/yandex", tags=["auth-yandex"])
+
+
+def _get_or_create_user_by_phone(phone: str, role: str = "installer") -> None:
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.phone == phone).first()
+        if not user:
+            user = User(phone=phone, role=role)
+            db.add(user)
+            db.commit()
+    finally:
+        db.close()
+
+
+@router.get("/start")
+def yandex_start():
+    """
+    Открываем это из клиента (ASWebAuthenticationSession / CustomTabs).
+    Сервер делает redirect на Яндекс OAuth authorize.
+    """
+    s = get_settings()
+    state = secrets.token_urlsafe(24)
+
+    params = {
+        "response_type": "code",
+        "client_id": s.yandex_client_id,
+        "redirect_uri": s.yandex_redirect_uri,
+        "scope": s.yandex_scopes,
+        "state": state,
+        # можно добавить prompt=login при необходимости
+    }
+
+    url = f"{s.yandex_auth_url}?{urllib.parse.urlencode(params)}"
+    return RedirectResponse(url=url, status_code=302)
+
+
+@router.get("/callback")
+def yandex_callback(code: str = Query(...), state: str = Query(None)):
+    """
+    Яндекс вернёт сюда ?code=...&state=...
+    Мы меняем code -> access_token, тянем userinfo,
+    создаём пользователя и редиректим в приложение belsiwork://...
+    """
+    s = get_settings()
+
+    # 1) Exchange code -> token
+    token_data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "client_id": s.yandex_client_id,
+        "client_secret": s.yandex_client_secret,
+        "redirect_uri": s.yandex_redirect_uri,
+    }
+
+    try:
+        with httpx.Client(timeout=20) as client:
+            r = client.post(s.yandex_token_url, data=token_data)
+            r.raise_for_status()
+            token_json = r.json()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Yandex token exchange failed: {e}")
+
+    access_token = token_json.get("access_token")
+    if not access_token:
+        raise HTTPException(status_code=400, detail="No access_token from Yandex")
+
+    # 2) UserInfo
+    try:
+        with httpx.Client(timeout=20) as client:
+            r = client.get(
+                s.yandex_userinfo_url,
+                headers={"Authorization": f"OAuth {access_token}"},
+            )
+            r.raise_for_status()
+            info = r.json()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Yandex userinfo failed: {e}")
+
+    # 3) Привязка к нашей модели.
+    # У Яндекса не всегда есть телефон. Минимально — используем yandex_id как идентификатор.
+    yandex_id = str(info.get("id") or info.get("client_id") or "")
+    if not yandex_id:
+        raise HTTPException(status_code=400, detail="Yandex user id not found")
+
+    # Вариант A (быстро для MVP): виртуальный "телефон"
+    phone = f"yandex:{yandex_id}"
+
+    _get_or_create_user_by_phone(phone=phone, role="installer")
+
+    # 4) Наш токен (как сейчас в проекте)
+    app_token = f"demo-token-{phone}"
+
+    # 5) Redirect обратно в приложение
+    deeplink = f"{s.yandex_app_deeplink}?token={urllib.parse.quote(app_token)}&phone={urllib.parse.quote(phone)}"
+    return RedirectResponse(url=deeplink, status_code=302)

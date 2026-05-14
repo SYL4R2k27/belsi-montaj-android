@@ -2,7 +2,11 @@ package com.belsi.work.presentation.screens.curator.objects
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.belsi.work.data.models.Batch
+import com.belsi.work.data.remote.api.BatchApi
+import com.belsi.work.data.remote.dto.brand.TimelineEventDto
 import com.belsi.work.data.remote.dto.objects.*
+import com.belsi.work.data.repositories.BrandCoreRepository
 import com.belsi.work.data.repositories.ObjectsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +17,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CuratorObjectsViewModel @Inject constructor(
-    private val objectsRepository: ObjectsRepository
+    private val objectsRepository: ObjectsRepository,
+    private val brandRepo: BrandCoreRepository,
+    private val batchApi: BatchApi,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CuratorObjectsUiState())
@@ -44,7 +50,11 @@ class CuratorObjectsViewModel @Inject constructor(
 
     fun loadObjectDetail(objectId: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoadingDetail = true)
+            _uiState.value = _uiState.value.copy(
+                isLoadingDetail = true,
+                timeline = emptyList(),
+                timelineError = null,
+            )
             objectsRepository.getCuratorObjectDetail(objectId)
                 .onSuccess { detail ->
                     _uiState.value = _uiState.value.copy(
@@ -58,6 +68,40 @@ class CuratorObjectsViewModel @Inject constructor(
                         errorMessage = it.message ?: "Ошибка загрузки деталей"
                     )
                 }
+            // FIX(2026-05-11) BELSI 2.0.0 build7: история объекта прямо в Инфо-табе.
+            // Параллельно подгружаем timeline из brand_core /objects/{id}/timeline
+            // (UNION ALL по shifts/photos/audit/deliveries/route_points/batches/tasks/tickets).
+            _uiState.value = _uiState.value.copy(isLoadingTimeline = true)
+            brandRepo.objectTimeline(objectId, limit = 80)
+                .onSuccess { events ->
+                    _uiState.value = _uiState.value.copy(
+                        timeline = events,
+                        isLoadingTimeline = false,
+                        timelineError = null,
+                    )
+                }
+                .onFailure { err ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingTimeline = false,
+                        timelineError = err.message ?: "История временно недоступна",
+                    )
+                }
+
+            // FIX(2026-05-12) build18 P2: подгружаем партии объекта (для нового таба Партии).
+            _uiState.value = _uiState.value.copy(isLoadingBatches = true)
+            try {
+                val resp = batchApi.listBatches(targetObjectId = objectId, limit = 100)
+                if (resp.isSuccessful) {
+                    _uiState.value = _uiState.value.copy(
+                        batches = resp.body() ?: emptyList(),
+                        isLoadingBatches = false,
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(isLoadingBatches = false)
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoadingBatches = false)
+            }
         }
     }
 
@@ -140,4 +184,11 @@ data class CuratorObjectsUiState(
     val isProcessing: Boolean = false,
     val errorMessage: String? = null,
     val showCreateDialog: Boolean = false,
+    // FIX(2026-05-11) build7: история объекта в InfoTab
+    val timeline: List<TimelineEventDto> = emptyList(),
+    val isLoadingTimeline: Boolean = false,
+    val timelineError: String? = null,
+    // FIX(2026-05-12) build18 P2: партии объекта для нового таба «Партии».
+    val batches: List<Batch> = emptyList(),
+    val isLoadingBatches: Boolean = false,
 )

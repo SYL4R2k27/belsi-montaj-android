@@ -172,17 +172,28 @@ def update_user_name(
 
 
 
+# FIX(2026-05-11) BELSI 2.0.0 security: restored /user/me/role с safe constraints.
+# Ранее endpoint позволял ЛЮБОМУ юзеру сменить роль на curator (privilege escalation).
+# Сейчас разрешено только:
+#   1) Установить роль "installer" (default, не повышение)
+#   2) Уточнить роль если текущая NULL/пустая (первичный onboarding после signup)
+# Все остальные смены роли — через curator-only POST /users/{user_id}/role.
 @router.post("/user/me/role", response_model=UserResponse)
 def update_current_user_role(
     request: UpdateRoleRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Update current user's role"""
-    allowed_roles = ["installer", "foreman", "coordinator", "curator"]
-    if request.role not in allowed_roles:
-        raise HTTPException(status_code=400, detail=f"Invalid role. Allowed: {allowed_roles}")
-    current_user.role = request.role
+    """Self-set role (только для первичного onboarding / возврат к installer)."""
+    SAFE_SELF_ROLES = {"installer"}
+    new_role = (request.role or "").strip().lower()
+    if new_role not in SAFE_SELF_ROLES:
+        raise HTTPException(
+            status_code=403,
+            detail="Самостоятельно можно установить только роль 'installer'. "
+                   "Для других ролей обратитесь к куратору."
+        )
+    current_user.role = new_role
     db.commit()
     db.refresh(current_user)
     return current_user

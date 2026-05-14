@@ -106,15 +106,30 @@ data class BatchCreateUiState(
     val isSubmitting: Boolean = false,
     val createdId: String? = null,
     val error: String? = null,
+    // FIX(2026-05-12) BELSI 2.0.0 build14: реальные списки фабрик и объектов-целей
+    val facilities: List<com.belsi.work.data.models.Facility> = emptyList(),
+    val targetObjects: List<com.belsi.work.data.remote.dto.objects.SiteObjectDto> = emptyList(),
 )
 
 @HiltViewModel
 class BatchCreateViewModel @Inject constructor(
     private val repo: BatchRepository,
+    private val productionRepo: com.belsi.work.data.repositories.ProductionRepository,
+    private val objectsRepo: com.belsi.work.data.repositories.ObjectsRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BatchCreateUiState())
     val state: StateFlow<BatchCreateUiState> = _state.asStateFlow()
+
+    init {
+        // FIX(2026-05-12) build14: подгружаем dropdown-данные при открытии экрана
+        viewModelScope.launch {
+            productionRepo.listFacilities()
+                .onSuccess { list -> _state.value = _state.value.copy(facilities = list) }
+            objectsRepo.getObjects(status = "active")
+                .onSuccess { list -> _state.value = _state.value.copy(targetObjects = list) }
+        }
+    }
 
     fun submit(request: BatchCreateRequest) {
         viewModelScope.launch {

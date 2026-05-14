@@ -45,14 +45,10 @@ fun BatchListScreen(
     val state by viewModel.state.collectAsState()
     var filter by remember { mutableStateOf<BatchStatus?>(null) }
 
-    // FIX(2026-05-05): fallback на mock когда сервер недоступен (Pipeline endpoints
-    // живут только на feature/driver-integration, не задеплоены).
-    // Когда деплой будет — реальные данные из API подменят mock без переписывания UI.
-    val batches: List<FactoryMockData.Batch> = if (state.batches.isNotEmpty()) {
-        state.batches.map { it.toMockShape() }
-    } else {
-        FactoryMockData.batches
-    }
+    // FIX(2026-05-12) BELSI 2.0.0 build14: убрали mock-fallback.
+    // Backend pipeline уже deployed (build9-14). Пустой список — пустой,
+    // empty state ниже, не выдумываем 5 фейковых партий.
+    val batches: List<FactoryMockData.Batch> = state.batches.map { it.toMockShape() }
 
     LaunchedEffect(filter) { viewModel.setFilter(filter) }
 
@@ -66,14 +62,17 @@ fun BatchListScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* search */ }) { Icon(Icons.Default.Search, contentDescription = null) }
+                    // FIX(2026-05-12) BELSI 2.0.0 build14: refresh — поиск отдельный экран на потом
+                    IconButton(onClick = { viewModel.load() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Обновить")
+                    }
                 }
             )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { navController.navigate(AppRoute.BatchCreate.route) },
-                containerColor = AmberPrimary,
+                containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White,
             ) {
                 Icon(Icons.Default.Add, contentDescription = null)
@@ -104,11 +103,36 @@ fun BatchListScreen(
                         }
                     }
                 }
-                items(
-                    if (filter == null) batches
+                val visibleBatches = if (filter == null) batches
                     else batches.filter { mockStatusMatch(it.status, filter!!) }
-                ) { b ->
-                    BatchListRow(b) { navController.navigate(AppRoute.BatchDetail.createRoute(b.id)) }
+                if (visibleBatches.isEmpty()) {
+                    item {
+                        // FIX(2026-05-12) BELSI 2.0.0 build14: честный empty state
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text("📦", fontSize = 48.sp)
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                if (filter == null) "Партий пока нет"
+                                else "Нет партий со статусом «${filter!!.label}»",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "Создайте первую партию через «+» внизу",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            )
+                        }
+                    }
+                } else {
+                    items(visibleBatches) { b ->
+                        BatchListRow(b) { navController.navigate(AppRoute.BatchDetail.createRoute(b.id)) }
+                    }
                 }
             }
         }
@@ -134,7 +158,7 @@ private fun BatchListRow(b: FactoryMockData.Batch, onClick: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("${b.itemCount} шт", fontWeight = FontWeight.Bold, color = AmberPrimary)
+                    Text("${b.itemCount} шт", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     Text(b.deadline, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -171,11 +195,18 @@ fun BatchDetailScreen(
     LaunchedEffect(batchId) { viewModel.load(batchId) }
     val state by viewModel.state.collectAsState()
 
-    // FIX(2026-05-05): real-batch если пришёл с сервера → toMockShape для UI.
-    // Иначе fallback на mock (поиск по batchId, иначе первая партия).
-    val batch: FactoryMockData.Batch = state.batch?.toMockShape()
-        ?: FactoryMockData.batches.firstOrNull { it.id == batchId }
-        ?: FactoryMockData.batches.first()
+    // FIX(2026-05-12) BELSI 2.0.0 build14: убрали mock fallback. Если бек не отдал партию
+    // — показываем loader или ошибку.
+    val batchNullable: FactoryMockData.Batch? = state.batch?.toMockShape()
+
+    if (batchNullable == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            if (state.isLoading) CircularProgressIndicator()
+            else Text(state.error ?: "Партия не найдена", color = MaterialTheme.colorScheme.error)
+        }
+        return
+    }
+    val batch = batchNullable
 
     Scaffold(
         topBar = {
@@ -202,7 +233,7 @@ fun BatchDetailScreen(
                             // changeStatus вызывает /production/batches/{id}/status → audit log.
                             onClick = { viewModel.changeStatus(nextStatus) },
                             modifier = Modifier.fillMaxWidth().height(52.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = AmberPrimary),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             enabled = !state.isLoading,
                         ) {
                             if (state.isLoading) {
@@ -234,7 +265,7 @@ fun BatchDetailScreen(
         ) {
             // Заголовок
             Card(
-                colors = CardDefaults.cardColors(containerColor = AmberPrimary.copy(alpha = 0.1f))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
             ) {
                 Column(Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -242,7 +273,7 @@ fun BatchDetailScreen(
                         Spacer(Modifier.width(10.dp))
                         Column(Modifier.weight(1f)) {
                             Text(batch.title, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                            Text(batch.status.label, fontSize = 12.sp, color = AmberPrimary,
+                            Text(batch.status.label, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.SemiBold)
                         }
                     }
@@ -259,17 +290,74 @@ fun BatchDetailScreen(
                 modifier = Modifier.padding(top = 8.dp))
             PipelineSteps(batch.status)
 
-            // История (мок)
+            // FIX(2026-05-12) BELSI 2.0.0 build15: «Доставка» — связанная заявка/маршрут.
+            // Сейчас отображаем минимум — расширенный delivery info требует backend enrichment
+            // через композитный endpoint (BatchOut.delivery_info). Пока показываем статус
+            // и подсказку, что партия едет / доставлена / в маршруте.
+            if (batch.status in listOf(
+                    FactoryMockData.BatchStatus.READY_TO_SHIP,
+                    FactoryMockData.BatchStatus.IN_ROUTE,
+                    FactoryMockData.BatchStatus.DELIVERED,
+                    FactoryMockData.BatchStatus.INSTALLED,
+                )) {
+                Text("Доставка", fontWeight = FontWeight.Bold, fontSize = 14.sp,
+                    modifier = Modifier.padding(top = 8.dp))
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                    ),
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("🚛", fontSize = 22.sp)
+                            Spacer(Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                val deliveryLabel = when (batch.status) {
+                                    FactoryMockData.BatchStatus.READY_TO_SHIP -> "Готова к отгрузке"
+                                    FactoryMockData.BatchStatus.IN_ROUTE -> "Партия в маршруте"
+                                    FactoryMockData.BatchStatus.DELIVERED -> "Доставлена, ожидает приёмки"
+                                    FactoryMockData.BatchStatus.INSTALLED -> "Монтаж закрыт"
+                                    else -> ""
+                                }
+                                Text(deliveryLabel, fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    "Подробности маршрута — в журнале логиста",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // FIX(2026-05-12) BELSI 2.0.0 build14: реальная история переходов статусов
+            // из backend batch_status_history. Раньше — хардкод из 3 строк.
             Text("История", fontWeight = FontWeight.Bold, fontSize = 14.sp,
                 modifier = Modifier.padding(top = 8.dp))
             Card { Column(Modifier.padding(12.dp)) {
-                HistoryRow("Создана", "Начальник производства", "сегодня 09:00")
-                HistoryRow("В работе", "Старший Петров", "сегодня 09:15")
-                if (batch.status == FactoryMockData.BatchStatus.READY_TO_SHIP ||
-                    batch.status == FactoryMockData.BatchStatus.IN_ROUTE ||
-                    batch.status == FactoryMockData.BatchStatus.DELIVERED ||
-                    batch.status == FactoryMockData.BatchStatus.INSTALLED) {
-                    HistoryRow("Готова к отгрузке", "Начальник производства", "сегодня 18:30")
+                if (state.history.isEmpty()) {
+                    Text(
+                        "Истории нет",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    state.history.forEach { item ->
+                        HistoryRow(
+                            action = "${item.fromStatus ?: "—"} → ${item.toStatus}",
+                            by = item.changedBy.toString().take(8),
+                            when_ = item.changedAt.take(16).replace("T", " "),
+                        )
+                        if (!item.comment.isNullOrBlank()) {
+                            Text(
+                                item.comment,
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 22.dp, bottom = 4.dp),
+                            )
+                        }
+                    }
                 }
             } }
         }
@@ -286,10 +374,20 @@ fun BatchCreateScreen(
 ) {
     var title by remember { mutableStateOf("") }
     var itemCount by remember { mutableStateOf("") }
-    var target by remember { mutableStateOf("") }
     var deadline by remember { mutableStateOf("") }
+    // FIX(2026-05-12) BELSI 2.0.0 build14: реальный выбор фабрики и целевого объекта
+    var selectedFacilityId by remember { mutableStateOf<UUID?>(null) }
+    var selectedTargetId by remember { mutableStateOf<UUID?>(null) }
+    var facilityMenuOpen by remember { mutableStateOf(false) }
+    var targetMenuOpen by remember { mutableStateOf(false) }
 
     val state by viewModel.state.collectAsState()
+    // Авто-выбор первой фабрики если есть
+    LaunchedEffect(state.facilities) {
+        if (selectedFacilityId == null && state.facilities.isNotEmpty()) {
+            selectedFacilityId = try { UUID.fromString(state.facilities.first().id) } catch (e: Exception) { null }
+        }
+    }
 
     // FIX(2026-05-05): после успешного создания → возврат назад
     LaunchedEffect(state.createdId) {
@@ -314,23 +412,23 @@ fun BatchCreateScreen(
             Surface(tonalElevation = 4.dp) {
                 Column(Modifier.padding(16.dp)) {
                     Button(
-                        // FIX(2026-05-05): реальный submit через ViewModel.
-                        // facility_id — TODO подтянуть из ActiveRoleManager.activeFacilityId.
-                        // Сейчас передаём dummy UUID для тестирования формы.
+                        // FIX(2026-05-12) BELSI 2.0.0 build14: реальные UUID из dropdown.
                         onClick = {
+                            val fid = selectedFacilityId ?: return@Button
                             viewModel.submit(
                                 BatchCreateRequest(
                                     title = title,
                                     itemCount = itemCount.toIntOrNull() ?: 0,
-                                    sourceFacilityId = UUID.fromString("00000000-0000-0000-0000-000000000000"),
-                                    targetObjectId = null,  // TODO: выбор объекта в форме
+                                    sourceFacilityId = fid,
+                                    targetObjectId = selectedTargetId,
                                     deadline = deadline.takeIf { it.isNotBlank() },
                                 )
                             )
                         },
                         modifier = Modifier.fillMaxWidth().height(52.dp),
-                        enabled = !state.isSubmitting && title.isNotBlank() && itemCount.isNotBlank(),
-                        colors = ButtonDefaults.buttonColors(containerColor = AmberPrimary),
+                        enabled = !state.isSubmitting && title.isNotBlank()
+                            && itemCount.isNotBlank() && selectedFacilityId != null,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     ) {
                         if (state.isSubmitting) {
                             CircularProgressIndicator(
@@ -376,12 +474,74 @@ fun BatchCreateScreen(
                 label = { Text("Количество (шт)") },
                 modifier = Modifier.fillMaxWidth(),
             )
-            OutlinedTextField(
-                value = target, onValueChange = { target = it },
-                label = { Text("Объект-цель") },
-                placeholder = { Text("Напр.: Школа №7, Коломенская 16") },
-                modifier = Modifier.fillMaxWidth(),
-            )
+            // FIX(2026-05-12) BELSI 2.0.0 build14: реальный dropdown фабрик
+            ExposedDropdownMenuBox(
+                expanded = facilityMenuOpen,
+                onExpandedChange = { facilityMenuOpen = it },
+            ) {
+                val selectedFacility = state.facilities.firstOrNull { it.id == selectedFacilityId?.toString() }
+                OutlinedTextField(
+                    value = selectedFacility?.name ?: "Выберите фабрику…",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Фабрика (источник)") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = facilityMenuOpen) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                )
+                ExposedDropdownMenu(
+                    expanded = facilityMenuOpen,
+                    onDismissRequest = { facilityMenuOpen = false },
+                ) {
+                    state.facilities.forEach { facility ->
+                        DropdownMenuItem(
+                            text = { Text(facility.name) },
+                            onClick = {
+                                selectedFacilityId = try { UUID.fromString(facility.id) } catch (e: Exception) { null }
+                                facilityMenuOpen = false
+                            },
+                        )
+                    }
+                    if (state.facilities.isEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("Фабрик нет — обратитесь к куратору", color = MaterialTheme.colorScheme.error) },
+                            onClick = { facilityMenuOpen = false },
+                        )
+                    }
+                }
+            }
+            // FIX(2026-05-12) build14: dropdown объекта-цели (опционально — можно создать партию без цели)
+            ExposedDropdownMenuBox(
+                expanded = targetMenuOpen,
+                onExpandedChange = { targetMenuOpen = it },
+            ) {
+                val selectedTarget = state.targetObjects.firstOrNull { it.id == selectedTargetId?.toString() }
+                OutlinedTextField(
+                    value = selectedTarget?.name ?: "Без объекта-цели",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Объект-цель (опционально)") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = targetMenuOpen) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                )
+                ExposedDropdownMenu(
+                    expanded = targetMenuOpen,
+                    onDismissRequest = { targetMenuOpen = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("— без цели —") },
+                        onClick = { selectedTargetId = null; targetMenuOpen = false },
+                    )
+                    state.targetObjects.forEach { obj ->
+                        DropdownMenuItem(
+                            text = { Text("${obj.name}${obj.address?.let { " · $it" } ?: ""}") },
+                            onClick = {
+                                selectedTargetId = try { UUID.fromString(obj.id) } catch (e: Exception) { null }
+                                targetMenuOpen = false
+                            },
+                        )
+                    }
+                }
+            }
             OutlinedTextField(
                 value = deadline, onValueChange = { deadline = it },
                 label = { Text("Дедлайн") },
@@ -418,7 +578,7 @@ private fun PipelineSteps(current: FactoryMockData.BatchStatus) {
                         .background(
                             color = when (state) {
                                 "done" -> Color(0xFF10B981)
-                                "active" -> AmberPrimary
+                                "active" -> MaterialTheme.colorScheme.primary
                                 else -> MaterialTheme.colorScheme.surfaceVariant
                             },
                             RoundedCornerShape(12.dp)
@@ -456,7 +616,7 @@ private fun HistoryRow(action: String, by: String, when_: String) {
             modifier = Modifier
                 .padding(top = 4.dp)
                 .size(8.dp)
-                .background(AmberPrimary, RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
         )
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
@@ -486,22 +646,24 @@ private fun nextStatusFor(status: FactoryMockData.BatchStatus): BatchStatus? = w
     FactoryMockData.BatchStatus.INSTALLED -> null
 }
 
+// FIX(2026-05-12) build19 hotfix: статусные цвета из theme/Color.kt константов
+// (а не hardcoded HEX). Single source of truth — 1.2.5 design tokens.
 private fun statusBg(s: FactoryMockData.BatchStatus): Color = when (s) {
-    FactoryMockData.BatchStatus.DRAFT -> Color(0xFFF1F5F9)
-    FactoryMockData.BatchStatus.IN_PRODUCTION -> Color(0xFFFEF3C7)
-    FactoryMockData.BatchStatus.READY_TO_SHIP -> Color(0xFFFEF3C7)
-    FactoryMockData.BatchStatus.IN_ROUTE -> Color(0xFFE0F2FE)
-    FactoryMockData.BatchStatus.DELIVERED -> Color(0xFFE0E7FF)
-    FactoryMockData.BatchStatus.INSTALLED -> Color(0xFFD1FAE5)
+    FactoryMockData.BatchStatus.DRAFT          -> com.belsi.work.presentation.theme.Slate100
+    FactoryMockData.BatchStatus.IN_PRODUCTION  -> Color(0xFFFEF3C7)  // warning container (Amber50-ish)
+    FactoryMockData.BatchStatus.READY_TO_SHIP  -> Color(0xFFFEF3C7)
+    FactoryMockData.BatchStatus.IN_ROUTE       -> Color(0xFFDBEAFE)  // info container (Sky50-ish)
+    FactoryMockData.BatchStatus.DELIVERED      -> com.belsi.work.presentation.theme.Indigo100
+    FactoryMockData.BatchStatus.INSTALLED      -> Color(0xFFDCFCE7)  // success container (Emerald50)
 }
 
 private fun statusFg(s: FactoryMockData.BatchStatus): Color = when (s) {
-    FactoryMockData.BatchStatus.DRAFT -> Color(0xFF475569)
-    FactoryMockData.BatchStatus.IN_PRODUCTION -> Color(0xFF92400E)
-    FactoryMockData.BatchStatus.READY_TO_SHIP -> Color(0xFF92400E)
-    FactoryMockData.BatchStatus.IN_ROUTE -> Color(0xFF0369A1)
-    FactoryMockData.BatchStatus.DELIVERED -> Color(0xFF4338CA)
-    FactoryMockData.BatchStatus.INSTALLED -> Color(0xFF065F46)
+    FactoryMockData.BatchStatus.DRAFT          -> com.belsi.work.presentation.theme.Slate600
+    FactoryMockData.BatchStatus.IN_PRODUCTION  -> com.belsi.work.presentation.theme.Amber600
+    FactoryMockData.BatchStatus.READY_TO_SHIP  -> com.belsi.work.presentation.theme.Amber600
+    FactoryMockData.BatchStatus.IN_ROUTE       -> com.belsi.work.presentation.theme.Sky500
+    FactoryMockData.BatchStatus.DELIVERED      -> com.belsi.work.presentation.theme.Indigo700
+    FactoryMockData.BatchStatus.INSTALLED      -> com.belsi.work.presentation.theme.Emerald600
 }
 
 private fun mockStatusMatch(mock: FactoryMockData.BatchStatus, target: BatchStatus): Boolean = when (target) {
@@ -519,7 +681,9 @@ private fun mockStatusMatch(mock: FactoryMockData.BatchStatus, target: BatchStat
 internal fun Batch.toMockShape(): FactoryMockData.Batch = FactoryMockData.Batch(
     id = this.id.toString(),
     title = this.title,
-    targetObject = "—",  // TODO: подтянуть имя объекта через ObjectsRepo
+    // FIX(2026-05-12) BELSI 2.0.0 build14: показываем targetObjectId (backend без target_object_name)
+    // — для UI достаточно first 8 chars если объект-цель указан, иначе «—».
+    targetObject = this.targetObjectId?.let { "Объект ${it.toString().take(8)}" } ?: "без цели",
     itemCount = this.itemCount,
     deadline = this.deadline ?: "—",
     status = when (this.status) {

@@ -113,10 +113,10 @@ fun CuratorPhotosScreen(
                     // FIX(2026-05-11) BELSI 2.0.0: Adaptive grid — на expanded
                     // 2 столбца карточек фото, на compact 1 столбец во всю ширину.
                     BoxWithConstraints(Modifier.fillMaxSize()) {
-                        val isExpanded = maxWidth >= 840.dp
+                        val isExpanded = maxWidth >= 680.dp
                         if (isExpanded) {
                             LazyVerticalGrid(
-                                columns = GridCells.Adaptive(minSize = 360.dp),
+                                columns = GridCells.Adaptive(minSize = 340.dp),
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -226,10 +226,10 @@ private fun CuratorPhotosContent(
             else -> {
                 // FIX(2026-05-11) BELSI 2.0.0 (embedded): adaptive grid 2-col на expanded
                 BoxWithConstraints(Modifier.fillMaxSize()) {
-                    val isExpanded = maxWidth >= 840.dp
+                    val isExpanded = maxWidth >= 680.dp
                     if (isExpanded) {
                         LazyVerticalGrid(
-                            columns = GridCells.Adaptive(minSize = 360.dp),
+                            columns = GridCells.Adaptive(minSize = 340.dp),
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(16.dp),
                             horizontalArrangement = Arrangement.spacedBy(16.dp),

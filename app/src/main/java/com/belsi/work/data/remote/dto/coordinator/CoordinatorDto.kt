@@ -182,3 +182,97 @@ data class CreateCoordinatorTaskRequest(
     val priority: String = "normal",
     @SerialName("due_at") val dueAt: String? = null
 )
+
+// ============================================================
+// FIX(2026-05-12) build18 P2: detail-DTO + composite-DTO
+// ============================================================
+
+@Serializable
+data class CoordinatorTeamMemberDetailDto(
+    @SerialName("user") val user: TeamMemberUserDto,
+    @SerialName("active_shift") val activeShift: TeamMemberShiftDto? = null,
+    @SerialName("recent_shifts") val recentShifts: List<TeamMemberShiftDto> = emptyList(),
+    @SerialName("recent_photos") val recentPhotos: List<TeamMemberPhotoDto> = emptyList(),
+    @SerialName("open_tasks") val openTasks: List<TeamMemberTaskDto> = emptyList(),
+    @SerialName("photos_today") val photosToday: Int = 0,
+)
+
+@Serializable
+data class TeamMemberUserDto(
+    val id: String,
+    val phone: String,
+    @SerialName("full_name") val fullName: String? = null,
+    val role: String,
+    @SerialName("first_name") val firstName: String? = null,
+    @SerialName("last_name") val lastName: String? = null,
+)
+
+@Serializable
+data class TeamMemberShiftDto(
+    val id: String,
+    @SerialName("start_at") val startAt: String? = null,
+    @SerialName("finish_at") val finishAt: String? = null,
+    @SerialName("duration_hours") val durationHours: Double? = null,
+    val status: String = "active",
+    @SerialName("site_object_id") val siteObjectId: String? = null,
+)
+
+@Serializable
+data class TeamMemberPhotoDto(
+    val id: String,
+    @SerialName("photo_url") val photoUrl: String,
+    val status: String = "pending",
+    val category: String = "hourly",
+    @SerialName("created_at") val createdAt: String? = null,
+)
+
+@Serializable
+data class TeamMemberTaskDto(
+    val id: String,
+    val title: String,
+    val status: String = "new",
+    val priority: String = "normal",
+    @SerialName("due_at") val dueAt: String? = null,
+)
+
+@Serializable
+data class CoordinatorObjectFullDto(
+    val site: CoordinatorSiteShortDto? = null,
+    val team: List<CoordinatorTeamShortDto> = emptyList(),
+    @SerialName("recent_photos") val recentPhotos: List<TeamMemberPhotoDto> = emptyList(),
+    @SerialName("recent_reports") val recentReports: List<CoordinatorReportShortDto> = emptyList(),
+    @SerialName("active_batches") val activeBatches: List<CoordinatorActiveBatchDto> = emptyList(),
+)
+
+@Serializable
+data class CoordinatorSiteShortDto(
+    val id: String,
+    val name: String,
+    val address: String? = null,
+    val status: String? = null,
+)
+
+@Serializable
+data class CoordinatorTeamShortDto(
+    val id: String,
+    val phone: String,
+    @SerialName("full_name") val fullName: String? = null,
+    val role: String,
+)
+
+@Serializable
+data class CoordinatorReportShortDto(
+    val id: String,
+    @SerialName("report_date") val reportDate: String? = null,
+    val content: String = "",
+    val status: String = "submitted",
+    @SerialName("created_at") val createdAt: String? = null,
+)
+
+@Serializable
+data class CoordinatorActiveBatchDto(
+    val id: String,
+    val title: String,
+    val status: String,
+    val deadline: String? = null,
+)

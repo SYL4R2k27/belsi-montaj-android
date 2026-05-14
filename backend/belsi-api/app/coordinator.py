@@ -578,3 +578,23 @@ def coordinator_update_site(
     db.execute(text(f"UPDATE site_objects SET {set_clause} WHERE id = :sid"), params)
     db.commit()
     return {"success": True}
+
+
+# ============= AI Daily Summary =============
+# FIX(2026-05-11) BELSI 2.0.0: координатор-вариант AI-сводки.
+# Реализация идентична curator.ai_daily_summary (handler уже принимает
+# роль coordinator/production_chief). Здесь — алиас под путём /coordinator/...
+# чтобы клиент мог звать единообразный путь по роли.
+
+from .curator import ai_daily_summary as _curator_ai_daily_summary, AiSummaryResponse as _AiSummaryResponse
+
+
+@router.post("/ai-daily-summary", response_model=_AiSummaryResponse)
+def coordinator_ai_daily_summary(
+    date: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """AI-сводка для координатора. Делегирует логику curator-эндпоинту."""
+    # require_coordinator вызывается внутри curator-handler через проверку роли
+    return _curator_ai_daily_summary(date=date, db=db, current_user=current_user)

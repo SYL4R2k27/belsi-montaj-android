@@ -11,13 +11,16 @@ from uuid import uuid4
 from .settings import settings
 from .sms import send_otp_via_smsru, SmsSendError
 
-# ⬇️ ПОДКЛЮЧЕНИЕ К REDIS (ИСПОЛЬЗУЕМ ТВОИ ДАННЫЕ)
-# ХОРОШО БЫ ВЫНЕСТИ В ENV-ПЕРЕМЕННЫЕ, НО ПОКА ЯВНО
+# Redis connection — env-первая стратегия, fallback на settings.
+# FIX(2026-05-14) BELSI 2.0.1: убран hardcoded REDIS_PASSWORD из public snapshot.
+# Production-значения в /opt/belsi-api/.env (REDIS_HOST/PORT/USER/PASSWORD).
 
-REDIS_HOST = "192.168.56.4"
-REDIS_PORT = 6379
-REDIS_USER = "default"
-REDIS_PASSWORD = ">,u_(3RK@unUTc"  # ▷ В ПРОДЕ лучше хранить в ENV
+import os
+
+REDIS_HOST = os.getenv("REDIS_HOST") or settings.redis_host or "127.0.0.1"
+REDIS_PORT = int(os.getenv("REDIS_PORT") or settings.redis_port or 6379)
+REDIS_USER = os.getenv("REDIS_USERNAME") or settings.redis_username or "default"
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD") or settings.redis_password or ""
 
 redis_client = redis.Redis(
     host=REDIS_HOST,

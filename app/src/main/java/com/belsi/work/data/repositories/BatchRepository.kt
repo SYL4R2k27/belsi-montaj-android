@@ -1,15 +1,20 @@
 package com.belsi.work.data.repositories
 
+import com.belsi.work.data.local.database.dao.ShiftDao
 import com.belsi.work.data.models.Batch
 import com.belsi.work.data.models.BatchCreateRequest
 import com.belsi.work.data.models.BatchHistoryItem
 import com.belsi.work.data.models.BatchStatus
 import com.belsi.work.data.models.BatchStatusChangeRequest
 import com.belsi.work.data.models.IdleReason
+import com.belsi.work.data.offline.OfflineQueueRepository
+import com.belsi.work.data.offline.OfflineQueuedException
+import com.belsi.work.data.offline.PendingAction
 import com.belsi.work.data.remote.api.BatchApi
 import com.belsi.work.data.remote.api.BreakStartRequest
 import com.belsi.work.data.remote.error.parseApiError
 import kotlinx.serialization.json.Json
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -40,13 +45,25 @@ interface BatchRepository {
     suspend fun endBreak(): Result<Unit>
 
     suspend fun getIdleReasons(domain: String? = null): Result<List<IdleReason>>
+
+    // FIX(2026-05-12) BELSI 2.0.0 build15: Foreman/Coordinator endpoints
+    suspend fun getIncomingBatches(): Result<List<com.belsi.work.data.models.IncomingBatchDto>>
+    suspend fun receiveBatch(batchId: String): Result<Unit>
+    suspend fun installBatch(batchId: String): Result<Unit>
 }
 
 @Singleton
 class BatchRepositoryImpl @Inject constructor(
     private val api: BatchApi,
     private val json: Json,
+    // FIX(2026-05-11) BELSI 2.0.0 build8: offline-очередь для обеда/перекура
+    private val offlineQueue: OfflineQueueRepository,
+    private val shiftDao: ShiftDao,
 ) : BatchRepository {
+
+    /** Реальный shiftId активной смены — для трассировки в pending_actions. */
+    private suspend fun activeShiftId(): String =
+        shiftDao.getActiveShift()?.id ?: "current"
 
     override suspend fun listBatches(
         status: BatchStatus?,
@@ -107,6 +124,11 @@ class BatchRepositoryImpl @Inject constructor(
         val resp = api.startBreak(BreakStartRequest(type))
         if (resp.isSuccessful) Result.success(Unit)
         else Result.failure(Exception(parseApiError(json, resp.errorBody()?.string(), resp.code())))
+    } catch (e: IOException) {
+        // FIX(2026-05-11) BELSI 2.0.0 build8: offline-fallback для производственных перерывов.
+        // Сеть упала — действие в очередь, PendingSyncWorker отправит когда сеть появится.
+        offlineQueue.enqueue(PendingAction.StartBreak(shiftId = activeShiftId(), type = type))
+        Result.failure(OfflineQueuedException("перерыв «$type»: будет отправлен когда появится связь", e))
     } catch (e: Exception) {
         Result.failure(Exception("Ошибка старта перерыва: ${e.message}", e))
     }
@@ -115,6 +137,10 @@ class BatchRepositoryImpl @Inject constructor(
         val resp = api.endBreak()
         if (resp.isSuccessful) Result.success(Unit)
         else Result.failure(Exception(parseApiError(json, resp.errorBody()?.string(), resp.code())))
+    } catch (e: IOException) {
+        // FIX(2026-05-11) BELSI 2.0.0 build8: offline-fallback для завершения перерыва.
+        offlineQueue.enqueue(PendingAction.EndBreak(shiftId = activeShiftId()))
+        Result.failure(OfflineQueuedException("завершение перерыва: будет отправлено когда появится связь", e))
     } catch (e: Exception) {
         Result.failure(Exception("Ошибка завершения перерыва: ${e.message}", e))
     }
@@ -125,5 +151,30 @@ class BatchRepositoryImpl @Inject constructor(
         else Result.failure(Exception(parseApiError(json, resp.errorBody()?.string(), resp.code())))
     } catch (e: Exception) {
         Result.failure(Exception("Ошибка загрузки причин: ${e.message}", e))
+    }
+
+    // FIX(2026-05-12) BELSI 2.0.0 build15: Foreman/Coordinator endpoints
+    override suspend fun getIncomingBatches(): Result<List<com.belsi.work.data.models.IncomingBatchDto>> = try {
+        val resp = api.getIncomingBatches()
+        if (resp.isSuccessful) Result.success(resp.body() ?: emptyList())
+        else Result.failure(Exception(parseApiError(json, resp.errorBody()?.string(), resp.code())))
+    } catch (e: Exception) {
+        Result.failure(Exception("Ошибка входящих партий: ${e.message}", e))
+    }
+
+    override suspend fun receiveBatch(batchId: String): Result<Unit> = try {
+        val resp = api.receiveBatch(batchId)
+        if (resp.isSuccessful) Result.success(Unit)
+        else Result.failure(Exception(parseApiError(json, resp.errorBody()?.string(), resp.code())))
+    } catch (e: Exception) {
+        Result.failure(Exception("Ошибка приёмки партии: ${e.message}", e))
+    }
+
+    override suspend fun installBatch(batchId: String): Result<Unit> = try {
+        val resp = api.installBatch(batchId)
+        if (resp.isSuccessful) Result.success(Unit)
+        else Result.failure(Exception(parseApiError(json, resp.errorBody()?.string(), resp.code())))
+    } catch (e: Exception) {
+        Result.failure(Exception("Ошибка закрытия монтажа: ${e.message}", e))
     }
 }

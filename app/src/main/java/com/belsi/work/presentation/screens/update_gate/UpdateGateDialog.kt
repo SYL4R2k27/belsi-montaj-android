@@ -108,9 +108,28 @@ fun UpdateGateDialog(
                             appBuild = BuildConfig.VERSION_CODE,
                             deviceInfo = "${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE}",
                             onReady = { url ->
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(intent)
+                                // FIX(2026-05-11) BELSI 2.0.0 security: валидация URL.
+                                // Раньше любой URL с сервера открывался через ACTION_VIEW
+                                // (потенциальный вектор подмены при MITM/server-compromise).
+                                // Сейчас разрешаем только HTTPS на доверенные хосты BELSI.
+                                val parsed = runCatching { Uri.parse(url) }.getOrNull()
+                                val scheme = parsed?.scheme?.lowercase()
+                                val host = parsed?.host?.lowercase()
+                                val allowedHosts = setOf(
+                                    "api.belsi.ru",
+                                    "bucket.api.belsi.ru",
+                                    "belsi.ru",
+                                )
+                                if (parsed != null && scheme == "https" && host in allowedHosts) {
+                                    val intent = Intent(Intent.ACTION_VIEW, parsed)
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    context.startActivity(intent)
+                                } else {
+                                    android.util.Log.w(
+                                        "UpdateGate",
+                                        "Refused unsafe download URL: scheme=$scheme host=$host"
+                                    )
+                                }
                             },
                         )
                     },

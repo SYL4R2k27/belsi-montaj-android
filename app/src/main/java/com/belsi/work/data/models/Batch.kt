@@ -110,6 +110,24 @@ data class BatchStatusChangeRequest(
     val comment: String? = null,
 )
 
+/**
+ * FIX(2026-05-12) BELSI 2.0.0 build15: партия "едет к нам" для бригадира/координатора.
+ * Источник: GET /production/batches/incoming
+ */
+@Serializable
+data class IncomingBatchDto(
+    @SerialName("id") val id: String,
+    @SerialName("title") val title: String,
+    @SerialName("item_count") val itemCount: Int = 0,
+    @SerialName("status") val status: String,
+    @SerialName("target_object_id") val targetObjectId: String? = null,
+    @SerialName("source_facility_id") val sourceFacilityId: String? = null,
+    @SerialName("deadline") val deadline: String? = null,
+    @SerialName("responsible_user_id") val responsibleUserId: String? = null,
+    @SerialName("target_object_name") val targetObjectName: String? = null,
+    @SerialName("facility_name") val facilityName: String? = null,
+)
+
 @Serializable
 data class BatchHistoryItem(
     @Serializable(with = UUIDSerializer::class)

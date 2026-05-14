@@ -16,10 +16,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.belsi.work.presentation.screens.driver.DriverMockData
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.belsi.work.presentation.components.role.Severity
+import com.belsi.work.presentation.components.role.colors
+import com.belsi.work.presentation.screens.driver.LogistHomeViewModel
 
 /**
- * FIX(2026-05-03): Logistician Home (Brandbook · Logistician Board, Этап A — мок-данные).
+ * FIX(2026-05-03): Logistician Home (Brandbook · Logistician Board).
+ * FIX(2026-05-11) BELSI 2.0.0: данные с backend через LogistHomeViewModel.
  * KPI + список pending заявок + активные маршруты водителей.
  */
 @Composable
@@ -27,31 +31,78 @@ fun LogisticianHomeScreen(
     onCreateRoute: () -> Unit = {},
     onRequestClick: (String) -> Unit = {},
     onRouteClick: (String) -> Unit = {},
-    onBatchesClick: () -> Unit = {},  // FIX(2026-05-05): Pipeline партий
+    onBatchesClick: () -> Unit = {},
+    // FIX(2026-05-11) BELSI 2.0.0 build12: переход в Driver list (мониторинг всех водителей)
+    onDriverListClick: () -> Unit = {},
     topBar: @Composable () -> Unit = {},
+    viewModel: LogistHomeViewModel = hiltViewModel(),
 ) {
+    val vmState by viewModel.state.collectAsState()
+    // FIX(2026-05-12) build19 P2: убран mock-fallback. Если dashboard null — показываем "—",
+    // как принято для отсутствующих данных.
+    val pendingReqCount: String = vmState.dashboard?.pendingRequests?.toString() ?: "—"
+    val activeRouteCount: String = vmState.dashboard?.activeRoutes?.toString() ?: "—"
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         topBar()
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // FIX(2026-05-11) BELSI 2.0.0 build10: контрол смены логиста.
+            // Backend выставит shifts.domain='logistics' автоматически по роли.
+            item { com.belsi.work.presentation.components.ShiftControlBar() }
+
             // KPI
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    KpiCard("Заявок открыто", DriverMockData.pendingRequests.size.toString(), MaterialTheme.colorScheme.secondary, modifier = Modifier.weight(1f))
-                    KpiCard("Маршрутов идёт", DriverMockData.activeRoutes.size.toString(), MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
+                    KpiCard("Заявок открыто", pendingReqCount, MaterialTheme.colorScheme.secondary, modifier = Modifier.weight(1f))
+                    KpiCard("Маршрутов идёт", activeRouteCount, MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
                 }
             }
 
-            // FIX(2026-05-05): Pipeline партий — ссылка на BatchListScreen
-            // с фильтром ready_to_ship и in_route (применит сервер по роли).
+            // FIX(2026-05-11) BELSI 2.0.0 build12: переход к Driver list (мониторинг).
+            // Бриф BELSI.Driver: главный экран логиста — список всех водителей.
             item {
+                Surface(
+                    onClick = onDriverListClick,
+                    shape = RoundedCornerShape(14.dp),
+                    tonalElevation = 1.dp,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("🚛", fontSize = 24.sp)
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Водители",
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            )
+                            Text(
+                                "Мониторинг смен · live-обновление 30 сек",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                            )
+                        }
+                        Text("→", fontSize = 20.sp, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    }
+                }
+            }
+
+            // FIX(2026-05-05): Pipeline партий — ссылка на BatchListScreen.
+            // FIX(2026-05-12) build19 hotfix: оранжевые hardcoded цвета заменены
+            // на WARNING-семантику (тёплый акцент готовности к отгрузке).
+            item {
+                val (warnFg, warnBg) = Severity.WARNING.colors()
                 Surface(
                     onClick = onBatchesClick,
                     shape = RoundedCornerShape(14.dp),
                     tonalElevation = 1.dp,
-                    color = Color(0xFFFEF3C7),
+                    color = warnBg.copy(alpha = 0.4f),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(
@@ -64,37 +115,46 @@ fun LogisticianHomeScreen(
                             Text(
                                 "Партии к отгрузке",
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF92400E),
+                                color = warnFg,
                             )
                             Text(
                                 "Готовы на фабриках, ждут водителя",
                                 fontSize = 12.sp,
-                                color = Color(0xFFB45309),
+                                color = warnFg.copy(alpha = 0.8f),
                             )
                         }
-                        Text("→", fontSize = 20.sp, color = Color(0xFF92400E))
+                        Text("→", fontSize = 20.sp, color = warnFg)
                     }
                 }
             }
 
-            // Pending requests
+            // FIX(2026-05-12) BELSI 2.0.0 build15: убран DriverMockData fallback
+            // (pendingRequests / activeRoutes / fleet). Реальные данные — через
+            // соответствующие экраны: DriverList (build12), CreateRoute (build12),
+            // RouteDetail (build13). Главный экран остаётся компактным дашбордом
+            // с KPI + переходами вместо ленты из 15 мок-карточек.
             item {
-                SectionHeader("ОТКРЫТЫЕ ЗАЯВКИ", actionText = "Создать маршрут", onAction = onCreateRoute)
+                SectionHeader("ДЕЙСТВИЯ", actionText = null, onAction = {})
             }
-            items(DriverMockData.pendingRequests, key = { it.id }) { req ->
-                RequestRow(req, onClick = { onRequestClick(req.id) })
-            }
-
-            // Active routes
-            item { SectionHeader("АКТИВНЫЕ МАРШРУТЫ") }
-            items(DriverMockData.activeRoutes, key = { it.id }) { route ->
-                ActiveRouteCardCompact(route, onClick = { onRouteClick(route.id) })
-            }
-
-            // Drivers fleet
-            item { SectionHeader("ВОДИТЕЛИ") }
-            items(DriverMockData.fleet, key = { it.id }) { driver ->
-                DriverFleetRow(driver)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    onClick = onCreateRoute,
+                ) {
+                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("🗺", fontSize = 24.sp)
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Создать маршрут", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "Динамические точки + Haversine + Yandex preview",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Text("→", fontSize = 20.sp)
+                    }
+                }
             }
         }
     }
@@ -149,136 +209,7 @@ private fun SectionHeader(title: String, actionText: String? = null, onAction: (
     }
 }
 
-@Composable
-private fun RequestRow(req: DriverMockData.DeliveryRequest, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        tonalElevation = 1.dp,
-        onClick = onClick,
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
-                    .background(MaterialTheme.colorScheme.secondaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("📋", style = MaterialTheme.typography.titleMedium)
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    "${req.objectName} · ${req.needBy}",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
-                )
-                Text(
-                    "${req.cargo} · от ${req.createdBy}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            AssistChip(
-                onClick = {},
-                label = { Text("PENDING", style = MaterialTheme.typography.labelSmall) },
-                colors = AssistChipDefaults.assistChipColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    labelColor = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            )
-        }
-    }
-}
-
-@Composable
-private fun ActiveRouteCardCompact(route: DriverMockData.Route, onClick: () -> Unit) {
-    val gradient = Brush.linearGradient(
-        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.85f))
-    )
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        onClick = onClick,
-    ) {
-        Column(modifier = Modifier.background(gradient).padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AssistChip(
-                    onClick = {},
-                    label = { Text("МАРШРУТ #${route.id.takeLast(3)}", style = MaterialTheme.typography.labelSmall) },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = Color.White.copy(alpha = 0.2f),
-                        labelColor = Color.White
-                    )
-                )
-                Spacer(Modifier.weight(1f))
-                Text(route.driverName, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
-            }
-            Spacer(Modifier.height(8.dp))
-            val done = route.points.count { it.status == DriverMockData.PointStatus.DELIVERED }
-            Text(
-                "$done / ${route.points.size} точек · ${(route.progress * 100).toInt()}%",
-                color = Color.White,
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
-            )
-            LinearProgressIndicator(
-                progress = { route.progress },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).clip(RoundedCornerShape(99.dp)),
-                color = Color.White,
-                trackColor = Color.White.copy(alpha = 0.25f),
-            )
-            route.nextPoint?.let { p ->
-                Text(
-                    "Сейчас: ${p.type.emoji} ${p.address}",
-                    color = Color.White.copy(alpha = 0.85f),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun DriverFleetRow(driver: DriverMockData.DriverFleetItem) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        tonalElevation = 1.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                modifier = Modifier.size(36.dp).clip(CircleShape)
-                    .background(
-                        when (driver.status) {
-                            DriverMockData.FleetStatus.ACTIVE -> MaterialTheme.colorScheme.primaryContainer
-                            DriverMockData.FleetStatus.FREE -> MaterialTheme.colorScheme.tertiaryContainer
-                            DriverMockData.FleetStatus.OFFLINE -> MaterialTheme.colorScheme.surfaceVariant
-                        }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(driver.initials, style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(driver.name, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
-                driver.current?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            val statusText = when (driver.status) {
-                DriverMockData.FleetStatus.ACTIVE -> "ACTIVE"
-                DriverMockData.FleetStatus.FREE -> "FREE"
-                DriverMockData.FleetStatus.OFFLINE -> "OFFLINE"
-            }
-            AssistChip(
-                onClick = {},
-                label = { Text(statusText, style = MaterialTheme.typography.labelSmall) }
-            )
-        }
-    }
-}
+// FIX(2026-05-12) build19 hotfix: удалены 3 dead composables (RequestRow, ActiveRouteCardCompact,
+// DriverFleetRow) — они использовали DriverMockData типы, но не вызывались. Реальные карточки
+// заявок/маршрутов/водителей живут в LogistRequestDetailScreen / LogistRouteDetailScreen /
+// LogistDriverListScreen.

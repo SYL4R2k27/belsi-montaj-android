@@ -9,6 +9,8 @@ import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.belsi.work.data.local.database.dao.PhotoDao
+import com.belsi.work.data.offline.OfflineQueueRepository
+import com.belsi.work.data.workers.PhotoReminderWorker
 import com.belsi.work.data.workers.PhotoUploadWorker
 import com.belsi.work.data.workers.SyncWorker
 import com.belsi.work.utils.NetworkEvent
@@ -27,6 +29,7 @@ class BelsiWorkApp : Application(), ImageLoaderFactory, Configuration.Provider {
     @Inject lateinit var workerFactory: HiltWorkerFactory
     @Inject lateinit var networkMonitor: NetworkMonitor
     @Inject lateinit var photoDao: PhotoDao
+    @Inject lateinit var offlineQueue: OfflineQueueRepository
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -45,6 +48,26 @@ class BelsiWorkApp : Application(), ImageLoaderFactory, Configuration.Provider {
         // Запланировать периодические workers
         PhotoUploadWorker.schedulePeriodic(this)
         SyncWorker.schedulePeriodicSync(this)
+        // FIX(2026-05-11) BELSI 2.0.0 build9: PhotoReminderWorker раньше определялся
+        // но НИГДЕ не вызывался schedule() — напоминания о часовом фото не работали.
+        // Теперь подключаем в onCreate (одно из 12 P0-fix-ов из аудита).
+        PhotoReminderWorker.schedule(this)
+
+        // FIX(2026-05-11) BELSI 2.0.0 build8: запустить PendingSyncWorker на старте app —
+        // если pending_actions остались с прошлой сессии (kill / reboot), они начнут
+        // обрабатываться как только появится сеть (constraint NetworkType.CONNECTED).
+        // Без этого pending после рестарта замораживались до следующего enqueue.
+        offlineQueue.scheduleWorker()
+        Log.d("BelsiWorkApp", "PendingSyncWorker scheduled on app start")
+
+        // Гигиена БД: чистим failed-actions старше 7 дней
+        appScope.launch {
+            try {
+                offlineQueue.cleanupOldFailed()
+            } catch (e: Exception) {
+                Log.w("BelsiWorkApp", "cleanupOldFailed: ${e.message}")
+            }
+        }
 
         // При появлении сети — триггерить загрузку и синхронизацию
         appScope.launch {
@@ -54,6 +77,8 @@ class BelsiWorkApp : Application(), ImageLoaderFactory, Configuration.Provider {
                         Log.d("BelsiWorkApp", "Network connected, triggering sync")
                         PhotoUploadWorker.enqueueUpload(this@BelsiWorkApp)
                         SyncWorker.enqueueNow(this@BelsiWorkApp)
+                        // FIX(2026-05-11) build8: pending pause/idle/break — тоже синкаем
+                        offlineQueue.scheduleWorker()
                     }
                     is NetworkEvent.Disconnected -> {
                         Log.d("BelsiWorkApp", "Network disconnected")

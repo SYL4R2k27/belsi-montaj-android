@@ -144,6 +144,9 @@ fun PhotoGalleryScreen(
                     }
                 // FIX(2026-05-11) BELSI 2.0.0: max-width 900dp на expanded — галерея
                 // фото по сменам не должна растягиваться на всю ширину Tab Ultra.
+                // FIX(2026-05-11) build5: photoGridColumns() — composable, считаем тут
+                // ВНЕ LazyColumn (Lazy lambda не @Composable scope).
+                val photoCols = com.belsi.work.presentation.utils.photoGridColumns()
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.TopCenter,
@@ -172,11 +175,26 @@ fun PhotoGalleryScreen(
                                 HourLabel(hour)
                             }
 
-                            items(
-                                items = photos,
-                                key = { photo -> "photo_${photo.id}" }
-                            ) { photo ->
-                                PhotoCard(photo)
+                            // FIX(2026-05-11) BELSI 2.0.0 build5: адаптивный photo-grid.
+                            // Брендбук foldable-tablet "PhotoGalleryScreen":
+                            // compact=3 / medium=4 / expanded=5 / xlarge=6 колонок.
+                            // photoCols вычислен выше LazyColumn (composable-scope).
+                            photos.chunked(photoCols).forEachIndexed { rowIdx, rowPhotos ->
+                                item(key = "row_${shiftWithPhotos.shiftId}_${hour}_$rowIdx") {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        rowPhotos.forEach { photo ->
+                                            Box(modifier = Modifier.weight(1f)) {
+                                                PhotoCard(photo)
+                                            }
+                                        }
+                                        repeat(photoCols - rowPhotos.size) {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
+                                    }
+                                }
                             }
                         }
 

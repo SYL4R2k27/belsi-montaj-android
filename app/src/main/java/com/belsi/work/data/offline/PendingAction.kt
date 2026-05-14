@@ -87,4 +87,90 @@ sealed class PendingAction {
         val newStatus: String,
         override val createdAt: Long = System.currentTimeMillis(),
     ) : PendingAction()
+
+    /**
+     * FIX(2026-05-11) BELSI 2.0.0 build8: производственные перерывы (обед, перекур).
+     * POST /shift/break/start { type: "smoke" | "lunch" }
+     */
+    @Serializable
+    data class StartBreak(
+        val shiftId: String,
+        val type: String,   // "smoke" | "lunch"
+        override val createdAt: Long = System.currentTimeMillis(),
+    ) : PendingAction()
+
+    /**
+     * FIX(2026-05-11) BELSI 2.0.0 build8: завершение производственного перерыва.
+     * POST /shift/break/end
+     */
+    @Serializable
+    data class EndBreak(
+        val shiftId: String,
+        override val createdAt: Long = System.currentTimeMillis(),
+    ) : PendingAction()
+
+    // ============================================================
+    // FIX(2026-05-12) build18 P2: новые типы actions для монтажа.
+    // ============================================================
+
+    /** POST /coordinator/photos/{id}/approve  или  /curator/photos/{id}/approve  */
+    @Serializable
+    data class ApprovePhoto(
+        val photoId: String,
+        val role: String,  // "coordinator" / "curator" / "foreman"
+        override val createdAt: Long = System.currentTimeMillis(),
+    ) : PendingAction()
+
+    /** POST /coordinator/photos/{id}/reject  или  /curator/photos/{id}/reject  */
+    @Serializable
+    data class RejectPhoto(
+        val photoId: String,
+        val role: String,
+        val reason: String? = null,
+        override val createdAt: Long = System.currentTimeMillis(),
+    ) : PendingAction()
+
+    /** POST /foreman/tasks  или  /coordinator/tasks  или  /curator/tasks  */
+    @Serializable
+    data class CreateTask(
+        val title: String,
+        val description: String? = null,
+        val assignedTo: String,
+        val priority: String = "normal",
+        val role: String,  // bridge: какой router использовать
+        val dueAt: String? = null,
+        override val createdAt: Long = System.currentTimeMillis(),
+    ) : PendingAction()
+
+    /** POST /production/batches/{id}/receive  */
+    @Serializable
+    data class BatchReceive(
+        val batchId: String,
+        override val createdAt: Long = System.currentTimeMillis(),
+    ) : PendingAction()
+
+    /** POST /production/batches/{id}/install  */
+    @Serializable
+    data class BatchInstall(
+        val batchId: String,
+        override val createdAt: Long = System.currentTimeMillis(),
+    ) : PendingAction()
+
+    /** POST /foreman/tools/issue  */
+    @Serializable
+    data class ToolIssue(
+        val toolId: String,
+        val installerId: String,
+        val comment: String? = null,
+        override val createdAt: Long = System.currentTimeMillis(),
+    ) : PendingAction()
+
+    /** POST /foreman/tools/return  */
+    @Serializable
+    data class ToolReturn(
+        val transactionId: String,
+        val condition: String,   // "good" / "damaged" / "broken"
+        val comment: String? = null,
+        override val createdAt: Long = System.currentTimeMillis(),
+    ) : PendingAction()
 }

@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.belsi.work.presentation.screens.driver.DriverMockData.PointStatus
 import com.belsi.work.presentation.screens.driver.DriverMockData.RoutePoint
 
@@ -34,9 +35,14 @@ fun DriverHomeScreen(
     onPointClick: (String) -> Unit = {},
     onMenuClick: () -> Unit = {},
     topBar: @Composable () -> Unit = {},
+    viewModel: DriverHomeViewModel = hiltViewModel(),
 ) {
-    val route = DriverMockData.activeRoute
-    val next = route.nextPoint
+    // FIX(2026-05-12) build19 hotfix: убран mock-fallback на DriverMockData.activeRoute.
+    // Если у водителя нет назначенных маршрутов — показываем честный empty state,
+    // а не фейковый маршрут «Иванов Сергей · rt-234».
+    val vmState by viewModel.state.collectAsState()
+    val route = vmState.activeRoutes.firstOrNull()?.toMockRoute()
+    val next = route?.nextPoint
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         topBar()
@@ -45,28 +51,71 @@ fun DriverHomeScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Активная карточка маршрута
-            item { ActiveRouteCard(route, onMapClick = onMenuClick) }
-
-            // Заголовок секции
+            // FIX(2026-05-11) BELSI 2.0.0 build10: контрол смены водителя
+            // (старт/пауза/простой/финиш). Backend сам выставит domain='logistics'.
+            // Причины простоя — из shift_idle_reason_catalog domain=logistics
+            // (5 причин: traffic, vehicle_breakdown, wait_loading и т.д.)
+            //
+            // FIX(2026-05-11) BELSI 2.0.0 build12: requireShiftPhoto=true — у водителя
+            // старт/финиш смены требует фото-подтверждения (брендбук BELSI.Driver).
             item {
-                Text(
-                    "ТОЧКИ МАРШРУТА",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.6.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 4.dp)
+                com.belsi.work.presentation.components.ShiftControlBar(
+                    requireShiftPhoto = true,
                 )
             }
 
-            items(route.points, key = { it.id }) { point ->
-                RoutePointRow(point, isNext = point.id == next?.id, onClick = { onPointClick(point.id) })
-            }
+            if (route == null) {
+                // FIX(2026-05-12) build19 hotfix: честный empty state когда нет маршрута.
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        tonalElevation = 1.dp,
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text("🗺", fontSize = 36.sp)
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Маршрутов нет",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "Логист пока не назначил вам маршрут на сегодня",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Активная карточка маршрута
+                item { ActiveRouteCard(route, onMapClick = onMenuClick) }
 
-            // Сегодня
-            item { TodayStatsCard() }
+                // Заголовок секции
+                item {
+                    Text(
+                        "ТОЧКИ МАРШРУТА",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 0.6.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                }
+
+                items(route.points, key = { it.id }) { point ->
+                    RoutePointRow(point, isNext = point.id == next?.id, onClick = { onPointClick(point.id) })
+                }
+
+                // FIX(2026-05-12) build19 hotfix: реальные счётчики из текущего маршрута
+                // вместо hardcoded "23 км · 1:14 · 1/4".
+                item { TodayStatsCard(route) }
+            }
         }
     }
 }
@@ -225,7 +274,12 @@ private fun RoutePointRow(point: RoutePoint, isNext: Boolean, onClick: () -> Uni
 }
 
 @Composable
-private fun TodayStatsCard() {
+private fun TodayStatsCard(route: DriverMockData.Route) {
+    // FIX(2026-05-12) build19 hotfix: считаем реальные значения из маршрута.
+    // Пробег и общее время в пути backend пока не отдаёт через RouteOutDto,
+    // поэтому для них показываем "—" вместо фейка "23 км/1:14".
+    val total = route.points.size
+    val done = route.points.count { it.status == DriverMockData.PointStatus.DELIVERED }
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -242,9 +296,9 @@ private fun TodayStatsCard() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatBlock("23 км", "Пробег")
-                StatBlock("1:14", "В пути")
-                StatBlock("1/4", "Точек")
+                StatBlock("—", "Пробег")
+                StatBlock("—", "В пути")
+                StatBlock("$done/$total", "Точек")
             }
         }
     }

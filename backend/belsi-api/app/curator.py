@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Body, File, Form, UploadFile
 from pydantic import BaseModel, ConfigDict, Field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from uuid import UUID
 from sqlalchemy.orm import Session

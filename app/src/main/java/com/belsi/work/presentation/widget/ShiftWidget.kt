@@ -92,7 +92,7 @@ private fun ShiftWidgetContent(
             modifier = GlanceModifier.fillMaxWidth()
         ) {
             Text(
-                text = "Belsi.Монтаж",
+                text = "BELSI.Команда",
                 style = TextStyle(
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,

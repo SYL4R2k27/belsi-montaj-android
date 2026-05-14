@@ -39,10 +39,10 @@ class CuratorViewModel @Inject constructor(
     private val _aiSummaryLoading = MutableStateFlow(false)
     val aiSummaryLoading: StateFlow<Boolean> = _aiSummaryLoading.asStateFlow()
 
-    fun loadAiSummary() {
+    fun loadAiSummary(forceRefresh: Boolean = false) {
         viewModelScope.launch {
             _aiSummaryLoading.value = true
-            aiRepository.getDailySummary().onSuccess { summary ->
+            aiRepository.getDailySummary(forceRefresh = forceRefresh).onSuccess { summary ->
                 _aiSummary.value = summary
             }.onFailure {
                 // Тихо: если AI упал — оставляем эвристики на UI
@@ -96,6 +96,17 @@ class CuratorViewModel @Inject constructor(
     init {
         initSiteStore()
         loadAllData()
+        // FIX(2026-05-11) BELSI 2.0.0 build10: live-обновление дашборда куратора.
+        // Каждые 30 сек обновляем дашборд + статусы пауз/простоев + кол-во активных смен.
+        // Полезно потому что куратор контролирует все 11 ролей и без обновления
+        // видел snapshot. WebSocket overkill, polling даёт fresh data <30s latency.
+        viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(30_000L)
+                loadAllData()
+                loadAiSummary()  // AI-сводка тоже refresh-ится (XeroCode кэширует 1 час)
+            }
+        }
     }
 
     private fun initSiteStore() {
@@ -168,6 +179,10 @@ class CuratorViewModel @Inject constructor(
         viewModelScope.launch {
             _isRefreshing.value = true
             _error.value = null
+
+            // FIX(2026-05-12) build19 hotfix: при ручном pull-to-refresh / клике «↻»
+            // сбрасываем серверный кэш AI-сводки, иначе час будет висеть старый ответ.
+            loadAiSummary(forceRefresh = true)
 
             kotlinx.coroutines.coroutineScope {
                 launch {

@@ -26,8 +26,12 @@ interface ProductionApi {
     @POST("production/brigades")
     suspend fun createBrigade(@Body request: BrigadeCreateRequest): Response<Brigade>
 
+    /**
+     * FIX(2026-05-14) BELSI 2.0.1: senior_worker может держать до 15 бригад.
+     * Раньше endpoint возвращал одну (Brigade?), теперь — List<Brigade>.
+     */
     @GET("production/brigades/mine")
-    suspend fun getMyBrigade(): Response<Brigade?>
+    suspend fun getMyBrigades(): Response<List<Brigade>>
 
     @GET("production/brigades/{brigadeId}/members")
     suspend fun getBrigadeMembers(@Path("brigadeId") brigadeId: String): Response<List<BrigadeMember>>
@@ -43,6 +47,10 @@ interface ProductionApi {
         @Path("brigadeId") brigadeId: String,
         @Path("userId") userId: String,
     ): Response<Unit>
+
+    // FIX(2026-05-12) BELSI 2.0.0 build14: реальный tools catalog из БД
+    @GET("production/engineer/tools-catalog")
+    suspend fun getToolsCatalog(): Response<List<ToolCatalogItem>>
 
     // ─────────────────────────────────────────────────────────────
     // Фабрика
@@ -100,6 +108,7 @@ interface ProductionApi {
         @Query("mine") mine: Boolean = false,
         @Query("status") status: String? = null,
         @Query("type") type: String? = null,
+        @Query("facility_id") facilityId: String? = null,   // FIX(2026-05-14) BELSI 2.0.1
     ): Response<List<EngineerTask>>
 
     @POST("production/engineer/tasks")
@@ -110,4 +119,17 @@ interface ProductionApi {
         @Path("taskId") taskId: String,
         @Body request: EngineerTaskStatusRequest,
     ): Response<EngineerTask>
+
+    /** FIX(2026-05-14) BELSI 2.0.1: передача задачи другому инженеру. */
+    @PATCH("production/engineer/tasks/{taskId}/reassign")
+    suspend fun reassignEngineerTask(
+        @Path("taskId") taskId: String,
+        @Body request: EngineerTaskReassignRequest,
+    ): Response<EngineerTask>
+
+    /** FIX(2026-05-14) BELSI 2.0.1: список инженеров для выбора при reassign. */
+    @GET("production/engineer/engineers")
+    suspend fun listEngineers(
+        @Query("facility_id") facilityId: String? = null,
+    ): Response<List<EngineerPickItem>>
 }

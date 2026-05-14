@@ -1,6 +1,8 @@
 package com.belsi.work.presentation.screens.coordinator
 
 import android.net.Uri
+import com.belsi.work.presentation.components.role.Severity
+import com.belsi.work.presentation.components.role.colors
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -87,7 +89,7 @@ fun CoordinatorMainScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Belsi", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                        Text("BELSI.Команда", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, maxLines = 1)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -108,16 +110,37 @@ fun CoordinatorMainScreen(
                     }
                     // FIX(2026-05-05): История объекта — timeline всех событий
                     // (производство → логистика → монтаж). Точка входа для координатора.
-                    IconButton(onClick = {
-                        navController.navigate(AppRoute.ObjectHistory.createRoute("current"))
-                    }) {
-                        Icon(Icons.Default.History, "История объекта")
+                    //
+                    // FIX(2026-05-12) build17 P0: было ObjectHistory.createRoute("current")
+                    // — литерал "current" падал на backend 422. Теперь — реальный UUID объекта
+                    // координатора (site?.id). Если объекта нет — кнопка не отображается.
+                    val siteId = site?.id
+                    if (siteId != null) {
+                        IconButton(onClick = {
+                            navController.navigate(AppRoute.ObjectHistory.createRoute(siteId))
+                        }) {
+                            Icon(Icons.Default.History, "История объекта")
+                        }
                     }
                     // FIX(2026-05-05): Партии на этом объекте
                     IconButton(onClick = {
                         navController.navigate(AppRoute.BatchList.route)
                     }) {
                         Icon(Icons.Default.Inventory, "Партии")
+                    }
+                    // FIX(2026-05-12) build17 P0: реальная кнопка создания заявки на доставку.
+                    if (siteId != null) {
+                        IconButton(onClick = {
+                            navController.navigate(AppRoute.CoordCreateRequest.createRoute())
+                        }) {
+                            Icon(Icons.Default.LocalShipping, "Заявка на доставку")
+                        }
+                    }
+                    // FIX(2026-05-12) build19 Этап3+: Tool Transfer Hub для координатора
+                    IconButton(onClick = {
+                        navController.navigate(AppRoute.ToolTransferHub.createRoute("incoming"))
+                    }) {
+                        Icon(Icons.Default.Inventory2, "Передачи инструмента")
                     }
                     IconButton(onClick = { navController.navigate(AppRoute.Settings.route) }) {
                         Icon(Icons.Default.Settings, "Настройки")
@@ -150,7 +173,7 @@ fun CoordinatorMainScreen(
                         onRefresh = { viewModel.refreshPhotos() },
                         navController = navController)
                     2 -> CoordinatorTasksTab(tasks, myTasks, team, viewModel)
-                    3 -> TeamTab(team)
+                    3 -> TeamTab(team, navController)
                     4 -> ReportsTab(reports, viewModel)
                     5 -> com.belsi.work.presentation.screens.messenger.ChatHubScreen(
                         navController = navController
@@ -355,6 +378,13 @@ private fun SiteTab(
                 onPauseShift = { shiftViewModel.pauseShift() },
                 onResumeShift = { shiftViewModel.resumeShift() },
                 onOpenShift = { navController.navigate(AppRoute.Camera.route) }
+            )
+        }
+
+        // FIX(2026-05-12) BELSI 2.0.0 build15: «К нам едут» — партии в пути / доставлены
+        item {
+            com.belsi.work.presentation.components.IncomingBatchesWidget(
+                onBatchClick = { bid -> navController.navigate(AppRoute.BatchDetail.createRoute(bid)) },
             )
         }
 
@@ -588,7 +618,7 @@ private fun SiteTab(
                 MiniStatCard("Бригадиры", "${dashboard.totalForemen}", Icons.Default.SupervisorAccount,
                     BelsiPrimary, Modifier.weight(1f))
                 MiniStatCard("Монтажники", "${dashboard.totalInstallers}", Icons.Default.Engineering,
-                    Color(0xFF795548), Modifier.weight(1f))
+                    com.belsi.work.presentation.theme.Slate600, Modifier.weight(1f))
             }
         }
 
@@ -809,10 +839,12 @@ private fun PhotoReviewCard(
         )
     }
 
+    // FIX(2026-05-12) build19 hotfix: warning-фон (тёплый) для фото на модерации.
+    val (_, warnBg) = Severity.WARNING.colors()
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0))
+        colors = CardDefaults.cardColors(containerColor = warnBg.copy(alpha = 0.4f))
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             // Фото
@@ -1037,7 +1069,7 @@ private fun CoordinatorTasksTab(
         if (activeMyTasks.isNotEmpty()) {
             item {
                 Text("Мои задачи (${activeMyTasks.size})",
-                    fontWeight = FontWeight.SemiBold, color = Color(0xFF00897B))
+                    fontWeight = FontWeight.SemiBold, color = com.belsi.work.presentation.theme.Emerald600)
             }
             items(activeMyTasks, key = { "my_${it.id}" }) { task ->
                 MyTaskCard(task)
@@ -1093,7 +1125,7 @@ private fun MyTaskCard(task: Task) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF00897B).copy(alpha = 0.05f))
+        colors = CardDefaults.cardColors(containerColor = com.belsi.work.presentation.theme.Emerald600.copy(alpha = 0.05f))
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
@@ -1107,7 +1139,7 @@ private fun MyTaskCard(task: Task) {
                 Text(task.title, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Мне", style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF00897B), fontWeight = FontWeight.Medium)
+                        color = com.belsi.work.presentation.theme.Emerald600, fontWeight = FontWeight.Medium)
                     Text(task.status, style = MaterialTheme.typography.bodySmall, color = statusColor)
                 }
             }
@@ -1395,9 +1427,13 @@ private fun CreateTaskDialog(
 // =====================================================================
 
 @Composable
-private fun TeamTab(team: List<CoordinatorTeamMemberDto>) {
+private fun TeamTab(team: List<CoordinatorTeamMemberDto>, navController: androidx.navigation.NavController? = null) {
     val foremen = team.filter { it.isForeman }
     val installers = team.filter { it.isInstaller }
+
+    val onMemberClick: (CoordinatorTeamMemberDto) -> Unit = { m ->
+        navController?.navigate(AppRoute.CoordTeamMemberDetail.createRoute(m.id))
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -1411,14 +1447,14 @@ private fun TeamTab(team: List<CoordinatorTeamMemberDto>) {
         if (foremen.isNotEmpty()) {
             item { Text("Бригадиры (${foremen.size})", fontWeight = FontWeight.SemiBold) }
             items(foremen, key = { it.id }) { member ->
-                TeamMemberCard(member)
+                TeamMemberCard(member, onClick = if (navController != null) { { onMemberClick(member) } } else null)
             }
         }
 
         if (installers.isNotEmpty()) {
             item { Text("Монтажники (${installers.size})", fontWeight = FontWeight.SemiBold) }
             items(installers, key = { it.id }) { member ->
-                TeamMemberCard(member)
+                TeamMemberCard(member, onClick = if (navController != null) { { onMemberClick(member) } } else null)
             }
         }
 
@@ -1433,7 +1469,7 @@ private fun TeamTab(team: List<CoordinatorTeamMemberDto>) {
 }
 
 @Composable
-private fun TeamMemberCard(member: CoordinatorTeamMemberDto) {
+private fun TeamMemberCard(member: CoordinatorTeamMemberDto, onClick: (() -> Unit)? = null) {
     val statusColor = when (member.currentShiftStatus) {
         "active" -> com.belsi.work.presentation.theme.Emerald500
         "paused" -> com.belsi.work.presentation.theme.Amber500
@@ -1442,7 +1478,9 @@ private fun TeamMemberCard(member: CoordinatorTeamMemberDto) {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(

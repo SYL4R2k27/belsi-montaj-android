@@ -1,0 +1,819 @@
+#app/main.py
+
+from __future__ import annotations
+
+import re
+import secrets
+import random
+import string
+from .yandex_auth import router as yandex_auth_router
+from .tools import router as tools_router
+from .user_names import router as user_router
+from .sber_auth import router as sber_auth_router
+from .tools import router as tools_router
+from .user_names import router as user_router
+from datetime import datetime, timezone, timedelta
+from typing import Optional, List
+from . import support
+
+from fastapi import (
+    FastAPI,
+    Depends,
+    HTTPException,
+    UploadFile,
+    File,
+    Form,
+    status,
+    Query,
+)
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from pydantic import BaseModel, ConfigDict  
+from uuid import UUID
+from .shifts_photos import router as shifts_photos_router
+from .tools import router as tools_router
+from .user_names import router as user_router
+from .photos_feed import router as photos_feed_router
+from .photo_review import router as photo_review_router
+from .tools import router as tools_router
+from .user_names import router as user_router
+from .foreman_team import router as foreman_team_router
+from .tools import router as tools_router
+from .user_names import router as user_router
+from .profiles import router as profile_router
+from .tools import router as tools_router
+from .user_names import router as user_router
+from .tasks import router as tasks_router
+from .tools import router as tools_router
+from .user_names import router as user_router
+
+from sqlalchemy.orm import Session
+from sqlalchemy import or_
+
+from .db import get_db
+from .models import User, Shift, ShiftPhoto,ForemanInvite
+from .otp_service import otp_service  # сервис работы с OTP в Redis
+from .sms import send_otp_via_smsru, SmsSendError
+from .storage import save_shift_photo
+from .curator import router as curator_router
+from .tools import router as tools_router
+from .user_names import router as user_router
+from .otp_service import get_current_user
+
+app = FastAPI(title="BELSI.Work API")
+from .support_chat import router as support_chat_router
+from .tools import router as tools_router
+from .user_names import router as user_router
+from .support import router as support_router
+from .tools import router as tools_router
+from .user_names import router as user_router
+
+app.include_router(profile_router)
+app.include_router(tools_router)
+app.include_router(user_router)
+app.include_router(tasks_router)
+app.include_router(tools_router)
+app.include_router(user_router)
+app.include_router(foreman_team_router)
+app.include_router(tools_router)
+app.include_router(user_router)
+app.include_router(yandex_auth_router)
+app.include_router(tools_router)
+app.include_router(user_router)
+app.include_router(sber_auth_router)
+app.include_router(tools_router)
+app.include_router(user_router)
+app.include_router(support_chat_router)
+app.include_router(tools_router)
+app.include_router(user_router)
+app.include_router(support_router)
+app.include_router(tools_router)
+app.include_router(user_router)
+app.include_router(shifts_photos_router)
+app.include_router(tools_router)
+app.include_router(user_router)
+app.include_router(photos_feed_router)
+app.include_router(photo_review_router)
+app.include_router(tools_router)
+app.include_router(user_router)
+
+security = HTTPBearer(auto_error=False)
+
+
+# ==================== УТИЛИТЫ ====================
+
+
+def normalize_phone(raw: str) -> str:
+    """
+    Приводим телефон к единому формату: +7XXXXXXXXXX
+    (сейчас работаем только с РФ; при необходимости расширим).
+    """
+    digits = re.sub(r"\D", "", raw or "")
+    if not digits:
+        return ""
+
+    # 89XXXXXXXXX -> 79XXXXXXXXX
+    if digits.startswith("8") and len(digits) == 11:
+        digits = "7" + digits[1:]
+
+    if not digits.startswith("7") or len(digits) != 11:
+        # сюда можно добавить обработку других стран
+        return ""
+
+    return "+" + digits
+
+
+def make_demo_token(phone: str) -> str:
+    return f"demo-token-{phone}"
+
+
+def parse_demo_token(token: str) -> str:
+    prefix = "demo-token-"
+    if not token.startswith(prefix):
+        raise ValueError("Invalid demo token")
+    return token[len(prefix) :]
+
+
+def get_or_create_user(db: Session, phone: str, default_role: str = "installer") -> User:
+    user = db.query(User).filter(User.phone == phone).one_or_none()
+    if user is None:
+        user = User(phone=phone, role=default_role)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    return user
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
+) -> User:
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
+    token = credentials.credentials.strip()
+    try:
+        phone_raw = parse_demo_token(token)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+
+    phone = normalize_phone(phone_raw)
+    if not phone:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid phone in token",
+        )
+
+    return get_or_create_user(db, phone)
+
+
+# ==================== МОДЕЛИ AUTH ====================
+
+
+class PhoneRequest(BaseModel):
+    phone: str
+
+
+class OTPVerifyRequest(BaseModel):
+    phone: str
+    code: str
+
+
+class VerifyResponse(BaseModel):
+    status: str
+    token: str
+    phone: str
+
+
+# ==================== AUTH ====================
+
+
+@app.post("/auth/phone")
+async def auth_phone(payload: PhoneRequest):
+    """
+    1) Нормализуем номер
+    2) Генерируем OTP-код
+    3) Сохраняем в Redis
+    4) Отправляем через sms.ru (или логируем в DEV)
+    """
+    phone = normalize_phone(payload.phone)
+    if not phone:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Некорректный номер телефона",
+        )
+
+    # генерим и сохраняем в Redis
+    code = otp_service.generate_code()
+    otp_service.save_code(phone, code, ttl_seconds=300)
+
+    try:
+        await send_otp_via_smsru(phone, code)
+    except SmsSendError as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Ошибка отправки SMS: {e}",
+        )
+
+    return {"status": "ok", "message": "verification_code_sent"}
+
+
+@app.post("/auth/verify", response_model=VerifyResponse)
+def auth_verify(payload: OTPVerifyRequest, db: Session = Depends(get_db)):
+    """
+    Проверяем код и, если всё ок, выдаём demo-токен.
+    """
+    phone = normalize_phone(payload.phone)
+    if not phone:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Некорректный номер телефона",
+        )
+
+    ok = otp_service.verify_code(phone, payload.code)
+    if not ok:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Неверный или истёкший код",
+        )
+
+    token = make_demo_token(phone)
+
+    # гарантируем, что пользователь есть в БД
+    get_or_create_user(db, phone)
+
+    return VerifyResponse(status="ok", token=token, phone=phone)
+
+
+# ==================== SHIFTS ====================
+
+
+class ShiftStartRequest(BaseModel):
+    # на будущее можно добавить lat/lng, объект и т.п.
+    pass
+
+
+class ShiftStartResponse(BaseModel):
+    id: UUID
+    start_at: datetime
+    status: str
+
+
+class ShiftFinishRequest(BaseModel):
+    shift_id: UUID
+
+
+class ShiftFinishResponse(BaseModel):
+    id: UUID
+    start_at: datetime
+    finish_at: datetime
+    duration_hours: float
+    status: str
+
+
+class ShiftItem(BaseModel):
+    id: UUID
+    start_at: datetime
+    finish_at: Optional[datetime]
+    duration_hours: Optional[float]
+    status: str
+
+
+class ShiftsListResponse(BaseModel):
+    items: List[ShiftItem]
+
+
+@app.post("/shifts/start", response_model=ShiftStartResponse)
+def start_shift(
+    payload: ShiftStartRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Старт смены. Разрешаем только одну активную смену на пользователя.
+    """
+    active_shift = (
+        db.query(Shift)
+        .filter(Shift.user_id == current_user.id, Shift.status == "active")
+        .one_or_none()
+    )
+    if active_shift is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Active shift already exists",
+        )
+
+    now = datetime.now(timezone.utc)
+
+    shift = Shift(
+        user_id=current_user.id,
+        start_at=now,
+        status="active",
+    )
+    db.add(shift)
+    db.commit()
+    db.refresh(shift)
+
+    return ShiftStartResponse(
+        id=shift.id,
+        start_at=shift.start_at,
+        status=shift.status,
+    )
+
+
+@app.post("/shifts/finish", response_model=ShiftFinishResponse)
+def finish_shift(
+    payload: ShiftFinishRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Завершение смены + расчёт длительности в часах.
+    """
+    shift = (
+        db.query(Shift)
+        .filter(Shift.id == payload.shift_id, Shift.user_id == current_user.id)
+        .one_or_none()
+    )
+    if shift is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Смена не найдена или принадлежит другому пользователю",
+        )
+
+    if shift.status != "active":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Нельзя завершить смену со статусом {shift.status}",
+        )
+
+    now = datetime.now(timezone.utc)
+
+    delta = now - shift.start_at
+    duration_hours = round(delta.total_seconds() / 3600.0, 2)
+
+    shift.finish_at = now
+    shift.duration_hours = duration_hours
+    shift.status = "finished"
+
+    db.add(shift)
+    db.commit()
+    db.refresh(shift)
+
+    return ShiftFinishResponse(
+        id=shift.id,
+        start_at=shift.start_at,
+        finish_at=shift.finish_at,
+        duration_hours=float(shift.duration_hours or 0.0),
+        status=shift.status,
+    )
+
+
+@app.get("/shifts", response_model=ShiftsListResponse)
+def list_shifts(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Список смен текущего пользователя (для истории / отчётов).
+    """
+    shifts = (
+        db.query(Shift)
+        .filter(Shift.user_id == current_user.id)
+        .order_by(Shift.start_at.desc())
+        .all()
+    )
+
+    items: List[ShiftItem] = []
+    for s in shifts:
+        items.append(
+            ShiftItem(
+                id=s.id,
+                start_at=s.start_at,
+                finish_at=s.finish_at,
+                duration_hours=float(s.duration_hours)
+                if s.duration_hours is not None
+                else None,
+                status=s.status,
+            )
+        )
+
+    return ShiftsListResponse(items=items)
+
+# ===================== FOREMAN INVITES (БРИГАДИРСКИЕ ИНВАЙТЫ) =====================
+
+# ============================
+# Модели для инвайтов бригадира
+# ============================
+class ForemanInviteOut(BaseModel):
+    id: UUID
+    code: str
+    foreman_phone: str
+    installer_phone: Optional[str] = None
+    status: str
+    created_at: datetime
+    expires_at: Optional[datetime] = None
+    used_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True  # важно для .from_orm(...)
+        # если очень хочешь старую совместимость:
+        # orm_mode = True
+
+
+class ForemanInviteListOut(BaseModel):
+    items: List[ForemanInviteOut]
+class ForemanInviteRedeemIn(BaseModel):
+    code: str
+
+
+class ForemanInviteCancelIn(BaseModel):
+    code: str
+
+
+# ============================
+# Хелперы для инвайтов бригадира
+# ============================
+
+def _generate_invite_code(length: int = 6) -> str:
+    """
+    Генерируем код из A-Z и 0-9, без похожих символов (O, I и т.п.).
+    """
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def _get_now_utc() -> datetime:
+    """
+    Единая функция получения текущего времени в UTC.
+    """
+    return datetime.now(timezone.utc)
+
+
+def _get_foreman_active_invites_count(db: Session, foreman_phone: str) -> int:
+    """
+    Считаем количество активных инвайтов (new/accepted, не истёкшие).
+    """
+    now = _get_now_utc()
+
+    return (
+        db.query(ForemanInvite)
+        .filter(
+            ForemanInvite.foreman_phone == foreman_phone,
+            ForemanInvite.status.in_(["new", "accepted"]),
+            or_(
+                ForemanInvite.expires_at.is_(None),
+                ForemanInvite.expires_at > now,
+            ),
+        )
+        .count()
+    )
+
+
+def _find_invite_by_code_for_redeem(db: Session, code: str) -> Optional[ForemanInvite]:
+    """
+    Ищем инвайт по коду (для redeem). Здесь не привязываемся к номеру бригадира,
+    потому что код может ввести монтажник.
+    """
+    return db.query(ForemanInvite).filter(ForemanInvite.code == code).first()
+
+
+def _find_invite_by_code_for_foreman(db: Session, code: str, foreman_phone: str) -> Optional[ForemanInvite]:
+    """
+    Ищем инвайт по коду, который принадлежит конкретному бригадиру.
+    Используем в cancel.
+    """
+    return (
+        db.query(ForemanInvite)
+        .filter(
+            ForemanInvite.code == code,
+            ForemanInvite.foreman_phone == foreman_phone,
+        )
+        .first()
+    )
+
+
+# ============================
+# Эндпоинты инвайтов бригадира
+# ============================
+# --------------------------
+# FOREMAN INVITES API
+# --------------------------
+
+@app.post("/foreman/invites", response_model=ForemanInviteOut)
+def create_foreman_invite(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Создаёт новый инвайт-код для бригадира.
+
+    Ограничения:
+    - максимум 10 активных инвайтов (new/accepted, не истёкшие);
+    - код уникальный (по полю code).
+    """
+    foreman_phone = current_user.phone
+
+    # 1. Проверяем лимит активных инвайтов
+    active_count = _get_foreman_active_invites_count(db, foreman_phone)
+    if active_count >= 10:
+        raise HTTPException(
+            status_code=400,
+            detail="Вы уже создали максимальное количество активных инвайт-кодов (10). "
+                   "Отмените один из существующих, чтобы создать новый.",
+        )
+
+    # 2. Генерируем уникальный код
+    max_attempts = 10
+    code = None
+    for _ in range(max_attempts):
+        candidate = _generate_invite_code()
+        existing = db.query(ForemanInvite).filter(ForemanInvite.code == candidate).first()
+        if not existing:
+            code = candidate
+            break
+
+    if code is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось сгенерировать уникальный инвайт-код. "
+                   "Попробуйте ещё раз или обратитесь в поддержку.",
+        )
+
+    # 3. Создаём запись
+    now = _get_now_utc()
+    expires_at = now + timedelta(days=3)
+
+    invite = ForemanInvite(
+        code=code,
+        foreman_phone=foreman_phone,
+        foreman_user_id=current_user.id,   # <<< ВОТ ЭТО ДОБАВИТЬ
+        installer_phone=None,
+        installer_user_id=None,
+        created_at=now,
+        expires_at=expires_at,
+        used_at=None,
+        status="new",
+    )
+    db.add(invite)
+    db.commit()
+    db.refresh(invite)
+
+    return ForemanInviteOut.from_orm(invite)
+
+
+@app.get("/foreman/invites", response_model=ForemanInviteListOut)
+def list_foreman_invites(
+    status: Optional[str] = Query(
+        None,
+        description="Фильтр по статусу: new / accepted / cancelled / expired",
+    ),
+    only_active: bool = Query(
+        False,
+        description="Если true — только активные (new/accepted, не истёкшие)",
+    ),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Возвращает список инвайтов бригадира.
+
+    Параметры:
+    - status: фильтр по статусу (например, ?status=new)
+    - only_active: если true — только активные (new/accepted, не истёкшие).
+
+    Если параметры не заданы — возвращаем все инвайты бригадира.
+    """
+    foreman_phone = current_user.phone
+    now = _get_now_utc()
+
+    query = db.query(ForemanInvite).filter(ForemanInvite.foreman_phone == foreman_phone)
+
+    if status is not None:
+        query = query.filter(ForemanInvite.status == status)
+
+    if only_active:
+        query = query.filter(
+            ForemanInvite.status.in_(["new", "accepted"]),
+            or_(ForemanInvite.expires_at.is_(None), ForemanInvite.expires_at > now),
+        )
+
+    invites = query.order_by(ForemanInvite.created_at.desc()).all()
+
+    return ForemanInviteListOut(
+        items=[ForemanInviteOut.from_orm(i) for i in invites]
+    )
+
+
+@app.post("/foreman/invites/redeem", response_model=ForemanInviteOut)
+def redeem_foreman_invite(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Монтажник вводит инвайт-код и «привязывается» к бригадиру.
+
+    Логика:
+    - находим инвайт по коду;
+    - проверяем, что не истёк;
+    - проверяем, что статус new;
+    - ставим installer_phone = текущий пользователь;
+    - статус -> accepted, used_at = сейчас.
+    """
+    code = payload.get("code")
+    if not code:
+        raise HTTPException(
+            status_code=400,
+            detail="Не передан инвайт-код.",
+        )
+
+    invite = _find_invite_by_code_for_redeem(db, code)
+    if invite is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Инвайт-код не найден. Проверьте, правильно ли он введён.",
+        )
+
+    now = _get_now_utc()
+
+    # Проверяем истечение срока действия
+    if invite.expires_at is not None and invite.expires_at <= now:
+        invite.status = "expired"
+        db.commit()
+        raise HTTPException(
+            status_code=400,
+            detail="Срок действия инвайт-кода истёк. Попросите бригадира создать новый.",
+        )
+
+    # Проверяем статус
+    if invite.status != "new":
+        raise HTTPException(
+            status_code=400,
+            detail="Инвайт-код уже использован или отменён. Попросите бригадира выдать новый.",
+        )
+
+    # Всё ок — принимаем код
+    invite.installer_user_id = current_user.id
+    invite.installer_phone = current_user.phone
+    invite.used_at = datetime.now(timezone.utc)
+    invite.status = "accepted"
+    
+    db.commit()
+    db.refresh(invite)
+
+    return ForemanInviteOut.from_orm(invite)
+
+
+@app.post("/foreman/invites/cancel", response_model=ForemanInviteOut)
+def cancel_foreman_invite(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Бригадир отменяет свой инвайт-код.
+
+    Можно отменить только:
+    - свой код (по номеру foreman_phone);
+    - в статусе new (ещё никто не принял).
+    """
+    code = payload.get("code")
+    if not code:
+        raise HTTPException(
+            status_code=400,
+            detail="Не передан инвайт-код для отмены.",
+        )
+
+    foreman_phone = current_user.phone
+    invite = _find_invite_by_code_for_foreman(db, code, foreman_phone)
+
+    if invite is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Инвайт-код не найден или не принадлежит вашему номеру.",
+        )
+
+    # Проверяем статус
+    if invite.status != "new":
+        raise HTTPException(
+            status_code=400,
+            detail="Инвайт-код уже был использован, отменён или истёк.",
+        )
+
+    invite.status = "cancelled"
+    db.commit()
+    db.refresh(invite)
+
+    return ForemanInviteOut.from_orm(invite)
+
+# ==================== HOURLY PHOTOS ====================
+
+
+class HourPhotoResponse(BaseModel):
+    id: UUID
+    created_at: datetime
+    hour_label: Optional[str]
+    status: str
+    comment: Optional[str]
+    photo_url: str
+    shift_id: Optional[UUID]
+
+
+@app.post("/shift/hour/photo", response_model=HourPhotoResponse)
+async def upload_shift_hour_photo(
+    hour_label: str = Form(..., description="Например, '10:00-11:00'"),
+    photo: UploadFile = File(...),
+    shift_id: Optional[UUID] = Form(
+        None, description="ID смены, если уже есть. Можно не передавать, если есть активная смена."
+    ),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Загрузка почасового фото смены + сохранение в S3 и БД.
+    """
+    content = await photo.read()
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Пустой файл",
+        )
+
+    # Сначала сохраняем в S3
+    try:
+        photo_url = await save_shift_photo(content, photo.filename)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка хранения фото: {e}",
+        )
+
+    # Определяем смену
+    if shift_id is not None:
+        shift = (
+            db.query(Shift)
+            .filter(Shift.id == shift_id, Shift.user_id == current_user.id)
+            .one_or_none()
+        )
+        if shift is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Смена не найдена",
+            )
+    else:
+        shift = (
+            db.query(Shift)
+            .filter(Shift.user_id == current_user.id, Shift.status == "active")
+            .order_by(Shift.start_at.desc())
+            .first()
+        )
+        if shift is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Нет активной смены, передайте shift_id",
+            )
+
+    now = datetime.now(timezone.utc)
+
+    photo_row = ShiftPhoto(
+        shift_id=shift.id,
+        hour_label=hour_label,
+        photo_url=photo_url,
+        status="pending",
+        created_at=now,
+    )
+
+    db.add(photo_row)
+    db.commit()
+    db.refresh(photo_row)
+
+    return HourPhotoResponse(
+        id=photo_row.id,
+        created_at=photo_row.created_at,
+        hour_label=photo_row.hour_label,
+        status=photo_row.status,
+        comment=photo_row.comment,
+        photo_url=photo_row.photo_url,
+        shift_id=photo_row.shift_id,
+    )
+
+
+# ==================== СИСТЕМНЫЕ РОУТЫ ====================
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+# Подключаем роуты куратора
+app.include_router(curator_router)
+app.include_router(tools_router)
+app.include_router(user_router)

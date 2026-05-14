@@ -44,6 +44,22 @@ interface CoordinatorApi {
     @GET("coordinator/team")
     suspend fun getTeam(): Response<CoordinatorTeamResponse>
 
+    /**
+     * FIX(2026-05-12) build18 P2: детальная карточка участника команды (для TeamMemberDetailScreen).
+     * GET /coordinator/team/{userId}
+     */
+    @GET("coordinator/team/{userId}")
+    suspend fun getTeamMemberDetail(
+        @Path("userId") userId: String,
+    ): Response<CoordinatorTeamMemberDetailDto>
+
+    /**
+     * FIX(2026-05-12) build18 P2: composite endpoint для главного экрана координатора.
+     * GET /coordinator/object-full — одним запросом site + team + photos + reports + batches.
+     */
+    @GET("coordinator/object-full")
+    suspend fun getObjectFull(): Response<CoordinatorObjectFullDto>
+
     /** GET /coordinator/reports → отчёты координатора */
     @GET("coordinator/reports")
     suspend fun getReports(): Response<CoordinatorReportsResponse>

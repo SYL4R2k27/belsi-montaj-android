@@ -1,0 +1,1250 @@
+"""
+Полный функционал для кабинета куратора
+Версия: 2.0 - с иерархией команд, проверкой фото и массовой постановкой задач
+"""
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from pydantic import BaseModel, ConfigDict, Field
+from datetime import datetime, timedelta
+from typing import List, Optional
+from uuid import UUID
+from sqlalchemy.orm import Session
+from sqlalchemy import text, func, and_, or_
+
+from .db import get_db
+from .auth import get_current_user
+from .models import (
+    User, Shift, ShiftPhoto, Tool, ToolTransaction,
+    SupportTicket, SupportMessage, SupportTicketRead, Task
+)
+
+router = APIRouter(prefix="/curator", tags=["curator"])
+
+
+# ============= Schemas =============
+
+class CuratorInstallerOut(BaseModel):
+    """Монтажник в команде бригадира"""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    phone: str
+    full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    last_activity_at: Optional[datetime] = None
+    last_photo_status: str = "none"  # pending/approved/rejected/none
+    pending_photos_count: int = 0
+    total_shifts: int = 0
+    total_hours: float = 0.0
+
+
+class CuratorForemanOut(BaseModel):
+    """Бригадир с вложенной командой монтажников"""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    phone: str
+    full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    team_size: int = 0
+    active_installers_count: int = 0
+    total_shifts_today: int = 0
+    tools_count: int = 0
+    active_tools_issued: int = 0
+    pending_photos_count: int = 0
+    completion_percentage: float = 0.0  # Процент выполнения задач
+    created_at: datetime
+    installers: List[CuratorInstallerOut] = []  # Иерархия!
+
+
+class CuratorPhotoOut(BaseModel):
+    """Фото на проверке с информацией о связях"""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    user_id: UUID
+    user_phone: str
+    user_name: Optional[str] = None
+    foreman_id: Optional[UUID] = None  # Новое поле!
+    foreman_name: Optional[str] = None  # Новое поле!
+    photo_url: str
+    shift_id: UUID
+    timestamp: datetime
+    status: str = "pending"
+    comment: Optional[str] = None
+
+
+class CuratorPhotosResponse(BaseModel):
+    """Ответ со списком фото для Android"""
+    photos: List[CuratorPhotoOut]
+
+
+class CuratorDashboardStats(BaseModel):
+    """Статистика дашборда куратора"""
+    total_installers: int
+    active_installers_today: int
+    total_foremen: int
+    active_foremen_today: int = 0
+    pending_photos: int
+    total_shifts_today: int
+    total_tools: int
+    tools_issued: int
+    open_support_tickets: int
+    average_completion_percentage: float = 0.0  # Новое поле!
+
+
+class TaskCreateRequest(BaseModel):
+    """Запрос на создание задачи"""
+    title: str = Field(..., min_length=1, max_length=200)
+    description: str = Field(..., min_length=1, max_length=1000)
+    target_user_ids: Optional[List[UUID]] = None  # None = всем!
+    deadline: Optional[datetime] = None
+    priority: str = Field(..., pattern="^(low|medium|high)$")
+
+
+class TaskCreateResponse(BaseModel):
+    """Ответ после создания задачи"""
+    task_id: Optional[UUID] = None  # Для одной задачи
+    task_ids: List[UUID] = []  # Для массового создания
+    assigned_to_count: int
+
+
+class PhotoReviewRequest(BaseModel):
+    """Запрос на проверку фотографии"""
+    status: str = Field(..., pattern="^(approved|rejected)$")
+    comment: Optional[str] = Field(None, max_length=500)
+
+
+# ============= Helper Functions =============
+
+def require_curator(user: User):
+    """Проверка что пользователь - куратор"""
+    role = (user.role or "").strip().lower()
+    if role != "curator":
+        raise HTTPException(status_code=403, detail="Curator access required")
+
+
+def calculate_completion_percentage(db: Session, foreman_id: UUID) -> float:
+    """
+    Расчет процента выполнения задач для бригадира
+    Берем задачи, назначенные бригадиру и его команде
+    """
+    # Получаем все задачи бригадира и его команды
+    team_member_ids_query = text("""
+        SELECT installer_user_id
+        FROM foreman_memberships
+        WHERE foreman_user_id = :foreman_id
+        AND status = 'active'
+    """)
+
+    team_result = db.execute(team_member_ids_query, {"foreman_id": str(foreman_id)}).fetchall()
+    team_ids = [str(foreman_id)] + [row[0] for row in team_result]
+
+    if not team_ids:
+        return 0.0
+
+    # Подсчет задач
+    total_tasks = (
+        db.query(func.count(Task.id))
+        .filter(Task.assigned_to.in_(team_ids))
+        .scalar() or 0
+    )
+
+    if total_tasks == 0:
+        return 0.0
+
+    completed_tasks = (
+        db.query(func.count(Task.id))
+        .filter(Task.assigned_to.in_(team_ids))
+        .filter(Task.status == "completed")
+        .scalar() or 0
+    )
+
+    return round((completed_tasks / total_tasks) * 100, 1)
+
+
+def get_foreman_for_installer(db: Session, installer_id: UUID) -> Optional[tuple]:
+    """
+    Получить бригадира для монтажника
+    Returns: (foreman_id, foreman_name) или None
+    """
+    query = text("""
+        SELECT u.id, u.full_name, u.phone
+        FROM foreman_memberships fm
+        JOIN users u ON u.id = fm.foreman_user_id
+        WHERE fm.installer_user_id = :installer_id
+        AND fm.status = 'active'
+        LIMIT 1
+    """)
+
+    result = db.execute(query, {"installer_id": str(installer_id)}).first()
+
+    if result:
+        foreman_id = result[0]
+        foreman_name = result[1] or result[2]  # full_name или phone
+        return (foreman_id, foreman_name)
+
+    return None
+
+
+# ============= Endpoints =============
+
+@router.get("/dashboard", response_model=CuratorDashboardStats)
+def get_curator_dashboard(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Получить статистику дашборда куратора
+
+    Возвращает общие метрики по системе с процентом выполнения задач
+    """
+    require_curator(current_user)
+
+    # Подсчет пользователей
+    total_installers = db.query(func.count(User.id)).filter(User.role == "installer").scalar() or 0
+    total_foremen = db.query(func.count(User.id)).filter(User.role == "foreman").scalar() or 0
+
+    # Активные пользователи сегодня
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    active_installers_today = (
+        db.query(func.count(func.distinct(Shift.user_id)))
+        .join(User, User.id == Shift.user_id)
+        .filter(Shift.start_at >= today_start)
+        .filter(User.role == "installer")
+        .scalar() or 0
+    )
+
+    active_foremen_today = (
+        db.query(func.count(func.distinct(Shift.user_id)))
+        .join(User, User.id == Shift.user_id)
+        .filter(Shift.start_at >= today_start)
+        .filter(User.role == "foreman")
+        .scalar() or 0
+    )
+
+    # Смены сегодня
+    total_shifts_today = (
+        db.query(func.count(Shift.id))
+        .filter(Shift.start_at >= today_start)
+        .scalar() or 0
+    )
+
+    # Фотографии на проверке
+    pending_photos = (
+        db.query(func.count(ShiftPhoto.id))
+        .filter(ShiftPhoto.status == "pending")
+        .scalar() or 0
+    )
+
+    # Инструменты
+    total_tools = db.query(func.count(Tool.id)).scalar() or 0
+    tools_issued = (
+        db.query(func.count(Tool.id))
+        .filter(Tool.status == "issued")
+        .scalar() or 0
+    )
+
+    # Открытые тикеты поддержки
+    open_support_tickets = (
+        db.query(func.count(SupportTicket.id))
+        .filter(SupportTicket.status.in_(["open", "in_progress"]))
+        .scalar() or 0
+    )
+
+    # Средний процент выполнения задач по всем бригадирам
+    foremen = db.query(User).filter(User.role == "foreman").all()
+    if foremen:
+        total_percentage = sum(calculate_completion_percentage(db, f.id) for f in foremen)
+        average_completion_percentage = round(total_percentage / len(foremen), 1)
+    else:
+        average_completion_percentage = 0.0
+
+    return CuratorDashboardStats(
+        total_installers=total_installers,
+        active_installers_today=active_installers_today,
+        total_foremen=total_foremen,
+        active_foremen_today=active_foremen_today,
+        pending_photos=pending_photos,
+        total_shifts_today=total_shifts_today,
+        total_tools=total_tools,
+        tools_issued=tools_issued,
+        open_support_tickets=open_support_tickets,
+        average_completion_percentage=average_completion_percentage,
+    )
+
+
+@router.get("/foremen", response_model=List[CuratorForemanOut])
+def get_foremen_with_hierarchy(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+):
+    """
+    Получить список бригадиров с вложенными командами (иерархия)
+
+    Каждый бригадир содержит:
+    - Свою статистику
+    - Процент выполнения задач (0-100)
+    - Массив монтажников в команде
+    """
+    require_curator(current_user)
+
+    # Получаем бригадиров
+    foremen = (
+        db.query(User)
+        .filter(User.role == "foreman")
+        .order_by(User.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    result = []
+
+    for foreman in foremen:
+        # Получаем ID монтажников в команде
+        team_query = text("""
+            SELECT installer_user_id
+            FROM foreman_memberships
+            WHERE foreman_user_id = :foreman_id
+            AND status = 'active'
+        """)
+        team_result = db.execute(team_query, {"foreman_id": str(foreman.id)}).fetchall()
+        installer_ids = [row[0] for row in team_result]
+        team_size = len(installer_ids)
+
+        # Получаем монтажников с их статистикой
+        installers_list = []
+        active_count = 0
+
+        for installer_id in installer_ids:
+            installer = db.query(User).filter(User.id == installer_id).first()
+            if not installer:
+                continue
+
+            # Последняя активность
+            last_shift = (
+                db.query(Shift)
+                .filter(Shift.user_id == installer.id)
+                .order_by(Shift.start_at.desc())
+                .first()
+            )
+            last_activity_at = last_shift.start_at if last_shift else None
+
+            # Активность сегодня
+            shift_today = (
+                db.query(Shift)
+                .filter(Shift.user_id == installer.id)
+                .filter(Shift.start_at >= today_start)
+                .first()
+            )
+            if shift_today:
+                active_count += 1
+
+            # Последняя фотография
+            last_photo = (
+                db.query(ShiftPhoto)
+                .join(Shift)
+                .filter(Shift.user_id == installer.id)
+                .order_by(ShiftPhoto.created_at.desc())
+                .first()
+            )
+            last_photo_status = last_photo.status if last_photo else "none"
+
+            # Фото на проверке
+            pending_photos_count = (
+                db.query(func.count(ShiftPhoto.id))
+                .join(Shift)
+                .filter(Shift.user_id == installer.id)
+                .filter(ShiftPhoto.status == "pending")
+                .scalar() or 0
+            )
+
+            # Статистика смен
+            total_shifts = (
+                db.query(func.count(Shift.id))
+                .filter(Shift.user_id == installer.id)
+                .scalar() or 0
+            )
+
+            total_hours = (
+                db.query(func.sum(Shift.duration_hours))
+                .filter(Shift.user_id == installer.id)
+                .scalar() or 0
+            )
+
+            installers_list.append(
+                CuratorInstallerOut(
+                    id=installer.id,
+                    phone=installer.phone,
+                    full_name=getattr(installer, 'full_name', None) or installer.phone,
+                    first_name=getattr(installer, 'first_name', None),
+                    last_name=getattr(installer, 'last_name', None),
+                    last_activity_at=last_activity_at,
+                    last_photo_status=last_photo_status,
+                    pending_photos_count=pending_photos_count,
+                    total_shifts=total_shifts,
+                    total_hours=float(total_hours),
+                )
+            )
+
+        # Смены команды сегодня
+        if installer_ids:
+            total_shifts_today = (
+                db.query(func.count(Shift.id))
+                .filter(Shift.user_id.in_(installer_ids))
+                .filter(Shift.start_at >= today_start)
+                .scalar() or 0
+            )
+
+            pending_photos_count = (
+                db.query(func.count(ShiftPhoto.id))
+                .join(Shift)
+                .filter(Shift.user_id.in_(installer_ids))
+                .filter(ShiftPhoto.status == "pending")
+                .scalar() or 0
+            )
+        else:
+            total_shifts_today = 0
+            pending_photos_count = 0
+
+        # Инструменты бригадира
+        tools_count = (
+            db.query(func.count(Tool.id))
+            .filter(Tool.foreman_id == foreman.id)
+            .scalar() or 0
+        )
+
+        active_tools_issued = (
+            db.query(func.count(Tool.id))
+            .filter(Tool.foreman_id == foreman.id)
+            .filter(Tool.status == "issued")
+            .scalar() or 0
+        )
+
+        # Процент выполнения задач
+        completion_percentage = calculate_completion_percentage(db, foreman.id)
+
+        result.append(
+            CuratorForemanOut(
+                id=foreman.id,
+                phone=foreman.phone,
+                full_name=getattr(foreman, 'full_name', None) or foreman.phone,
+                first_name=getattr(foreman, 'first_name', None),
+                last_name=getattr(foreman, 'last_name', None),
+                team_size=team_size,
+                active_installers_count=active_count,
+                total_shifts_today=total_shifts_today,
+                tools_count=tools_count,
+                active_tools_issued=active_tools_issued,
+                pending_photos_count=pending_photos_count,
+                completion_percentage=completion_percentage,
+                created_at=foreman.created_at,
+                installers=installers_list,  # Иерархия!
+            )
+        )
+
+    return result
+
+
+@router.get("/photos", response_model=CuratorPhotosResponse)
+def get_photos_for_review(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(50, ge=1, le=200),
+    user_id: Optional[UUID] = Query(None, description="Фильтр по пользователю"),
+):
+    """
+    Получить фото на проверке с информацией о связях монтажник→бригадир
+
+    Возвращает фото со статусом pending и информацией:
+    - Кто загрузил (монтажник)
+    - Кто его бригадир (если есть)
+    """
+    require_curator(current_user)
+
+    query = (
+        db.query(ShiftPhoto)
+        .join(Shift, Shift.id == ShiftPhoto.shift_id)
+        .filter(ShiftPhoto.status == "pending")
+    )
+
+    # Фильтр по пользователю
+    if user_id:
+        query = query.filter(Shift.user_id == user_id)
+
+    photos = query.order_by(ShiftPhoto.created_at.desc()).limit(limit).all()
+
+    result = []
+    for photo in photos:
+        # Получаем смену и пользователя
+        shift = db.query(Shift).filter(Shift.id == photo.shift_id).first()
+        if not shift:
+            continue
+
+        user = db.query(User).filter(User.id == shift.user_id).first()
+        if not user:
+            continue
+
+        # Получаем бригадира (новая логика!)
+        foreman_info = get_foreman_for_installer(db, user.id)
+        foreman_id = foreman_info[0] if foreman_info else None
+        foreman_name = foreman_info[1] if foreman_info else None
+
+        result.append(
+            CuratorPhotoOut(
+                id=photo.id,
+                user_id=user.id,
+                user_phone=user.phone,
+                user_name=getattr(user, 'full_name', None) or user.phone,
+                foreman_id=foreman_id,  # Новое поле!
+                foreman_name=foreman_name,  # Новое поле!
+                photo_url=photo.photo_url,
+                shift_id=shift.id,
+                timestamp=photo.created_at,
+                status=photo.status,
+                comment=photo.comment,
+            )
+        )
+
+    return CuratorPhotosResponse(photos=result)
+
+
+@router.post("/photos/{photo_id}/approve")
+def approve_photo(
+    photo_id: UUID,
+    comment: Optional[str] = Body(None, embed=True, max_length=500),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Одобрить фотографию
+    """
+    require_curator(current_user)
+
+    photo = db.query(ShiftPhoto).filter(ShiftPhoto.id == photo_id).first()
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    photo.status = "approved"
+
+    if comment:
+        curator_name = getattr(current_user, 'full_name', None) or current_user.phone
+        new_comment = f"[CURATOR] {curator_name}: {comment}"
+
+        if photo.comment:
+            photo.comment = f"{photo.comment}\n{new_comment}"
+        else:
+            photo.comment = new_comment
+
+    db.commit()
+
+    return {"success": True}
+
+
+@router.post("/photos/{photo_id}/reject")
+def reject_photo(
+    photo_id: UUID,
+    reason: Optional[str] = Body(None, embed=True, max_length=500),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Отклонить фотографию с указанием причины
+    """
+    require_curator(current_user)
+
+    photo = db.query(ShiftPhoto).filter(ShiftPhoto.id == photo_id).first()
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    photo.status = "rejected"
+
+    if reason:
+        curator_name = getattr(current_user, 'full_name', None) or current_user.phone
+        new_comment = f"[CURATOR] {curator_name}: {reason}"
+
+        if photo.comment:
+            photo.comment = f"{photo.comment}\n{new_comment}"
+        else:
+            photo.comment = new_comment
+
+    db.commit()
+
+    return {"success": True}
+
+
+@router.post("/tasks", response_model=TaskCreateResponse)
+def create_curator_task(
+    task_request: TaskCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Создать задачу для пользователей (точечно или всем)
+
+    Если target_user_ids == null → задача создается для ВСЕХ пользователей
+    Если target_user_ids == [id1, id2] → только для выбранных
+    """
+    require_curator(current_user)
+
+    # Определяем целевых пользователей
+    if task_request.target_user_ids is None:
+        # Массовая постановка - всем пользователям (foreman + installer)
+        target_users = (
+            db.query(User)
+            .filter(or_(User.role == "foreman", User.role == "installer"))
+            .all()
+        )
+    elif len(task_request.target_user_ids) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="target_user_ids cannot be empty array. Use null for all users"
+        )
+    else:
+        # Точечная постановка
+        target_users = (
+            db.query(User)
+            .filter(User.id.in_(task_request.target_user_ids))
+            .all()
+        )
+
+        if len(target_users) != len(task_request.target_user_ids):
+            raise HTTPException(status_code=404, detail="Some users not found")
+
+    if not target_users:
+        raise HTTPException(status_code=400, detail="No users to assign task to")
+
+    # Создаем задачи
+    task_ids = []
+    for user in target_users:
+        new_task = Task(
+            created_by=current_user.id,
+            assigned_to=user.id,
+            title=task_request.title,
+            description=task_request.description,
+            priority=task_request.priority,
+            status="pending",
+            deadline=task_request.deadline,
+        )
+        db.add(new_task)
+        db.flush()
+        task_ids.append(new_task.id)
+
+    db.commit()
+
+    # Возвращаем результат
+    if len(task_ids) == 1:
+        return TaskCreateResponse(
+            task_id=task_ids[0],
+            task_ids=task_ids,
+            assigned_to_count=len(target_users)
+        )
+    else:
+        return TaskCreateResponse(
+            task_id=None,
+            task_ids=task_ids,
+            assigned_to_count=len(target_users)
+        )
+
+
+@router.get("/support")
+def get_support_tickets(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    status: Optional[str] = Query(None, description="Фильтр по статусу"),
+    limit: int = Query(50, ge=1, le=200),
+):
+    """
+    Получить список тикетов поддержки (чатов с пользователями)
+
+    Уже реализовано в основном коде, этот endpoint для совместимости
+    """
+    require_curator(current_user)
+
+    query = db.query(SupportTicket).join(User, User.id == SupportTicket.user_id)
+
+    if status:
+        query = query.filter(SupportTicket.status == status)
+
+    tickets = query.order_by(SupportTicket.updated_at.desc()).limit(limit).all()
+
+    result = []
+    for ticket in tickets:
+        user = db.query(User).filter(User.id == ticket.user_id).first()
+
+        last_message = (
+            db.query(SupportMessage)
+            .filter(SupportMessage.ticket_id == ticket.id)
+            .order_by(SupportMessage.created_at.desc())
+            .first()
+        )
+
+        last_message_snippet = last_message.text[:100] if last_message else "..."
+
+        # Количество непрочитанных
+        last_read = (
+            db.query(SupportTicketRead)
+            .filter(SupportTicketRead.ticket_id == ticket.id)
+            .filter(SupportTicketRead.reader_user_id == current_user.id)
+            .first()
+        )
+
+        if last_read and last_read.last_read_at:
+            unread_count = (
+                db.query(func.count(SupportMessage.id))
+                .filter(SupportMessage.ticket_id == ticket.id)
+                .filter(SupportMessage.created_at > last_read.last_read_at)
+                .filter(SupportMessage.is_internal == False)
+                .scalar() or 0
+            )
+        else:
+            unread_count = (
+                db.query(func.count(SupportMessage.id))
+                .filter(SupportMessage.ticket_id == ticket.id)
+                .filter(SupportMessage.is_internal == False)
+                .scalar() or 0
+            )
+
+        result.append({
+            "id": str(ticket.id),
+            "user_id": str(user.id),
+            "user_phone": user.phone,
+            "user_name": getattr(user, 'full_name', None) or user.phone,
+            "last_message_snippet": last_message_snippet,
+            "unread_count": unread_count,
+            "status": str(ticket.status.value if hasattr(ticket.status, 'value') else ticket.status),
+            "category": ticket.category,
+            "created_at": ticket.created_at.isoformat(),
+            "updated_at": ticket.updated_at.isoformat() if ticket.updated_at else None,
+        })
+
+    return result
+
+
+# ============= Curator Tool Management =============
+
+@router.get("/tools/transactions")
+def get_curator_tool_transactions(
+    status: Optional[str] = Query(None, description="Filter by status: issued or returned"),
+    installer_id: Optional[UUID] = Query(None, description="Filter by installer"),
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all tool transactions (curator access only)
+    Supports filtering by status and installer_id, with pagination
+    """
+    require_curator(current_user)
+
+    from .models import ToolTransaction
+
+    query = db.query(ToolTransaction)
+
+    if status:
+        query = query.filter(ToolTransaction.status == status)
+    if installer_id:
+        query = query.filter(ToolTransaction.installer_id == installer_id)
+
+    total = query.count()
+    offset = (page - 1) * limit
+
+    transactions = (
+        query.order_by(ToolTransaction.issued_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    items = []
+    for t in transactions:
+        items.append({
+            "id": str(t.id),
+            "tool_id": str(t.tool_id),
+            "installer_id": str(t.installer_id),
+            "issued_by": str(t.issued_by),
+            "issued_at": t.issued_at.isoformat() if t.issued_at else None,
+            "issue_comment": t.issue_comment,
+            "issue_photo_url": t.issue_photo_url,
+            "returned_at": t.returned_at.isoformat() if t.returned_at else None,
+            "returned_to": str(t.returned_to) if t.returned_to else None,
+            "return_condition": t.return_condition,
+            "return_comment": t.return_comment,
+            "return_photo_url": t.return_photo_url,
+            "status": str(t.status.value) if hasattr(t.status, "value") else str(t.status),
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+        })
+
+    return {
+        "items": items,
+        "page": page,
+        "total_pages": (total + limit - 1) // limit,
+        "total_items": total,
+    }
+
+
+@router.post("/tools/issue")
+def curator_issue_tool(
+    request: dict = Body(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Curator can issue any tool to any installer
+    Body: { "tool_id": "uuid", "installer_id": "uuid", "comment": "optional" }
+    """
+    require_curator(current_user)
+
+    from .models import ToolTransaction
+    from uuid import UUID as PyUUID
+
+    tool_id = request.get("tool_id")
+    installer_id = request.get("installer_id")
+    comment = request.get("comment")
+
+    if not tool_id or not installer_id:
+        raise HTTPException(status_code=400, detail="tool_id and installer_id are required")
+
+    tool = db.query(Tool).filter(Tool.id == tool_id).first()
+    if not tool:
+        raise HTTPException(status_code=404, detail="Tool not found")
+
+    if tool.status != "available":
+        raise HTTPException(status_code=409, detail=f"Tool is not available (status: {tool.status})")
+
+    installer = db.query(User).filter(User.id == installer_id).first()
+    if not installer:
+        raise HTTPException(status_code=404, detail="Installer not found")
+
+    transaction = ToolTransaction(
+        tool_id=tool.id,
+        installer_id=installer.id,
+        issued_by=current_user.id,
+        issued_at=datetime.utcnow(),
+        issue_comment=comment,
+        status="issued",
+    )
+    tool.status = "issued"
+    db.add(transaction)
+    db.commit()
+    db.refresh(transaction)
+
+    return {
+        "id": str(transaction.id),
+        "tool_id": str(transaction.tool_id),
+        "installer_id": str(transaction.installer_id),
+        "issued_by": str(transaction.issued_by),
+        "issued_at": transaction.issued_at.isoformat(),
+        "status": "issued",
+    }
+
+
+# ============= Незакрепленные монтажники =============
+
+class UnassignedInstallerOut(BaseModel):
+    """Монтажник без бригадира"""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    phone: str
+    full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    last_activity_at: Optional[datetime] = None
+    last_photo_status: str = "none"  # pending, approved, rejected, none
+    pending_photos_count: int = 0
+    total_shifts: int = 0
+    total_hours: float = 0.0
+    created_at: datetime
+
+
+@router.get("/installers/unassigned", response_model=List[UnassignedInstallerOut])
+def get_unassigned_installers(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+):
+    """
+    Получить монтажников без закрепления за бригадиром
+    """
+    require_curator(current_user)
+
+    # Получаем всех монтажников, которые не в активных memberships
+    query = text("""
+        SELECT u.id, u.phone, u.full_name, u.first_name, u.last_name, u.created_at
+        FROM users u
+        WHERE u.role = 'installer'
+        AND u.id NOT IN (
+            SELECT DISTINCT installer_user_id
+            FROM foreman_memberships
+            WHERE status = 'active'
+        )
+        ORDER BY u.created_at DESC
+        LIMIT :limit OFFSET :offset
+    """)
+    rows = db.execute(query, {"limit": limit, "offset": offset}).fetchall()
+
+    result = []
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    for row in rows:
+        installer_id = row[0]
+
+        # Последняя активность
+        last_shift = (
+            db.query(Shift)
+            .filter(Shift.user_id == installer_id)
+            .order_by(Shift.start_at.desc())
+            .first()
+        )
+        last_activity_at = last_shift.start_at if last_shift else None
+
+        # Последнее фото
+        last_photo = (
+            db.query(ShiftPhoto)
+            .join(Shift)
+            .filter(Shift.user_id == installer_id)
+            .order_by(ShiftPhoto.created_at.desc())
+            .first()
+        )
+        last_photo_status = last_photo.status if last_photo else "none"
+
+        # Pending photos
+        pending_photos = (
+            db.query(ShiftPhoto)
+            .join(Shift)
+            .filter(Shift.user_id == installer_id)
+            .filter(ShiftPhoto.status == "pending")
+            .count()
+        )
+
+        # Статистика смен
+        total_shifts = db.query(Shift).filter(Shift.user_id == installer_id).count()
+        total_hours_query = text("""
+            SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (COALESCE(finish_at, NOW()) - start_at)) / 3600), 0)
+            FROM shifts
+            WHERE user_id = :uid
+        """)
+        total_hours = db.execute(total_hours_query, {"uid": str(installer_id)}).scalar() or 0.0
+
+        result.append(UnassignedInstallerOut(
+            id=row[0],
+            phone=row[1],
+            full_name=row[2],
+            first_name=row[3],
+            last_name=row[4],
+            created_at=row[5],
+            last_activity_at=last_activity_at,
+            last_photo_status=last_photo_status,
+            pending_photos_count=pending_photos,
+            total_shifts=total_shifts,
+            total_hours=float(total_hours)
+        ))
+
+    return result
+
+
+# ============= Все пользователи и детальная информация =============
+
+class AllUserOut(BaseModel):
+    """Пользователь для общего списка"""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    phone: str
+    full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: str
+    foreman_id: Optional[UUID] = None
+    foreman_name: Optional[str] = None
+    last_activity_at: Optional[datetime] = None
+    is_active_today: bool = False
+    pending_photos_count: int = 0
+    total_shifts: int = 0
+    total_hours: float = 0.0
+    created_at: datetime
+
+
+class UserDetailOut(BaseModel):
+    """Детальная информация о пользователе"""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    phone: str
+    full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: str
+    
+    # Связи
+    foreman_id: Optional[UUID] = None
+    foreman_name: Optional[str] = None
+    team_members: List[dict] = []  # Для бригадиров - список их монтажников
+    
+    # Статистика
+    total_shifts: int = 0
+    total_hours: float = 0.0
+    pending_photos_count: int = 0
+    approved_photos_count: int = 0
+    rejected_photos_count: int = 0
+    
+    # Задачи
+    active_tasks_count: int = 0
+    completed_tasks_count: int = 0
+    
+    # Последняя активность
+    last_activity_at: Optional[datetime] = None
+    current_shift_id: Optional[UUID] = None
+    is_on_shift: bool = False
+    
+    created_at: datetime
+
+
+@router.get("/users/all", response_model=List[AllUserOut])
+def get_all_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    role: Optional[str] = Query(None, description="Filter by role: foreman, installer"),
+    limit: int = Query(200, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+):
+    """
+    Получить всех пользователей (бригадиров и монтажников)
+    С информацией о привязке монтажников к бригадирам
+    """
+    require_curator(current_user)
+
+    query = db.query(User).filter(or_(User.role == "foreman", User.role == "installer"))
+    
+    if role:
+        query = query.filter(User.role == role)
+    
+    users = query.order_by(User.created_at.desc()).offset(offset).limit(limit).all()
+    
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    result = []
+    
+    for user in users:
+        # Получаем бригадира для монтажника
+        foreman_info = get_foreman_for_installer(db, user.id) if user.role == "installer" else None
+        foreman_id = foreman_info[0] if foreman_info else None
+        foreman_name = foreman_info[1] if foreman_info else None
+        
+        # Последняя активность
+        last_shift = (
+            db.query(Shift)
+            .filter(Shift.user_id == user.id)
+            .order_by(Shift.start_at.desc())
+            .first()
+        )
+        last_activity_at = last_shift.start_at if last_shift else None
+        
+        # Активность сегодня
+        shift_today = (
+            db.query(Shift)
+            .filter(Shift.user_id == user.id)
+            .filter(Shift.start_at >= today_start)
+            .first()
+        )
+        is_active_today = shift_today is not None
+        
+        # Pending photos
+        pending_photos = (
+            db.query(func.count(ShiftPhoto.id))
+            .join(Shift)
+            .filter(Shift.user_id == user.id)
+            .filter(ShiftPhoto.status == "pending")
+            .scalar() or 0
+        )
+        
+        # Статистика смен
+        total_shifts = db.query(func.count(Shift.id)).filter(Shift.user_id == user.id).scalar() or 0
+        total_hours = db.query(func.sum(Shift.duration_hours)).filter(Shift.user_id == user.id).scalar() or 0
+        
+        result.append(AllUserOut(
+            id=user.id,
+            phone=user.phone,
+            full_name=getattr(user, "full_name", None),
+            first_name=getattr(user, "first_name", None),
+            last_name=getattr(user, "last_name", None),
+            role=user.role or "installer",
+            foreman_id=foreman_id,
+            foreman_name=foreman_name,
+            last_activity_at=last_activity_at,
+            is_active_today=is_active_today,
+            pending_photos_count=pending_photos,
+            total_shifts=total_shifts,
+            total_hours=float(total_hours or 0),
+            created_at=user.created_at,
+        ))
+    
+    return result
+
+
+@router.get("/users/{user_id}", response_model=UserDetailOut)
+def get_user_detail(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Получить детальную информацию о пользователе
+    """
+    require_curator(current_user)
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Связи
+    foreman_info = get_foreman_for_installer(db, user.id) if user.role == "installer" else None
+    foreman_id = foreman_info[0] if foreman_info else None
+    foreman_name = foreman_info[1] if foreman_info else None
+    
+    # Команда бригадира
+    team_members = []
+    if user.role == "foreman":
+        team_query = text("""
+            SELECT u.id, u.phone, u.full_name
+            FROM foreman_memberships fm
+            JOIN users u ON u.id = fm.installer_user_id
+            WHERE fm.foreman_user_id = :foreman_id AND fm.status = 'active'
+        """)
+        rows = db.execute(team_query, {"foreman_id": str(user.id)}).fetchall()
+        team_members = [{"id": str(r[0]), "phone": r[1], "name": r[2] or r[1]} for r in rows]
+    
+    # Статистика смен
+    total_shifts = db.query(func.count(Shift.id)).filter(Shift.user_id == user.id).scalar() or 0
+    total_hours = db.query(func.sum(Shift.duration_hours)).filter(Shift.user_id == user.id).scalar() or 0
+    
+    # Статистика фото
+    pending_photos = (
+        db.query(func.count(ShiftPhoto.id))
+        .join(Shift).filter(Shift.user_id == user.id)
+        .filter(ShiftPhoto.status == "pending").scalar() or 0
+    )
+    approved_photos = (
+        db.query(func.count(ShiftPhoto.id))
+        .join(Shift).filter(Shift.user_id == user.id)
+        .filter(ShiftPhoto.status == "approved").scalar() or 0
+    )
+    rejected_photos = (
+        db.query(func.count(ShiftPhoto.id))
+        .join(Shift).filter(Shift.user_id == user.id)
+        .filter(ShiftPhoto.status == "rejected").scalar() or 0
+    )
+    
+    # Задачи
+    active_tasks = (
+        db.query(func.count(Task.id))
+        .filter(Task.assigned_to == user.id)
+        .filter(Task.status.in_(["new", "in_progress"]))
+        .scalar() or 0
+    )
+    completed_tasks = (
+        db.query(func.count(Task.id))
+        .filter(Task.assigned_to == user.id)
+        .filter(Task.status == "done")
+        .scalar() or 0
+    )
+    
+    # Последняя активность и текущая смена
+    last_shift = (
+        db.query(Shift)
+        .filter(Shift.user_id == user.id)
+        .order_by(Shift.start_at.desc())
+        .first()
+    )
+    last_activity_at = last_shift.start_at if last_shift else None
+    
+    current_shift = (
+        db.query(Shift)
+        .filter(Shift.user_id == user.id)
+        .filter(Shift.finish_at == None)
+        .first()
+    )
+    
+    return UserDetailOut(
+        id=user.id,
+        phone=user.phone,
+        full_name=getattr(user, "full_name", None),
+        first_name=getattr(user, "first_name", None),
+        last_name=getattr(user, "last_name", None),
+        role=user.role or "installer",
+        foreman_id=foreman_id,
+        foreman_name=foreman_name,
+        team_members=team_members,
+        total_shifts=total_shifts,
+        total_hours=float(total_hours or 0),
+        pending_photos_count=pending_photos,
+        approved_photos_count=approved_photos,
+        rejected_photos_count=rejected_photos,
+        active_tasks_count=active_tasks,
+        completed_tasks_count=completed_tasks,
+        last_activity_at=last_activity_at,
+        current_shift_id=current_shift.id if current_shift else None,
+        is_on_shift=current_shift is not None,
+        created_at=user.created_at,
+    )
+
+
+# ============= Change User Role =============
+
+class ChangeRoleRequest(BaseModel):
+    role: str  # "installer", "foreman", "curator"
+
+
+@router.post("/users/{user_id}/role")
+def change_user_role(
+    user_id: str,
+    body: ChangeRoleRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Изменить роль пользователя (только для куратора)"""
+    require_curator(current_user)
+
+    allowed_roles = ["installer", "foreman", "curator"]
+    if body.role not in allowed_roles:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Allowed: {allowed_roles}")
+
+    # Find target user
+    target_user = db.query(User).filter(User.id == user_id).one_or_none()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    old_role = target_user.role
+    target_user.role = body.role
+
+    # If changing to installer and was foreman, clear their team's foreman_id
+    if body.role == "installer" and old_role == "foreman":
+        db.query(User).filter(User.foreman_id == target_user.id).update(
+            {User.foreman_id: None}, synchronize_session="fetch"
+        )
+
+    # If changing from installer to foreman, clear their own foreman_id
+    if body.role == "foreman" and old_role == "installer":
+        target_user.foreman_id = None
+
+    db.commit()
+
+    return {
+        "success": True,
+        "user_id": str(target_user.id),
+        "old_role": old_role,
+        "new_role": body.role,
+        "message": f"Role changed from {old_role} to {body.role}",
+    }

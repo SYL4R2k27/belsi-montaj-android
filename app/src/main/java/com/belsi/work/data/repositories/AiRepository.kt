@@ -16,7 +16,7 @@ import javax.inject.Singleton
  * Все методы возвращают Result<T> в стиле проекта.
  */
 interface AiRepository {
-    suspend fun getDailySummary(date: String? = null): Result<AiDailySummaryResponse>
+    suspend fun getDailySummary(date: String? = null, forceRefresh: Boolean = false): Result<AiDailySummaryResponse>
     suspend fun searchPhotos(query: String): Result<AiPhotoSearchResponse>
     suspend fun verifyIdle(pauseId: String): Result<AiIdleVerifyResponse>
     suspend fun transcribeVoice(
@@ -52,8 +52,10 @@ class AiRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getDailySummary(date: String?): Result<AiDailySummaryResponse> =
-        safeCall("getDailySummary") { api.getDailySummary(date) }
+    override suspend fun getDailySummary(date: String?, forceRefresh: Boolean): Result<AiDailySummaryResponse> =
+        safeCall("getDailySummary") {
+            api.getDailySummary(date, if (forceRefresh) true else null)
+        }
 
     override suspend fun searchPhotos(query: String): Result<AiPhotoSearchResponse> =
         safeCall("searchPhotos") { api.searchPhotos(AiPhotoSearchRequest(query)) }

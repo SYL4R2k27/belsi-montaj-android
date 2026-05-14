@@ -236,10 +236,20 @@ def start_idle(
 
     db.commit()
 
-    # FIX(2026-05-04): push кураторам при простое — чтобы видеть проблему
-    # на объекте сразу. Содержит имя юзера + причину простоя.
+    # FIX(2026-05-04): push кураторам при простое.
+    # FIX(2026-05-11) BELSI 2.0.0 build4: используем централизованный idle_push_routing
+    # (брендбук ecosystem 05) — маршрутизация по ролям + объекту:
+    #   - монтажник → бригадир + координатор объекта + куратор
+    #   - работник → старший + начальник производства + куратор
+    #   - водитель → логист + куратор
     try:
-        _notify_curators_about_idle(db, current_user, payload.reason, shift)
+        from .idle_push_routing import notify_idle_event
+        notify_idle_event(
+            db=db,
+            actor_user=current_user,
+            reason_label=payload.reason,
+            site_object_id=shift.get("site_object_id") if isinstance(shift, dict) else None,
+        )
     except Exception as e:
         import logging
         logging.getLogger("idle").warning(f"idle push failed: {e}")

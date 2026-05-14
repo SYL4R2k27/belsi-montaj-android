@@ -179,8 +179,9 @@ private fun IdleVerifyResultCard(
         if (result.comment.isNotBlank()) {
             Text(result.comment, fontSize = 12.sp)
         }
+        // FIX(2026-05-12) build19 hotfix: "XeroCode" убран из UI AI-блоков.
         Text(
-            "AI-анализ · XeroCode",
+            "AI-анализ",
             fontSize = 10.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
         )

@@ -1,6 +1,7 @@
 package com.belsi.work.presentation.screens.coordinator
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,87 +24,139 @@ import androidx.navigation.NavController
  * Brandbook: координатор / куратор видит timeline объекта от создания партии
  * до сдачи монтажа. Каждое событие подсвечено цветом своего домена.
  *
- * Mock-режим до подключения backend timeline-эндпоинта.
+ * FIX(2026-05-11) BELSI 2.0.0 build3: реальный backend endpoint
+ * `GET /objects/{id}/timeline` агрегирует события из 8 таблиц
+ * (shifts, shift_photos, shift_audit_log, delivery_requests, driver_route_points,
+ *  production_batches, tasks, support_tickets). Mock остался только как fallback
+ * пока история ещё пуста для объекта.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ObjectHistoryScreen(navController: NavController, objectId: String) {
-    val events = mockEventsFor(objectId)
+fun ObjectHistoryScreen(
+    navController: NavController,
+    objectId: String,
+    viewModel: ObjectHistoryViewModel = androidx.hilt.navigation.compose.hiltViewModel(),
+) {
+    androidx.compose.runtime.LaunchedEffect(objectId) { viewModel.load(objectId) }
+    val state by viewModel.state.collectAsState()
+    // FIX(2026-05-11) BELSI 2.0.0 build7: убран mock fallback — показываем РЕАЛЬНЫЕ события
+    // из /objects/{id}/timeline. Если пусто — empty state, не выдуманная история.
+    val events: List<TimelineEvent> = state.events.map { it.toTimelineEvent() }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Column {
-                    Text("История объекта", fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Школа №7, Коломенская 16", fontSize = 16.sp,
+                title = {
+                    Text("История объекта", fontSize = 16.sp,
                         fontWeight = FontWeight.Bold)
-                } },
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 },
-                actions = {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.PictureAsPdf, contentDescription = "Экспорт PDF")
-                    }
-                }
             )
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            // Сводка в шапке
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Партий получено", fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("4 / 5", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text("Установлено", fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("3", fontSize = 22.sp, fontWeight = FontWeight.Bold,
-                            color = Color(0xFF10B981))
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text("Готовность", fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("60%", fontSize = 22.sp, fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary)
+            when {
+                state.loading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 }
-            }
-
-            // Timeline
-            LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(0.dp),
-            ) {
-                items(events) { e ->
-                    TimelineItem(e)
+                state.error != null -> {
+                    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+                        Text(
+                            state.error ?: "Ошибка",
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+                    }
+                }
+                events.isEmpty() -> {
+                    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                Icons.Default.History,
+                                null,
+                                Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                "По объекту пока нет событий",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "События появляются автоматически: создание партии, отгрузка, приёмка, начало смены, фото, отчёт.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            )
+                        }
+                    }
+                }
+                else -> {
+                    // Timeline — clickable
+                    LazyColumn(
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(0.dp),
+                    ) {
+                        items(events) { e ->
+                            TimelineItem(e, onClick = {
+                                // FIX(2026-05-12) build17: deep-link по targetId (если есть).
+                                // build15 открывал общие списки — теперь сразу на конкретный объект.
+                                val tid = e.targetId
+                                when (e.type) {
+                                    "batch" -> if (tid != null)
+                                        navController.navigate(com.belsi.work.presentation.navigation.AppRoute.BatchDetail.createRoute(tid))
+                                    else
+                                        navController.navigate(com.belsi.work.presentation.navigation.AppRoute.BatchList.route)
+                                    "photo" -> if (tid != null)
+                                        navController.navigate(com.belsi.work.presentation.navigation.AppRoute.PhotoDetail.createRoute(tid))
+                                    else
+                                        navController.navigate(com.belsi.work.presentation.navigation.AppRoute.CuratorPhotos.route)
+                                    "shift_start", "shift_end" -> if (tid != null)
+                                        navController.navigate(com.belsi.work.presentation.navigation.AppRoute.ShiftDetail.createRoute(tid))
+                                    else
+                                        navController.navigate(com.belsi.work.presentation.navigation.AppRoute.ShiftHistory.route)
+                                    else -> {}  // delivery / route / task / ticket — пока без таргета
+                                }
+                            })
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-private data class TimelineEvent(
+// FIX(2026-05-11) BELSI 2.0.0 build3: видимость internal — нужно ObjectHistoryViewModel
+// для конверсии TimelineEventDto → TimelineEvent.
+internal data class TimelineEvent(
     val time: String,
     val author: String,
     val title: String,
     val description: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
     val domainColor: Color,
+    // FIX(2026-05-12) BELSI 2.0.0 build15: тип для navigation
+    val type: String = "other",
+    // FIX(2026-05-12) build17: id цели события (batch, photo, shift) для deep-link.
+    val targetId: String? = null,
 )
 
 @Composable
-private fun TimelineItem(e: TimelineEvent) {
-    Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+private fun TimelineItem(e: TimelineEvent, onClick: () -> Unit = {}) {
+    Row(
+        modifier = Modifier
+            .height(IntrinsicSize.Min)
+            .clickable(onClick = onClick),
+    ) {
         // Левая колонка — линия с точкой
         Column(
             modifier = Modifier.width(40.dp).fillMaxHeight(),
@@ -152,24 +205,6 @@ private fun TimelineItem(e: TimelineEvent) {
     }
 }
 
-private fun mockEventsFor(objectId: String): List<TimelineEvent> {
-    val production = Color(0xFFD97706)
-    val logistics = Color(0xFF0EA5E9)
-    val installation = Color(0xFF4F46E5)
-    return listOf(
-        TimelineEvent("04 мая 09:00", "Начальник производства", "Партия UGL-0042 создана",
-            "20 подоконников, дедлайн 05.05 14:00", Icons.Default.Inventory, production),
-        TimelineEvent("04 мая 18:30", "Начальник производства", "Партия готова к отгрузке",
-            "Все 20 шт. собраны и упакованы", Icons.Default.CheckCircle, production),
-        TimelineEvent("05 мая 06:30", "Логист Иванов", "Партия в маршруте",
-            "Назначен водитель Петров, выезд 06:30", Icons.Default.LocalShipping, logistics),
-        TimelineEvent("05 мая 13:50", "Водитель Петров", "Доставка на объекте",
-            "Фото выгрузки прикреплены", Icons.Default.LocationOn, logistics),
-        TimelineEvent("05 мая 14:00", "Бригадир Хрулёв", "Приёмка подтверждена",
-            "Партия принята, начат монтаж", Icons.Default.Verified, installation),
-        TimelineEvent("05 мая 14:15", "Монтажник Сидоров", "Смена начата",
-            "Установка подоконников", Icons.Default.Build, installation),
-        TimelineEvent("05 мая 17:00", "Бригадир Хрулёв", "Партия установлена",
-            "20/20 шт. смонтированы. Часовые фото — 6 шт.", Icons.Default.Done, installation),
-    )
-}
+// FIX(2026-05-11) BELSI 2.0.0 build7: mockEventsFor удалён.
+// История объекта строится только из реальных событий /objects/{id}/timeline.
+// Пустое состояние теперь честно показывается empty-state блоком вместо выдумки.

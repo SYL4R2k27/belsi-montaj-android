@@ -36,10 +36,10 @@ class AiDashboardViewModel @Inject constructor(
      * через /curator/ai-daily-summary. Это новый блок сверху экрана.
      * При недоступности AI — секция скрывается (показываются только photo-stats).
      */
-    fun loadAiSummary() {
+    fun loadAiSummary(forceRefresh: Boolean = false) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(aiSummaryLoading = true)
-            aiRepository.getDailySummary().onSuccess { summary ->
+            aiRepository.getDailySummary(forceRefresh = forceRefresh).onSuccess { summary ->
                 _uiState.value = _uiState.value.copy(
                     aiSummary = summary,
                     aiSummaryLoading = false,

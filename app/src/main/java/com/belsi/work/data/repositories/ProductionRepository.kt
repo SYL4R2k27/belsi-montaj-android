@@ -15,6 +15,9 @@ import javax.inject.Singleton
 interface ProductionRepository {
     // Brigade
     suspend fun listBrigades(facilityId: String? = null): Result<List<Brigade>>
+    /** FIX(2026-05-14) BELSI 2.0.1: senior может держать до 15 бригад. */
+    suspend fun getMyBrigades(): Result<List<Brigade>>
+    /** Совместимость со старым кодом: возвращает первую бригаду или null. */
     suspend fun getMyBrigade(): Result<Brigade?>
     suspend fun getBrigadeMembers(brigadeId: String): Result<List<BrigadeMember>>
     suspend fun createBrigade(name: String, facilityId: String, seniorWorkerId: String? = null): Result<Brigade>
@@ -34,9 +37,21 @@ interface ProductionRepository {
     suspend fun updateOrderStatus(orderId: String, status: String, quantityDelivered: Int? = null, note: String? = null): Result<MaterialOrder>
 
     // Engineer
-    suspend fun getEngineerTasks(mine: Boolean = false, status: String? = null, type: String? = null): Result<List<EngineerTask>>
+    suspend fun getEngineerTasks(
+        mine: Boolean = false,
+        status: String? = null,
+        type: String? = null,
+        facilityId: String? = null,    // FIX(2026-05-14) BELSI 2.0.1: facility scope
+    ): Result<List<EngineerTask>>
     suspend fun createEngineerTask(request: EngineerTaskCreateRequest): Result<EngineerTask>
     suspend fun updateEngineerTaskStatus(taskId: String, status: String): Result<EngineerTask>
+    /** FIX(2026-05-14) BELSI 2.0.1: передача задачи другому. */
+    suspend fun reassignEngineerTask(taskId: String, newAssigneeId: String, comment: String? = null): Result<EngineerTask>
+    /** FIX(2026-05-14) BELSI 2.0.1: список инженеров для UI picker. */
+    suspend fun listEngineers(facilityId: String? = null): Result<List<EngineerPickItem>>
+
+    // Tools catalog (build14)
+    suspend fun getToolsCatalog(): Result<List<ToolCatalogItem>>
 }
 
 @Singleton
@@ -66,18 +81,22 @@ class ProductionRepositoryImpl @Inject constructor(
     override suspend fun listBrigades(facilityId: String?) =
         safeCall("listBrigades") { api.listBrigades(facilityId) }
 
-    override suspend fun getMyBrigade(): Result<Brigade?> {
+    override suspend fun getMyBrigades(): Result<List<Brigade>> {
         return try {
-            val response = api.getMyBrigade()
+            val response = api.getMyBrigades()
             if (response.isSuccessful) {
-                Result.success(response.body())
+                Result.success(response.body() ?: emptyList())
             } else {
-                Result.failure(Exception("getMyBrigade: ${response.code()}"))
+                Result.failure(Exception("getMyBrigades: ${response.code()}"))
             }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
+    /** Backward compat: возвращает первую из списка. */
+    override suspend fun getMyBrigade(): Result<Brigade?> =
+        getMyBrigades().map { it.firstOrNull() }
 
     override suspend fun getBrigadeMembers(brigadeId: String) =
         safeCall("getBrigadeMembers") { api.getBrigadeMembers(brigadeId) }
@@ -130,8 +149,8 @@ class ProductionRepositoryImpl @Inject constructor(
 
     // ─── Engineer ─────────────────────────────────────────────────
 
-    override suspend fun getEngineerTasks(mine: Boolean, status: String?, type: String?) =
-        safeCall("getEngineerTasks") { api.getEngineerTasks(mine, status, type) }
+    override suspend fun getEngineerTasks(mine: Boolean, status: String?, type: String?, facilityId: String?) =
+        safeCall("getEngineerTasks") { api.getEngineerTasks(mine, status, type, facilityId) }
 
     override suspend fun createEngineerTask(request: EngineerTaskCreateRequest) =
         safeCall("createEngineerTask") { api.createEngineerTask(request) }
@@ -140,4 +159,16 @@ class ProductionRepositoryImpl @Inject constructor(
         safeCall("updateEngineerTaskStatus") {
             api.updateEngineerTaskStatus(taskId, EngineerTaskStatusRequest(status))
         }
+
+    override suspend fun reassignEngineerTask(taskId: String, newAssigneeId: String, comment: String?) =
+        safeCall("reassignEngineerTask") {
+            api.reassignEngineerTask(taskId, EngineerTaskReassignRequest(newAssigneeId, comment))
+        }
+
+    override suspend fun listEngineers(facilityId: String?) =
+        safeCall("listEngineers") { api.listEngineers(facilityId) }
+
+    // FIX(2026-05-12) build14: tools catalog
+    override suspend fun getToolsCatalog() =
+        safeCall("getToolsCatalog") { api.getToolsCatalog() }
 }

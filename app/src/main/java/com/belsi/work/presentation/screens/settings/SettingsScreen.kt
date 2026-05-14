@@ -319,6 +319,9 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // FIX(2026-05-12) build19 hotfix: подключены реальные клики на 4 юр-документа.
+            // Раньше Privacy и TOS были `/* Navigate to */` (мёртвые клики). Теперь все 4
+            // документа открывают LegalDocumentScreen, который читает из LegalTexts.byType().
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -336,35 +339,60 @@ fun SettingsScreen(
                     Divider()
 
                     SettingsMenuItem(
-                        icon = Icons.Default.Security,
-                        title = "Политика конфиденциальности",
-                        onClick = { /* Navigate to privacy policy */ }
+                        icon = Icons.Default.Article,
+                        title = "Пользовательское соглашение",
+                        value = "Условия использования сервиса BELSI",
+                        onClick = {
+                            navController.navigate(
+                                com.belsi.work.presentation.navigation.AppRoute.LegalDocument.createRoute("tos")
+                            )
+                        }
                     )
 
                     Divider()
 
                     SettingsMenuItem(
-                        icon = Icons.Default.Article,
-                        title = "Пользовательское соглашение",
-                        onClick = { /* Navigate to terms */ }
+                        icon = Icons.Default.Security,
+                        title = "Политика конфиденциальности",
+                        value = "Согласие на обработку персональных данных (152-ФЗ)",
+                        onClick = {
+                            navController.navigate(
+                                com.belsi.work.presentation.navigation.AppRoute.LegalDocument.createRoute("privacy")
+                            )
+                        }
+                    )
+
+                    Divider()
+
+                    SettingsMenuItem(
+                        icon = Icons.Default.Description,
+                        title = "Лицензионное соглашение (EULA)",
+                        value = "Лицензия на использование приложения",
+                        onClick = {
+                            navController.navigate(
+                                com.belsi.work.presentation.navigation.AppRoute.LegalDocument.createRoute("eula")
+                            )
+                        }
+                    )
+
+                    Divider()
+
+                    SettingsMenuItem(
+                        icon = Icons.Default.AutoAwesome,
+                        title = "Согласие на AI-обработку",
+                        value = "Использование AI-сервиса для анализа фото и голоса",
+                        onClick = {
+                            navController.navigate(
+                                com.belsi.work.presentation.navigation.AppRoute.LegalDocument.createRoute("ai_consent")
+                            )
+                        }
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // FIX(2026-05-10) BELSI 1.3.0: AI-инфраструктура XeroCode.
-            // Брендинг согласно AI_INTEGRATION.md — "AI processing: XeroCode".
-            Text(
-                text = "AI processing: XeroCode",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            )
-
+            // FIX(2026-05-12) build19 hotfix: убран футер "AI processing: XeroCode".
+            // Имя AI-провайдера остаётся в AboutScreen (раздел документации) и
+            // в блоке согласия UpdateGate + текстах LegalTexts.
             Spacer(modifier = Modifier.height(24.dp))
 
             // Danger Zone

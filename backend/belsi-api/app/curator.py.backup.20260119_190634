@@ -1,0 +1,87 @@
+from fastapi import APIRouter
+from pydantic import BaseModel
+from datetime import datetime, timedelta
+from typing import List, Optional
+import uuid
+
+router = APIRouter(prefix="/curator", tags=["curator"])
+
+
+class CuratorInstallerSummaryOut(BaseModel):
+    id: str
+    phone: str
+    full_name: str
+    last_activity_at: Optional[datetime] = None
+    last_photo_status: str
+    pending_photos_count: int
+    total_shifts: int
+    total_hours: float
+
+
+class CuratorSupportTicketOut(BaseModel):
+    id: str
+    user_phone: str
+    user_name: Optional[str] = None
+    last_message_snippet: str
+    unread_count: int
+    status: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+
+@router.get("/installers", response_model=List[CuratorInstallerSummaryOut])
+async def get_installers():
+    """
+    ВРЕМЕННО: возвращаем тестовые данные, чтобы приложение уже
+    видело реальные ответы сервера. Позже привяжем к БД.
+    """
+    now = datetime.utcnow()
+    return [
+        CuratorInstallerSummaryOut(
+            id=str(uuid.uuid4()),
+            phone="+79990000001",
+            full_name="Иван Петров",
+            last_activity_at=now - timedelta(minutes=12),
+            last_photo_status="pending",
+            pending_photos_count=1,
+            total_shifts=5,
+            total_hours=36.5,
+        ),
+        CuratorInstallerSummaryOut(
+            id=str(uuid.uuid4()),
+            phone="+79990000002",
+            full_name="Сергей Смирнов",
+            last_activity_at=now - timedelta(hours=2),
+            last_photo_status="approved",
+            pending_photos_count=0,
+            total_shifts=12,
+            total_hours=96,
+        ),
+    ]
+
+
+@router.get("/support", response_model=List[CuratorSupportTicketOut])
+async def get_support_tickets():
+    now = datetime.utcnow()
+    return [
+        CuratorSupportTicketOut(
+            id=str(uuid.uuid4()),
+            user_phone="+79990000001",
+            user_name="Иван Петров",
+            last_message_snippet="Не прикрепляется фото за 13:00...",
+            unread_count=2,
+            status="new",
+            created_at=now - timedelta(hours=1),
+            updated_at=now - timedelta(minutes=20),
+        ),
+        CuratorSupportTicketOut(
+            id=str(uuid.uuid4()),
+            user_phone="+79990000002",
+            user_name="Сергей Смирнов",
+            last_message_snippet="Смена закрыта, но акт не появился",
+            unread_count=0,
+            status="in_progress",
+            created_at=now - timedelta(days=1),
+            updated_at=now - timedelta(hours=3),
+        ),
+    ]

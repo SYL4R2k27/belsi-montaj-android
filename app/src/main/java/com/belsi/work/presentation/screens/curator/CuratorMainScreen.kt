@@ -93,7 +93,7 @@ fun CuratorMainScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Belsi", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                        Text("BELSI.Команда", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, maxLines = 1)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -169,16 +169,43 @@ fun CuratorMainScreen(
                                 },
                                 leadingIcon = { Icon(Icons.Default.Inventory, null) }
                             )
-                            // FIX(2026-05-05): История объекта — timeline по доменам
+                            // FIX(2026-05-12) build17 P0: было ObjectHistory.createRoute("demo"),
+                            // backend получал "/objects/demo/timeline" → 422. Теперь — переход
+                            // в таб «Объекты», откуда куратор открывает конкретный объект.
                             DropdownMenuItem(
-                                text = { Text("📜 История объекта (демо)") },
+                                text = { Text("📜 История объектов") },
                                 onClick = {
                                     showOverflow = false
-                                    // В демо передаём заглушку UUID. Реально юзер должен
-                                    // выбрать объект из списка → не помещается в overflow.
-                                    navController.navigate(AppRoute.ObjectHistory.createRoute("demo"))
+                                    selectedTab = 1  // вкладка «Объекты»
                                 },
                                 leadingIcon = { Icon(Icons.Default.History, null) }
+                            )
+                            // FIX(2026-05-12) build19 Этап3+: Tool Transfer Hub
+                            DropdownMenuItem(
+                                text = { Text("🧰 Передачи инструмента") },
+                                onClick = {
+                                    showOverflow = false
+                                    navController.navigate(AppRoute.ToolTransferHub.createRoute("incoming"))
+                                },
+                                leadingIcon = { Icon(Icons.Default.Inventory2, null) }
+                            )
+                            // FIX(2026-05-14) BELSI 2.0.1: Return Flow overview
+                            DropdownMenuItem(
+                                text = { Text("⏪ Возвраты инструмента") },
+                                onClick = {
+                                    showOverflow = false
+                                    navController.navigate(AppRoute.CuratorReturns.route)
+                                },
+                                leadingIcon = { Icon(Icons.Default.AssignmentReturn, null) }
+                            )
+                            // FIX(2026-05-14) BELSI 2.0.1: единая лента алертов
+                            DropdownMenuItem(
+                                text = { Text("⚡ Лента алертов") },
+                                onClick = {
+                                    showOverflow = false
+                                    navController.navigate(AppRoute.CuratorAlertsFeed.route)
+                                },
+                                leadingIcon = { Icon(Icons.Default.NotificationsActive, null) }
                             )
                             DropdownMenuItem(
                                 text = { Text("Настройки") },
@@ -188,16 +215,8 @@ fun CuratorMainScreen(
                                 },
                                 leadingIcon = { Icon(Icons.Default.Settings, null) }
                             )
-                            // FIX(2026-05-03): debug-доступ к Driver/Logistician sandbox
-                            HorizontalDivider()
-                            DropdownMenuItem(
-                                text = { Text("🚛 BELSI.Driver (тест UI)") },
-                                onClick = {
-                                    showOverflow = false
-                                    navController.navigate(AppRoute.DriverPlayground.route)
-                                },
-                                leadingIcon = { Icon(Icons.Default.LocalShipping, null) }
-                            )
+                            // FIX(2026-05-13) release/2.0.1-internal: убран debug-блок
+                            // BELSI.Driver sandbox (был только для dev-юзера 9886).
                             if (selectedTab == 0) {
                                 HorizontalDivider()
                                 DropdownMenuItem(
@@ -257,9 +276,9 @@ fun CuratorMainScreen(
             } else {
                 when (selectedTab) {
                     0 -> DashboardTab(dashboard, foremen, localSites, viewModel, navController, navigateToTab)
-                    1 -> ForemenTab(foremen)
+                    1 -> ForemenTab(foremen, navController)
                     2 -> UsersTab(allUsers, navController)
-                    3 -> CuratorObjectsTab()
+                    3 -> CuratorObjectsTab(navController)
                     4 -> CuratorTasksScreen(
                         foremen = foremenFull,
                         unassignedInstallers = unassignedInstallers,
@@ -508,13 +527,16 @@ private fun DashboardTab(
             }
         }
         item {
+            // FIX(2026-05-12) build17 P1: правильные индексы табов.
+            // Раньше Фото→4 (был CuratorTasksScreen) и Тикеты→5 (был CuratorPhotosScreen).
+            // Реальные индексы: 4=Tasks, 5=Photos, 6=Tickets.
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 DashMiniCard("Фото", "${stats.pendingPhotos}", Icons.Default.CameraAlt,
                     MaterialTheme.belsiColors.warning, Modifier.weight(1f),
-                    onClick = { navigateToTab(4, null) })
+                    onClick = { navigateToTab(5, null) })
                 DashMiniCard("Тикеты", "${stats.openSupportTickets}", Icons.Default.Support,
                     MaterialTheme.colorScheme.error, Modifier.weight(1f),
-                    onClick = { navigateToTab(5, null) })
+                    onClick = { navigateToTab(6, null) })
             }
         }
 
@@ -709,7 +731,7 @@ private fun QuickActionCard(title: String, subtitle: String, icon: ImageVector, 
 // =====================================================================
 
 @Composable
-private fun ForemenTab(foremen: List<CuratorForemanDto>) {
+private fun ForemenTab(foremen: List<CuratorForemanDto>, navController: androidx.navigation.NavController? = null) {
     if (foremen.isEmpty()) {
         EmptyStateView(Icons.Default.Groups, "Нет бригадиров", "Бригадиры появятся после регистрации")
     } else {
@@ -719,17 +741,25 @@ private fun ForemenTab(foremen: List<CuratorForemanDto>) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(foremen, key = { it.id }) { foreman ->
-                ForemanCard(foreman)
+                // FIX(2026-05-12) build17 P2: ForemanCard кликабельна → детальный экран куратора.
+                ForemanCard(foreman, onClick = navController?.let {
+                    { it.navigate(AppRoute.CuratorUserDetail.createRoute(foreman.id)) }
+                })
             }
         }
     }
 }
 
 @Composable
-private fun ForemanCard(foreman: CuratorForemanDto) {
+private fun ForemanCard(foreman: CuratorForemanDto, onClick: (() -> Unit)? = null) {
     var expanded by remember { mutableStateOf(false) }
 
-    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        shape = MaterialTheme.shapes.medium,
+    ) {
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)) {

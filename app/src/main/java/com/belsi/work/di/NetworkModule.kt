@@ -196,6 +196,13 @@ object NetworkModule {
         return retrofit.create(ToolsApi::class.java)
     }
 
+    // FIX(2026-05-12) build19 Этап3: tool-transfer pipeline API
+    @Provides
+    @Singleton
+    fun provideToolTransferApi(retrofit: Retrofit): com.belsi.work.data.remote.api.ToolTransferApi {
+        return retrofit.create(com.belsi.work.data.remote.api.ToolTransferApi::class.java)
+    }
+
     @Provides
     @Singleton
     fun provideTasksApi(retrofit: Retrofit): TasksApi {
@@ -270,5 +277,25 @@ object NetworkModule {
     @Singleton
     fun provideAiApi(retrofit: Retrofit): com.belsi.work.data.remote.api.AiApi {
         return retrofit.create(com.belsi.work.data.remote.api.AiApi::class.java)
+    }
+
+    // FIX(2026-05-11) BELSI 2.0.0: Driver / Logistician API
+    @Provides
+    @Singleton
+    fun provideDriverApi(retrofit: Retrofit): com.belsi.work.data.remote.api.DriverApi {
+        return retrofit.create(com.belsi.work.data.remote.api.DriverApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLogistApi(retrofit: Retrofit): com.belsi.work.data.remote.api.LogistApi {
+        return retrofit.create(com.belsi.work.data.remote.api.LogistApi::class.java)
+    }
+
+    // FIX(2026-05-11) BELSI 2.0.0 build3: BrandCoreApi — multi-role + timeline + pipeline + idle
+    @Provides
+    @Singleton
+    fun provideBrandCoreApi(retrofit: Retrofit): com.belsi.work.data.remote.api.BrandCoreApi {
+        return retrofit.create(com.belsi.work.data.remote.api.BrandCoreApi::class.java)
     }
 }

@@ -36,13 +36,8 @@ fun ProfileScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
-    // FIX(2026-05-06): TEST-MODE переключатель ролей (debug only)
-    var showRoleSwitcher by remember { mutableStateOf(false) }
-    if (showRoleSwitcher) {
-        com.belsi.work.presentation.components.RoleSwitcherDialog(
-            onDismiss = { showRoleSwitcher = false }
-        )
-    }
+    // FIX(2026-05-13) release/2.0.1-internal: TEST-MODE переключатель удалён.
+    // Multi-role переключение через BrandRoleSwitcher bottom-sheet при логине.
 
     // Обновляем профиль при возвращении на экран
     LaunchedEffect(Unit) {
@@ -314,25 +309,8 @@ fun ProfileScreen(
                         onClick = { navController.navigate(AppRoute.Support.route) }
                     )
 
-                    // FIX(2026-05-03): debug-доступ к Driver/Logistician sandbox
-                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    ProfileMenuItem(
-                        icon = Icons.Default.LocalShipping,
-                        title = "🚛 BELSI.Driver (тест UI)",
-                        onClick = { navController.navigate(AppRoute.DriverPlayground.route) }
-                    )
-
-                    // FIX(2026-05-06): TEST-MODE — переключатель ролей.
-                    // Показываем ТОЛЬКО в debug-сборке (BELSI.Команда).
-                    // В прод-сборке для монтажников этот пункт скрыт.
-                    if (com.belsi.work.BuildConfig.DEBUG) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                        ProfileMenuItem(
-                            icon = Icons.Default.SwapHoriz,
-                            title = "🧪 Сменить роль (тест)",
-                            onClick = { showRoleSwitcher = true }
-                        )
-                    }
+                    // FIX(2026-05-13) release/2.0.1-internal: debug-блок удалён
+                    // (BELSI.Driver sandbox + role-switcher).
                 }
             }
 

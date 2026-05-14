@@ -1,0 +1,55 @@
+# app/foreman_team.py
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy import select
+
+from .db import get_db
+from .models import User, ForemanInvite
+from .auth import get_current_user
+from .schemas_foreman_team import ForemanTeamOut, ForemanTeamMemberOut
+
+router = APIRouter(prefix="/foreman/team", tags=["foreman-team"])
+
+
+@router.get("", response_model=ForemanTeamOut)
+def get_team(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # допускаем только бригадира
+    if current_user.role not in ("foreman", "FOREMAN"):
+        raise HTTPException(status_code=403, detail="Доступ только для бригадира")
+
+    # берём все accepted-инвайты, где installer_phone заполнен
+    invites = db.execute(
+        select(ForemanInvite)
+        .where(ForemanInvite.foreman_phone == current_user.phone)
+        .where(ForemanInvite.status == "accepted")
+        .where(ForemanInvite.installer_phone.isnot(None))
+    ).scalars().all()
+
+    installer_phones = sorted({i.installer_phone for i in invites if i.installer_phone})
+
+    # подтягиваем пользователей (если они есть в users)
+    users = []
+    if installer_phones:
+        users = db.execute(
+            select(User).where(User.phone.in_(installer_phones))
+        ).scalars().all()
+
+    users_by_phone = {u.phone: u for u in users}
+
+    items: list[ForemanTeamMemberOut] = []
+    for phone in installer_phones:
+        u = users_by_phone.get(phone)
+        items.append(
+            ForemanTeamMemberOut(
+                phone=phone,
+                user_id=str(u.id) if u else None,
+                role=u.role if u else None,
+                first_name=getattr(u, 'first_name', None) if u else None,
+                last_name=getattr(u, 'last_name', None) if u else None,
+            )
+        )
+
+    return ForemanTeamOut(items=items, count=len(items))

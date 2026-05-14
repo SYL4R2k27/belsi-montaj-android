@@ -387,12 +387,16 @@ fun InstallerDetailScreen(
 
     // Диалог перевода на объект
     if (showReassignDialog) {
+        // FIX(2026-05-12) build17 P0: грузим объекты при открытии диалога.
+        LaunchedEffect(Unit) { viewModel.loadAvailableObjects() }
         ReassignDialog(
             onDismiss = { showReassignDialog = false },
             onConfirm = { siteObjectId ->
                 showReassignDialog = false
                 viewModel.reassignInstaller(installerId, siteObjectId)
-            }
+            },
+            objects = uiState.availableObjects,
+            isLoading = uiState.isLoadingObjects,
         )
     }
 }
@@ -478,12 +482,21 @@ private fun PauseStatItem(
     }
 }
 
+/**
+ * FIX(2026-05-12) build17 P0: ReassignDialog теперь использует dropdown с реальным списком
+ * объектов из ObjectsRepository. Раньше — OutlinedTextField для ручного ввода UUID.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReassignDialog(
     onDismiss: () -> Unit,
-    onConfirm: (siteObjectId: String) -> Unit
+    onConfirm: (siteObjectId: String) -> Unit,
+    objects: List<com.belsi.work.data.remote.dto.objects.SiteObjectDto>,
+    isLoading: Boolean,
 ) {
-    var siteObjectId by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+    var selectedId by remember { mutableStateOf<String?>(null) }
+    val selected = remember(selectedId, objects) { objects.firstOrNull { it.id == selectedId } }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -491,22 +504,69 @@ private fun ReassignDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Введите ID объекта, на который нужно перевести монтажника",
+                    "Выберите объект, на который нужно перевести монтажника",
                     style = MaterialTheme.typography.bodyMedium
                 )
-                OutlinedTextField(
-                    value = siteObjectId,
-                    onValueChange = { siteObjectId = it },
-                    label = { Text("ID объекта") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                if (isLoading) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Загрузка объектов…", style = MaterialTheme.typography.bodySmall)
+                    }
+                } else if (objects.isEmpty()) {
+                    Text(
+                        "Нет доступных объектов",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                    )
+                } else {
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded },
+                    ) {
+                        OutlinedTextField(
+                            value = selected?.let { "${it.name}${it.address?.let { a -> " · $a" } ?: ""}" } ?: "Выберите объект",
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                            label = { Text("Объект") },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                            },
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                        ) {
+                            objects.forEach { obj ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(obj.name, fontWeight = FontWeight.Medium)
+                                            obj.address?.let {
+                                                Text(it, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                            }
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedId = obj.id
+                                        expanded = false
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             Button(
-                onClick = { if (siteObjectId.isNotBlank()) onConfirm(siteObjectId) },
-                enabled = siteObjectId.isNotBlank(),
+                onClick = { selectedId?.let { onConfirm(it) } },
+                enabled = selectedId != null,
                 colors = ButtonDefaults.buttonColors(containerColor = BelsiPrimary)
             ) {
                 Text("Перевести")

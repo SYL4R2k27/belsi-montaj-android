@@ -13,7 +13,6 @@ import com.belsi.work.data.local.database.dao.PhotoDao
 import com.belsi.work.data.local.database.entities.PhotoEntity
 import com.belsi.work.data.repositories.ShiftRepository
 import com.belsi.work.data.workers.PhotoUploadWorker
-import com.belsi.work.utils.NetworkMonitor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,7 +31,9 @@ import kotlin.math.min
 class CameraViewModel @Inject constructor(
     private val shiftRepository: ShiftRepository,
     private val photoDao: PhotoDao,
-    private val networkMonitor: NetworkMonitor
+    // FIX(2026-05-11) BELSI 2.0.0 build10: NetworkMonitor убран — он инжектился
+    // но никогда не читался (mob аудит). Реальная network-логика идёт через
+    // PhotoUploadWorker.enqueueUpload() который сам ждёт сеть (Constraints).
 ) : ViewModel() {
 
     private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
@@ -77,11 +78,21 @@ class CameraViewModel @Inject constructor(
                     return@launch
                 }
 
-                // Проверка: если shiftId начинается с "local-", смена ещё не синхронизирована
+                // FIX(2026-05-11) BELSI 2.0.0 build9: разрешаем фото на local-* смене.
+                // Раньше блокировали — это нарушало обещание offline-first: юзер в туннеле
+                // не мог снять часовое фото вообще пока смена не синканётся.
+                //
+                // Теперь:
+                //   1) PhotoEntity сохраняется с shiftId="local-<ts>" (status=LOCAL)
+                //   2) SyncWorker.syncOfflineShiftStart при появлении сети синканёт смену
+                //      и обновит photoDao.updateShiftId(localId, serverId)
+                //   3) PhotoUploadWorker увидит обновлённый shiftId и загрузит фото
+                //
+                // Так получается полный offline-first сценарий: смена создана локально,
+                // фото снято локально, всё доедет когда появится сеть.
                 if (shiftId.startsWith("local-")) {
-                    _errorMessage.value = "Смена ещё синхронизируется с сервером. Подождите несколько секунд"
-                    _isLoading.value = false
-                    return@launch
+                    Log.i(TAG, "Photo on local shift $shiftId — будет загружено после синка смены")
+                    // НЕ блокируем — продолжаем сохранение в Room. Worker подхватит.
                 }
 
                 // FIX(2026-05-01): убрана обязательная привязка к объекту.

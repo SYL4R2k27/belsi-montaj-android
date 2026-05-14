@@ -189,16 +189,37 @@ class CuratorUserDetailViewModel @Inject constructor(
         _uiState.update { it.copy(showTaskDialog = false) }
     }
 
+    /**
+     * FIX(2026-05-12) build17 P0: переписано со stub'а на реальный API.
+     * Раньше: просто выставляло taskCreated=true без вызова. Задачи не создавались.
+     */
     fun createTask(userId: String, title: String, description: String, priority: String) {
         viewModelScope.launch {
-            android.util.Log.d("CuratorUserDetail", "Creating task: $title for user $userId")
-            _uiState.update {
-                it.copy(
-                    showTaskDialog = false,
-                    taskCreated = true
-                )
-            }
+            _uiState.update { it.copy(showTaskDialog = false) }
+            val req = com.belsi.work.data.remote.api.CreateTaskRequest(
+                title = title,
+                description = description.ifBlank { null },
+                assignedTo = userId,
+                priority = priority.ifBlank { "normal" },
+            )
+            curatorRepository.createTask(req).fold(
+                onSuccess = {
+                    _uiState.update { it.copy(taskCreated = true) }
+                },
+                onFailure = { e ->
+                    _uiState.update {
+                        it.copy(
+                            taskCreated = false,
+                            error = e.message ?: "Не удалось создать задачу",
+                        )
+                    }
+                }
+            )
         }
+    }
+
+    fun clearTaskCreated() {
+        _uiState.update { it.copy(taskCreated = false) }
     }
 
     fun showRoleDialog() {

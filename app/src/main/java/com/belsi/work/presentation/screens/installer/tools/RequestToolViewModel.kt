@@ -76,11 +76,12 @@ class RequestToolViewModel @Inject constructor(
                 "tool_name" to toolName
             )
 
+            // FIX(2026-05-12) build17 P1: "medium" не в списке backend (low/normal/high/urgent).
             taskRepository.createTask(
                 title = title,
                 description = description,
                 assignedTo = foremanId,
-                priority = "medium",
+                priority = "normal",
                 dueAt = null,
                 meta = meta
             )

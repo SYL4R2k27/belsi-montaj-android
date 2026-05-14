@@ -27,6 +27,21 @@ data class AiDailySummaryResponse(
     val recommendations: List<String> = emptyList(),
     val cached: Boolean = false,
     @SerialName("cached_at") val cachedAt: String? = null,
+    // FIX(2026-05-12) build19 hotfix: сырые цифры из БД — UI показывает их рядом
+    // с AI-нарративом как ground-truth. Помогает когда AI-текст stale (из кэша)
+    // или AI неправильно интерпретировал данные.
+    @SerialName("raw_stats") val rawStats: AiRawStatsDto? = null,
+)
+
+@Serializable
+data class AiRawStatsDto(
+    @SerialName("active_now") val activeNow: Int = 0,
+    @SerialName("started_today") val startedToday: Int = 0,
+    @SerialName("finished_today") val finishedToday: Int = 0,
+    @SerialName("work_hours") val workHours: Double = 0.0,
+    @SerialName("idle_hours") val idleHours: Double = 0.0,
+    @SerialName("pause_hours") val pauseHours: Double = 0.0,
+    @SerialName("computed_at") val computedAt: String? = null,
 )
 
 @Serializable

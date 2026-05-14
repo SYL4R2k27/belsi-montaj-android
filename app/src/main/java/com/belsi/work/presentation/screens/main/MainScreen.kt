@@ -14,6 +14,10 @@ import com.belsi.work.presentation.screens.profile.ProfileScreen
 import com.belsi.work.presentation.screens.messenger.ChatHubScreen
 import com.belsi.work.presentation.screens.tasks.InstallerTasksScreen
 
+/**
+ * FIX(2026-05-12) build18 P3: главный экран монтажника.
+ * Добавлен таб TOOLS — «Мои инструменты», переход на ToolsList (с фильтром issued_to=me).
+ */
 @Composable
 fun MainScreen(navController: NavController) {
     var selectedTab by remember { mutableStateOf(MainTab.SHIFT) }
@@ -39,6 +43,8 @@ fun MainScreen(navController: NavController) {
             MainTab.SHIFT -> ShiftScreen(navController = navController)
             MainTab.PHOTOS -> PhotosScreenSimple(navController = navController)
             MainTab.TASKS -> InstallerTasksScreen()
+            // FIX(2026-05-12) build18 P3: «Мои инструменты» — открывается ToolsList в режиме installer.
+            MainTab.TOOLS -> com.belsi.work.presentation.screens.tools.ToolsListScreen(navController = navController)
             MainTab.PROFILE -> ProfileScreen(navController = navController)
             MainTab.CHAT -> ChatHubScreen(navController = navController)
         }
@@ -52,6 +58,7 @@ enum class MainTab(
     SHIFT("Смена", Icons.Default.AccessTime),
     PHOTOS("Фото", Icons.Default.Photo),
     TASKS("Задачи", Icons.Default.Assignment),
+    TOOLS("Инструменты", Icons.Default.Build),
     PROFILE("Профиль", Icons.Default.Person),
     CHAT("Чат", Icons.Default.Chat)
 }

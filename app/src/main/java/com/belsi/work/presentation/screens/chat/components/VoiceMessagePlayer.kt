@@ -1,5 +1,6 @@
 package com.belsi.work.presentation.screens.chat.components
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -9,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
@@ -115,23 +117,41 @@ fun VoiceMessagePlayer(
             )
         }
 
-        // Слайдер прогресса
-        Slider(
-            value = progress,
-            onValueChange = { value ->
-                progress = value
-                val dur = player.duration.takeIf { it > 0 } ?: totalDurationMs
-                val seekPos = (value * dur).toLong()
-                player.seekTo(seekPos)
-                currentPositionMs = seekPos
-            },
-            modifier = Modifier.weight(1f),
-            colors = SliderDefaults.colors(
-                thumbColor = accentColor,
-                activeTrackColor = accentColor,
-                inactiveTrackColor = trackColor
+        // FIX(2026-05-14) BELSI 2.0.1: AudioWaveform визуализация по образцу Telegram.
+        // Раньше: обычный Slider. Теперь: бары waveform с прогрессом подсветки.
+        // Placeholder waveform — псевдо-случайные амплитуды (стабильные на основе voiceUrl
+        // hash → одинаковые при каждом рендере одного сообщения). Реальный waveform
+        // от бэка будет в `message.voice_waveform_bytes` — backlog (см. docs/plans/...
+        // audio-waveform-backend.md когда появится).
+        val placeholderWaveform = remember(voiceUrl) {
+            com.belsi.work.audio.AudioWaveform.fromPcmSamples(
+                pcmSamples = generatePlaceholderPcm(voiceUrl),
+                targetBars = 60,
             )
-        )
+        }
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .pointerInput(player) {
+                    detectTapGestures { offset ->
+                        // Seek по тапу — преобразуем относительную позицию в время
+                        val relativeX = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
+                        val dur = player.duration.takeIf { it > 0 } ?: totalDurationMs
+                        val seekPos = (relativeX * dur).toLong()
+                        progress = relativeX
+                        player.seekTo(seekPos)
+                        currentPositionMs = seekPos
+                    }
+                },
+        ) {
+            com.belsi.work.audio.AudioWaveformView(
+                waveform = placeholderWaveform,
+                progress = progress,
+                playedColor = accentColor,
+                unplayedColor = trackColor,
+                height = 32.dp,
+            )
+        }
 
         // Длительность
         Text(
@@ -151,4 +171,30 @@ private fun formatVoiceDuration(ms: Long): String {
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return "%d:%02d".format(minutes, seconds)
+}
+
+/**
+ * FIX(2026-05-14) BELSI 2.0.1: детерминированный placeholder PCM на основе voiceUrl.
+ *
+ * Зачем: пока backend не возвращает реальный waveform, нам нужно что-то нарисовать.
+ * Решение: seeded random на основе hash(voiceUrl) → одинаковая «волна» каждый раз
+ * для одного сообщения. Выглядит как реальная аудио-визуализация, не «прямая палка».
+ *
+ * Когда появится `message.voice_waveform_bytes` от бэка — этот helper удалить,
+ * waveform создавать через `AudioWaveform(bitstream, bitsPerSample = 5)`.
+ */
+private fun generatePlaceholderPcm(voiceUrl: String): ShortArray {
+    // ~3 секунды псевдо-аудио, 1 секунда = ~120 sample'ов
+    val seed = voiceUrl.hashCode().toLong()
+    val random = java.util.Random(seed)
+    val samples = ShortArray(360)
+    for (i in samples.indices) {
+        // Базовая амплитуда — нелинейный envelope (fade-in + fade-out + случайный bump)
+        val t = i.toFloat() / samples.size
+        val envelope = kotlin.math.sin((t * Math.PI).toFloat()).coerceAtLeast(0.15f)
+        val variation = (random.nextFloat() * 0.6f + 0.4f)
+        val amplitude = (envelope * variation * Short.MAX_VALUE * 0.8f).toInt()
+        samples[i] = amplitude.coerceIn(-Short.MAX_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
+    }
+    return samples
 }

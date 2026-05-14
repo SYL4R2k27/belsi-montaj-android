@@ -139,7 +139,7 @@ fun ForemanMainScreen(
                 TopAppBar(
                     title = {
                         Column {
-                            Text("Belsi", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                            Text("BELSI.Команда", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, maxLines = 1)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -174,7 +174,7 @@ fun ForemanMainScreen(
                         FloatingActionButton(
                             onClick = {
                                 viewModel.getOrCreateShiftId { shiftId ->
-                                    navController.navigate("camera/$shiftId/0")
+                                    navController.navigate(com.belsi.work.presentation.navigation.AppRoute.CameraWithParams.createRoute(shiftId, 0))
                                 }
                             },
                             containerColor = MaterialTheme.colorScheme.primary,
@@ -222,6 +222,14 @@ fun ForemanMainScreen(
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 } else {
+                    // FIX(2026-05-11) BELSI 2.0.0 build5: на expanded экранах
+                    // (Z Fold open, tablets) ограничиваем контент таба до 1100dp
+                    // и центрируем — иначе списки команды и фото растягиваются
+                    // на 1232dp Tab S Ultra. Брендбук foldable-tablet 15.
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.TopCenter,
+                    ) { Box(modifier = Modifier.widthIn(max = 1100.dp).fillMaxSize()) {
                     when (selectedTab) {
                         ForemanTab.TEAM -> TeamTab(teamMembers, tools, createdTasks, pendingPhotos, navController, foremanShift, viewModel)
                         ForemanTab.PHOTOS -> PhotosTab(teamPhotos, viewModel, navController)
@@ -240,6 +248,7 @@ fun ForemanMainScreen(
                         )
                         ForemanTab.PROFILE -> ProfileScreen(navController)
                     }
+                    } }  // FIX(2026-05-11) build5: close max-width wrapper
                 }
             }
         }
@@ -331,9 +340,29 @@ private fun TeamTab(
                 onStartShift = { viewModel.startForemanShift() },
                 onTakePhoto = {
                     viewModel.getOrCreateShiftId { shiftId ->
-                        navController.navigate("camera/$shiftId/0")
+                        navController.navigate(com.belsi.work.presentation.navigation.AppRoute.CameraWithParams.createRoute(shiftId, 0))
                     }
                 }
+            )
+        }
+
+        // FIX(2026-05-12) BELSI 2.0.0 build15: «К нам едут» — партии для приёмки/монтажа
+        item {
+            com.belsi.work.presentation.components.IncomingBatchesWidget(
+                onBatchClick = { bid ->
+                    navController.navigate(com.belsi.work.presentation.navigation.AppRoute.BatchDetail.createRoute(bid))
+                },
+            )
+        }
+
+        // FIX(2026-05-12) build19 Этап3+: входящий инструмент (баннер если есть)
+        item {
+            com.belsi.work.presentation.screens.tools.ToolInboxBanner(
+                onClick = {
+                    navController.navigate(
+                        com.belsi.work.presentation.navigation.AppRoute.ToolTransferHub.createRoute("incoming")
+                    )
+                },
             )
         }
 
@@ -998,7 +1027,7 @@ private fun PhotosTab(
                     .fillMaxWidth()
                     .clickable {
                         viewModel.getOrCreateShiftId { shiftId ->
-                            navController.navigate("camera/$shiftId/0")
+                            navController.navigate(com.belsi.work.presentation.navigation.AppRoute.CameraWithParams.createRoute(shiftId, 0))
                         }
                     },
                 shape = MaterialTheme.shapes.medium,

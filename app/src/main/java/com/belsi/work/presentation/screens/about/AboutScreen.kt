@@ -64,7 +64,7 @@ fun AboutScreen(
 
             // App Name
             Text(
-                text = "Belsi.Монтаж",
+                text = "BELSI.Команда",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )

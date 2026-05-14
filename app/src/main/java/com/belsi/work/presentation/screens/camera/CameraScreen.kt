@@ -123,6 +123,17 @@ fun CameraScreen(
             )
         }
     ) { padding ->
+        // FIX(2026-05-11) BELSI 2.0.0 build5: TableTop posture — на Z Fold лежащем
+        // как ноутбук (HALF_OPENED + HORIZONTAL fold) превью занимает верхнюю
+        // половину экрана, кнопки и подсказки переезжают в нижнюю. Брендбук
+        // foldable-tablet раздел 03+13.
+        val posture = com.belsi.work.presentation.utils.rememberDevicePosture()
+        val isTableTop = posture == com.belsi.work.presentation.utils.DevicePosture.TABLE_TOP
+        val previewModifier = if (isTableTop) {
+            Modifier.fillMaxWidth().fillMaxHeight(0.5f)
+        } else {
+            Modifier.fillMaxSize()
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -159,7 +170,7 @@ fun CameraScreen(
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxSize()
+                    modifier = previewModifier.align(Alignment.TopCenter)
                 )
 
                 // Capture Button, Category and Comment

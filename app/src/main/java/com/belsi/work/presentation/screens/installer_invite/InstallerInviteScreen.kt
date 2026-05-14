@@ -96,14 +96,15 @@ fun InstallerInviteScreen(
             OutlinedTextField(
                 value = inviteCode,
                 onValueChange = { newValue ->
-                    // Санитизация: удаляем переносы строк и берём только первые 16 символов
-                    // Это защита от случайной вставки большого текста из буфера обмена
+                    // FIX(2026-05-12) build18 P3: backend foreman.py:_gen_code(6) генерирует
+                    // ровно 6 символов. Раньше тут было .take(16) — расхождение с RedeemInviteScreen
+                    // и с backend. Теперь обе формы принимают 6 символов alphanumeric uppercase.
                     val sanitized = newValue
                         .replace("\n", "")
                         .replace("\r", "")
-                        .take(16)
                         .uppercase()
                         .filter { it.isLetterOrDigit() }
+                        .take(6)
                     inviteCode = sanitized
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -133,7 +134,8 @@ fun InstallerInviteScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                enabled = inviteCode.isNotBlank() && !isLoading,
+                // FIX(2026-05-12) build18 P3: 6 символов — как в RedeemInviteScreen и backend.
+                enabled = inviteCode.length == 6 && !isLoading,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.onPrimary,
                     contentColor = MaterialTheme.colorScheme.primary,

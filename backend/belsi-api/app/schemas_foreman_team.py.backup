@@ -1,0 +1,35 @@
+# app/schemas_foreman_team.py
+from __future__ import annotations
+
+from datetime import datetime
+from uuid import UUID
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict
+
+
+class ForemanTeamMemberOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    phone: str
+    user_id: Optional[str] = None
+    role: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+
+class ForemanTeamOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    items: List[ForemanTeamMemberOut]
+    count: int
+
+
+class ForemanTeamMemberRemoveRequest(BaseModel):
+    installer_id: UUID
+
+
+# Legacy aliases for backward compatibility
+ForemanInstallerItem = ForemanTeamMemberOut
+ForemanInstallerListOut = ForemanTeamOut
+ForemanInstallerRemoveRequest = ForemanTeamMemberRemoveRequest

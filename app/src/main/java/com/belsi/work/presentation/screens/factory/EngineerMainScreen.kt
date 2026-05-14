@@ -11,17 +11,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.belsi.work.data.models.EngineerTask
+import com.belsi.work.presentation.components.role.RoleEmptyState
+import com.belsi.work.presentation.components.role.RoleStatCard
+import com.belsi.work.presentation.components.role.RoleStatusPill
+import com.belsi.work.presentation.components.role.Severity
+import com.belsi.work.presentation.components.role.colors
 
 /**
- * FIX(2026-05-06): EngineerMainScreen — подключён к API.
- * Задачи через GET /production/engineer/tasks.
+ * EngineerMainScreen — дашборд инженера производства.
+ *
+ * FIX(2026-05-12) build19 hotfix: единая дизайн-система (RoleStatCard / Pill / Severity).
+ * Удалены 8 hardcoded Color(0xFF...).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,7 +47,6 @@ fun EngineerMainScreen(
                         Icon(Icons.Default.Refresh, contentDescription = "Обновить")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AmberPrimary.copy(alpha = 0.1f))
             )
         },
     ) { padding ->
@@ -52,8 +57,8 @@ fun EngineerMainScreen(
                 modifier = Modifier.padding(16.dp).fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                MiniStat("Мои задачи", "${state.myTasks.size}", AmberPrimary)
-                MiniStat("Свободные", "${state.openTasks.size}", Color(0xFF10B981))
+                RoleStatCard("Мои задачи", "${state.myTasks.size}", Severity.PRIMARY, modifier = Modifier.weight(1f))
+                RoleStatCard("Свободные",  "${state.openTasks.size}", Severity.SUCCESS, modifier = Modifier.weight(1f))
             }
 
             TabRow(selectedTabIndex = tab) {
@@ -74,15 +79,11 @@ fun EngineerMainScreen(
 
             val tasks = if (tab == 0) state.myTasks else state.openTasks
             if (tasks.isEmpty()) {
-                Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(if (tab == 0) "🛠" else "🔍", fontSize = 56.sp)
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            if (tab == 0) "Нет назначенных задач" else "Нет свободных задач",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    RoleEmptyState(
+                        emoji = if (tab == 0) "🛠" else "🔍",
+                        title = if (tab == 0) "Нет назначенных задач" else "Нет свободных задач",
+                    )
                 }
             } else {
                 LazyColumn(
@@ -100,6 +101,7 @@ fun EngineerMainScreen(
 
 @Composable
 private fun EngineerTaskCard(task: EngineerTask, isMine: Boolean, viewModel: EngineerViewModel) {
+    val (successFg, _) = Severity.SUCCESS.colors()
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -135,7 +137,7 @@ private fun EngineerTaskCard(task: EngineerTask, isMine: Boolean, viewModel: Eng
                         Button(
                             onClick = { viewModel.completeTask(task.id) },
                             modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                            colors = ButtonDefaults.buttonColors(containerColor = successFg),
                         ) {
                             Text("Готово")
                         }
@@ -148,16 +150,17 @@ private fun EngineerTaskCard(task: EngineerTask, isMine: Boolean, viewModel: Eng
 
 @Composable
 private fun PriorityBadge(p: String) {
-    val (icon, color) = when (p) {
-        "urgent" -> "🔥" to Color(0xFFEF4444)
-        "high" -> "⚡" to Color(0xFFF59E0B)
-        "low" -> "·" to Color.Gray
-        else -> "•" to Color(0xFF6366F1)
+    val (icon, severity) = when (p) {
+        "urgent" -> "🔥" to Severity.ERROR
+        "high"   -> "⚡" to Severity.WARNING
+        "low"    -> "·" to Severity.NEUTRAL
+        else     -> "•" to Severity.PRIMARY
     }
+    val (fg, _) = severity.colors()
     Box(
         modifier = Modifier
             .size(20.dp)
-            .background(color.copy(alpha = 0.15f), RoundedCornerShape(10.dp)),
+            .background(fg.copy(alpha = 0.15f), RoundedCornerShape(10.dp)),
         contentAlignment = Alignment.Center,
     ) {
         Text(icon, fontSize = 11.sp)
@@ -166,31 +169,12 @@ private fun PriorityBadge(p: String) {
 
 @Composable
 private fun StatusBadge(status: String) {
-    val (text, color) = when (status) {
-        "open" -> "Открыта" to Color(0xFFFBBF24)
-        "in_progress" -> "В работе" to Color(0xFF6366F1)
-        "done" -> "Готова" to Color(0xFF10B981)
-        "cancelled" -> "Отмена" to Color.Gray
-        else -> status to Color.Gray
+    val (text, severity) = when (status) {
+        "open"        -> "Открыта"  to Severity.WARNING
+        "in_progress" -> "В работе" to Severity.PRIMARY
+        "done"        -> "Готова"   to Severity.SUCCESS
+        "cancelled"   -> "Отмена"   to Severity.NEUTRAL
+        else          -> status      to Severity.NEUTRAL
     }
-    Box(
-        modifier = Modifier
-            .background(color.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-    ) {
-        Text(text, fontSize = 10.sp, color = color, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun RowScope.MiniStat(label: String, value: String, color: Color) {
-    Card(
-        modifier = Modifier.weight(1f),
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
-    ) {
-        Column(Modifier.padding(12.dp)) {
-            Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = color)
-        }
-    }
+    RoleStatusPill(text = text, severity = severity)
 }

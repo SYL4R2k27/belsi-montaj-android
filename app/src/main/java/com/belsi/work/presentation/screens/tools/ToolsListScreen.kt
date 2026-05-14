@@ -42,6 +42,17 @@ fun ToolsListScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Мои инструменты") },
+                actions = {
+                    // FIX(2026-05-12) build19 Этап3+: переход в хаб передач инструмента
+                    IconButton(onClick = {
+                        navController.navigate(AppRoute.ToolTransferHub.createRoute("incoming"))
+                    }) {
+                        Icon(
+                            Icons.Default.Inventory2,
+                            contentDescription = "Передачи инструмента",
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -88,6 +99,14 @@ fun ToolsListScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // FIX(2026-05-12) build19 Этап3+: входящий инструмент (баннер)
+                    item {
+                        com.belsi.work.presentation.screens.tools.ToolInboxBanner(
+                            onClick = {
+                                navController.navigate(AppRoute.ToolTransferHub.createRoute("incoming"))
+                            },
+                        )
+                    }
                     // Активные инструменты
                     if (uiState.hasActiveTools) {
                         item {

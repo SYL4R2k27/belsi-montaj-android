@@ -84,11 +84,12 @@ fun AiInsightCard(
             )
         }
 
-        // Footer: AI-анализ · XeroCode (мелкий, серый)
+        // FIX(2026-05-12) build19 hotfix: убран суффикс "· XeroCode" из футера.
+        // Имя провайдера остаётся в Settings/About/LegalTexts/UpdateGate.
         if (showFooter) {
             Spacer(Modifier.height(2.dp))
             Text(
-                "AI-анализ · XeroCode",
+                "AI-анализ",
                 fontSize = 10.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             )

@@ -37,7 +37,7 @@ import com.belsi.work.presentation.screens.debug.DebugSettingsScreen
 import com.belsi.work.presentation.screens.gallery.PhotoGalleryScreen
 import com.belsi.work.presentation.screens.tools.ToolsListScreen
 import com.belsi.work.presentation.screens.tools.ToolIssueScreen
-import com.belsi.work.presentation.screens.tools.ToolReturnScreen
+// FIX(2026-05-12) build17: ToolReturnScreen import удалён — placeholder route не нужен.
 import com.belsi.work.presentation.screens.curator.tools.CuratorToolsScreen
 import com.belsi.work.presentation.screens.curator.support.CuratorSupportScreen
 import com.belsi.work.presentation.screens.installer.invite.RedeemInviteScreen
@@ -72,6 +72,7 @@ fun AppNavHost(
 
         // Login (password auth)
         composable(AppRoute.Login.route) {
+            // FIX(2026-05-12) build19+: финальный LoginScreen (C2 · mesh accent + dynamic greeting)
             LoginScreen(navController = navController)
         }
 
@@ -128,9 +129,89 @@ fun AppNavHost(
             CuratorMainScreen(navController = navController)
         }
 
-        // FIX(2026-05-03): Driver/Logistician sandbox — Этап A (мок-данные)
-        composable(AppRoute.DriverPlayground.route) {
-            com.belsi.work.presentation.screens.driver.RoleTestPlaygroundScreen(navController = navController)
+        // FIX(2026-05-13) release/2.0.1-internal: убран DriverPlayground route
+        // (sandbox-экран для тестирования). Production routes ниже.
+        // ─────────────────────────────────────────────────────────────────
+        composable(AppRoute.DriverHome.route) {
+            com.belsi.work.presentation.screens.driver.DriverHomeScreen(
+                onPointClick = { pointId ->
+                    navController.navigate(AppRoute.DriverPointDetail.createRoute(pointId))
+                },
+                onMenuClick = { /* TODO menu */ },
+                topBar = {},  // build16: используем дефолт пустой topBar
+            )
+        }
+        composable(
+            route = AppRoute.DriverPointDetail.route,
+            arguments = listOf(androidx.navigation.navArgument("pointId") { type = androidx.navigation.NavType.StringType }),
+        ) { entry ->
+            val pointId = entry.arguments?.getString("pointId") ?: return@composable
+            com.belsi.work.presentation.screens.driver.DriverPointDetailScreen(
+                pointId = pointId,
+                onCameraClick = { eventType ->
+                    // TODO: camera flow с GPS (build11 DriverEventCameraScreen) — пока через AppRoute.Camera
+                    navController.navigate(AppRoute.Camera.route)
+                },
+                onMarkDelivered = { navController.popBackStack() },
+            )
+        }
+        composable(AppRoute.LogisticianHome.route) {
+            com.belsi.work.presentation.screens.logistician.LogisticianHomeScreen(
+                onCreateRoute = { navController.navigate(AppRoute.LogistCreateRoute.route) },
+                onRequestClick = { id -> navController.navigate(AppRoute.LogistRequestDetail.createRoute(id)) },
+                onRouteClick = { id -> navController.navigate(AppRoute.LogistRouteDetail.createRoute(id)) },
+                onBatchesClick = { navController.navigate(AppRoute.BatchList.route) },
+                onDriverListClick = { navController.navigate(AppRoute.LogistDriverList.route) },
+                topBar = {},
+            )
+        }
+        composable(AppRoute.LogistDriverList.route) {
+            com.belsi.work.presentation.screens.logistician.LogistDriverListScreen(
+                onDriverClick = { id -> navController.navigate(AppRoute.LogistDriverDetail.createRoute(id)) },
+                onCreateRoute = { navController.navigate(AppRoute.LogistCreateRoute.route) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = AppRoute.LogistDriverDetail.route,
+            arguments = listOf(androidx.navigation.navArgument("driverId") { type = androidx.navigation.NavType.StringType }),
+        ) { entry ->
+            val driverId = entry.arguments?.getString("driverId") ?: return@composable
+            com.belsi.work.presentation.screens.logistician.LogistDriverDetailScreen(
+                driverId = driverId,
+                onCreateRoute = { navController.navigate(AppRoute.LogistCreateRoute.route) },
+                onRouteClick = { rid -> navController.navigate(AppRoute.LogistRouteDetail.createRoute(rid)) },
+            )
+        }
+        composable(
+            route = AppRoute.LogistRouteDetail.route,
+            arguments = listOf(androidx.navigation.navArgument("routeId") { type = androidx.navigation.NavType.StringType }),
+        ) { entry ->
+            val routeId = entry.arguments?.getString("routeId") ?: return@composable
+            com.belsi.work.presentation.screens.logistician.LogistRouteDetailScreen(
+                routeId = routeId,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(AppRoute.LogistCreateRoute.route) {
+            com.belsi.work.presentation.screens.logistician.LogistCreateRouteScreen(
+                onAssign = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = AppRoute.LogistRequestDetail.route,
+            arguments = listOf(androidx.navigation.navArgument("requestId") { type = androidx.navigation.NavType.StringType }),
+        ) { entry ->
+            val requestId = entry.arguments?.getString("requestId") ?: return@composable
+            com.belsi.work.presentation.screens.logistician.LogistRequestDetailScreen(
+                requestId = requestId,
+                onAddToRoute = { navController.popBackStack() },
+                onCreateNewRoute = {
+                    navController.navigate(AppRoute.LogistCreateRoute.route) {
+                        popUpTo(AppRoute.LogistRequestDetail.route) { inclusive = true }
+                    }
+                },
+            )
         }
 
         // Settings
@@ -172,6 +253,130 @@ fun AppNavHost(
         // About
         composable(AppRoute.About.route) {
             AboutScreen(navController = navController)
+        }
+
+        // FIX(2026-05-12) build19 hotfix: универсальный просмотрщик юр-документов.
+        // Вызывается из Settings → «О приложении» → клик на любой документ.
+        composable(
+            route = AppRoute.LegalDocument.route,
+            arguments = listOf(androidx.navigation.navArgument("type") { type = androidx.navigation.NavType.StringType }),
+        ) { entry ->
+            val type = entry.arguments?.getString("type") ?: "privacy"
+            com.belsi.work.presentation.screens.legal.LegalDocumentScreen(
+                navController = navController,
+                type = type,
+            )
+        }
+
+        // FIX(2026-05-12) build19 Этап3: tool-transfer pipeline экраны.
+        composable(
+            route = AppRoute.ToolTransferCreate.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("siteObjectId") {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                androidx.navigation.navArgument("batchId") {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { entry ->
+            com.belsi.work.presentation.screens.tools.ToolTransferCreateScreen(
+                navController = navController,
+                siteObjectId = entry.arguments?.getString("siteObjectId"),
+                batchId = entry.arguments?.getString("batchId"),
+            )
+        }
+        composable(AppRoute.ToolTransferIncoming.route) {
+            // FIX(2026-05-12) build19: совместимость с push-deeplink'ами на старый route.
+            // Открываем универсальный hub на табе incoming.
+            com.belsi.work.presentation.screens.tools.ToolTransferHubScreen(
+                navController = navController,
+                initialTab = "incoming",
+            )
+        }
+        composable(
+            route = AppRoute.ToolTransferHub.route,
+            arguments = listOf(androidx.navigation.navArgument("tab") {
+                type = androidx.navigation.NavType.StringType
+                defaultValue = "incoming"
+            }),
+        ) { entry ->
+            com.belsi.work.presentation.screens.tools.ToolTransferHubScreen(
+                navController = navController,
+                initialTab = entry.arguments?.getString("tab") ?: "incoming",
+            )
+        }
+        composable(
+            route = AppRoute.ToolTransferDetail.route,
+            arguments = listOf(androidx.navigation.navArgument("transferId") {
+                type = androidx.navigation.NavType.StringType
+            }),
+        ) { entry ->
+            com.belsi.work.presentation.screens.tools.ToolTransferDetailScreen(
+                navController = navController,
+                transferId = entry.arguments?.getString("transferId") ?: "",
+            )
+        }
+
+        // FIX(2026-05-14) BELSI 2.0.1: return flow routes
+        composable(
+            route = AppRoute.ToolReturnRequest.route,
+            arguments = listOf(androidx.navigation.navArgument("transferId") {
+                type = androidx.navigation.NavType.StringType
+            }),
+        ) { entry ->
+            com.belsi.work.presentation.screens.tools.ToolReturnRequestScreen(
+                navController = navController,
+                transferId = entry.arguments?.getString("transferId") ?: "",
+            )
+        }
+        composable(
+            route = AppRoute.ToolReturnPickup.route,
+            arguments = listOf(androidx.navigation.navArgument("transferId") {
+                type = androidx.navigation.NavType.StringType
+            }),
+        ) { entry ->
+            com.belsi.work.presentation.screens.tools.ToolReturnPickupScreen(
+                navController = navController,
+                transferId = entry.arguments?.getString("transferId") ?: "",
+            )
+        }
+        composable(
+            route = AppRoute.ToolReturnDeliver.route,
+            arguments = listOf(androidx.navigation.navArgument("transferId") {
+                type = androidx.navigation.NavType.StringType
+            }),
+        ) { entry ->
+            com.belsi.work.presentation.screens.tools.ToolReturnDeliverScreen(
+                navController = navController,
+                transferId = entry.arguments?.getString("transferId") ?: "",
+            )
+        }
+        composable(
+            route = AppRoute.ToolReturnAccept.route,
+            arguments = listOf(androidx.navigation.navArgument("transferId") {
+                type = androidx.navigation.NavType.StringType
+            }),
+        ) { entry ->
+            com.belsi.work.presentation.screens.tools.ToolReturnAcceptScreen(
+                navController = navController,
+                transferId = entry.arguments?.getString("transferId") ?: "",
+            )
+        }
+        composable(AppRoute.CuratorReturns.route) {
+            com.belsi.work.presentation.screens.tools.CuratorReturnsScreen(
+                navController = navController,
+            )
+        }
+        // FIX(2026-05-14) BELSI 2.0.1: единая лента алертов куратора
+        composable(AppRoute.CuratorAlertsFeed.route) {
+            com.belsi.work.presentation.screens.curator.alerts.CuratorAlertsFeedScreen(
+                navController = navController,
+            )
         }
 
         // Camera
@@ -313,10 +518,57 @@ fun AppNavHost(
             val installerId = backStackEntry.arguments?.getString("installerId")
             ToolIssueScreen(navController = navController, installerId = installerId)
         }
+        // FIX(2026-05-12) build17: ToolReturn — placeholder удалён, AppRoute убран.
 
-        // Note: ToolReturnScreen requires a ToolTransaction object
-        // This will be handled through navigation arguments when implemented
-        // For now, this route is a placeholder
+        // FIX(2026-05-12) build17 P0: реальный экран создания заявки на доставку координатором.
+        composable(
+            route = AppRoute.CoordCreateRequest.route,
+            arguments = listOf(navArgument("batchId") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            })
+        ) { backStackEntry ->
+            val batchId = backStackEntry.arguments?.getString("batchId")
+            com.belsi.work.presentation.screens.coordinator.CoordCreateRequestScreen(
+                onBack = { navController.popBackStack() },
+                onCreated = { navController.popBackStack() },
+                initialBatchId = batchId,
+            )
+        }
+
+        // FIX(2026-05-12) build17 P2: ShiftDetail composable — теперь подключён.
+        composable(
+            route = AppRoute.ShiftDetail.route,
+            arguments = listOf(navArgument("shiftId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val shiftId = backStackEntry.arguments?.getString("shiftId") ?: ""
+            com.belsi.work.presentation.screens.shift_history.ShiftDetailScreen(
+                shiftId = shiftId,
+                onBack = { navController.popBackStack() },
+                onPhotoClick = { photoId ->
+                    navController.navigate(AppRoute.PhotoDetail.createRoute(photoId))
+                },
+            )
+        }
+
+        // FIX(2026-05-12) build18 P2: детальная карточка участника команды координатора.
+        composable(
+            route = AppRoute.CoordTeamMemberDetail.route,
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            com.belsi.work.presentation.screens.coordinator.teammember.CoordinatorTeamMemberDetailScreen(
+                userId = userId,
+                onBack = { navController.popBackStack() },
+                onPhotoClick = { photoId ->
+                    navController.navigate(AppRoute.PhotoDetail.createRoute(photoId))
+                },
+                onShiftClick = { sid ->
+                    navController.navigate(AppRoute.ShiftDetail.createRoute(sid))
+                },
+            )
+        }
 
         // Curator Tools
         composable(AppRoute.CuratorTools.route) {
@@ -446,8 +698,9 @@ fun AppNavHost(
                         com.belsi.work.data.models.UserRole.WORKER -> AppRoute.WorkerMain.route
                         com.belsi.work.data.models.UserRole.SUPPLIER -> AppRoute.SupplierMain.route
                         com.belsi.work.data.models.UserRole.ENGINEER -> AppRoute.EngineerMain.route
-                        com.belsi.work.data.models.UserRole.DRIVER,
-                        com.belsi.work.data.models.UserRole.LOGISTICIAN -> AppRoute.DriverPlayground.route
+                        // FIX(2026-05-12) build16: real routes вместо playground
+                        com.belsi.work.data.models.UserRole.DRIVER -> AppRoute.DriverHome.route
+                        com.belsi.work.data.models.UserRole.LOGISTICIAN -> AppRoute.LogisticianHome.route
                         else -> AppRoute.Main.route
                     }
                     navController.navigate(target) {

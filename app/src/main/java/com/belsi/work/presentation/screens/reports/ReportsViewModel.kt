@@ -6,6 +6,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.belsi.work.data.models.ShiftReport
+import com.belsi.work.data.remote.api.UserApi
 import com.belsi.work.data.repositories.ReportRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -21,7 +22,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ReportsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val reportRepository: ReportRepository
+    private val reportRepository: ReportRepository,
+    private val userApi: UserApi,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ReportsUiState>(ReportsUiState.Initial)
@@ -37,9 +39,33 @@ class ReportsViewModel @Inject constructor(
     private val _endDate = MutableStateFlow(getDefaultEndDate())
     val endDate: StateFlow<String> = _endDate.asStateFlow()
 
-    // Выбранная ставка для расчёта (500 или 600 рублей/час)
+    // FIX(2026-05-12) build18 P2: ставка из API /user/me/rate.
+    // Раньше хардкод 500 — теперь реальный hourly_rate пользователя.
     private val _selectedHourlyRate = MutableStateFlow(500.0)
     val selectedHourlyRate: StateFlow<Double> = _selectedHourlyRate.asStateFlow()
+
+    private val _isRateFromServer = MutableStateFlow(false)
+    val isRateFromServer: StateFlow<Boolean> = _isRateFromServer.asStateFlow()
+
+    init {
+        loadServerRate()
+    }
+
+    private fun loadServerRate() {
+        viewModelScope.launch {
+            try {
+                val resp = userApi.getMyRate()
+                if (resp.isSuccessful) {
+                    resp.body()?.let { rate ->
+                        _selectedHourlyRate.value = rate.hourlyRate
+                        _isRateFromServer.value = !rate.isDefault
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("ReportsVM", "loadServerRate failed: ${e.message}")
+            }
+        }
+    }
 
     /**
      * Загрузить отчет с сервера

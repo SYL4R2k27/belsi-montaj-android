@@ -1,0 +1,403 @@
+# app/models.py
+
+from __future__ import annotations
+
+import uuid
+import enum
+from uuid import uuid4
+from datetime import datetime
+from decimal import Decimal
+from typing import Optional
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    Enum as SAEnum,
+    text as sa_text,
+)
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+
+from .db import Base
+
+
+# =========================
+# USERS
+# =========================
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    phone = Column(String, unique=True, nullable=False)
+    role = Column(String, nullable=False)  # installer / foreman / curator ...
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    @property
+    def full_name(self) -> str:
+        """Получить полное имя пользователя"""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        return self.phone or "Без имени"
+
+
+    # shifts (ok)
+    shifts = relationship("Shift", back_populates="user")
+
+    # profile (optional)
+    profile = relationship("UserProfile", uselist=False, back_populates="user", cascade="all, delete-orphan")
+
+    # tasks (optional relationships, без back_populates, чтобы не ловить mapper-конфликты)
+    created_tasks = relationship("Task", foreign_keys="Task.created_by")
+    assigned_tasks = relationship("Task", foreign_keys="Task.assigned_to")
+
+
+# =========================
+# USER PROFILES (public.user_profiles)
+# =========================
+
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+
+    full_name = Column(Text, nullable=True)
+    city = Column(Text, nullable=True)
+    email = Column(Text, nullable=True)
+    telegram = Column(Text, nullable=True)
+    about = Column(Text, nullable=True)
+
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="profile")
+
+
+# =========================
+# SHIFTS + PHOTOS
+# =========================
+
+class Shift(Base):
+    __tablename__ = "shifts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    start_at = Column(DateTime(timezone=True), nullable=False)
+    finish_at = Column(DateTime(timezone=True), nullable=True)
+
+    duration_hours = Column(Numeric(8, 4), nullable=True)  # Decimal (в БД может быть другая точность — ок)
+    status = Column(Text, nullable=False)  # active / finished / approved / paid
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="shifts")
+    photos = relationship("ShiftPhoto", back_populates="shift", cascade="all, delete-orphan")
+
+
+class ShiftPhoto(Base):
+    __tablename__ = "shift_photos"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    shift_id = Column(UUID(as_uuid=True), ForeignKey("shifts.id", ondelete="CASCADE"), nullable=False)
+
+    hour_label = Column(Text, nullable=True)  # '10:00–11:00'
+    photo_url = Column(Text, nullable=False)
+
+    status = Column(Text, nullable=False, server_default=sa_text("'pending'"))  # pending / approved / rejected
+    comment = Column(Text, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    shift = relationship("Shift", back_populates="photos")
+
+
+# =========================
+# FOREMAN INVITES
+# =========================
+
+class ForemanInvite(Base):
+    __tablename__ = "foreman_invites"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    code = Column(String, nullable=False, unique=True)
+
+    foreman_phone = Column(String, nullable=False)
+    installer_phone = Column(String, nullable=True)
+
+    foreman_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    installer_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+
+    status = Column(String, nullable=False, server_default=sa_text("'new'"))  # new/accepted/cancelled/expired
+
+    foreman_user = relationship("User", foreign_keys=[foreman_user_id])
+    installer_user = relationship("User", foreign_keys=[installer_user_id])
+
+
+# =========================
+# FOREMAN ↔ INSTALLERS LINK (public.foreman_memberships)
+# (реальная таблица у тебя именно foreman_memberships)
+# =========================
+
+class ForemanMembership(Base):
+    __tablename__ = "foreman_memberships"
+    __table_args__ = (
+        UniqueConstraint("foreman_user_id", "installer_user_id", name="foreman_memberships_pkey"),
+    )
+
+    foreman_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    installer_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    foreman = relationship("User", foreign_keys=[foreman_user_id])
+    installer = relationship("User", foreign_keys=[installer_user_id])
+
+
+# =========================
+# TASKS (public.tasks) — строго по \d+ public.tasks
+# =========================
+
+class Task(Base):
+    __tablename__ = "tasks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True)  # в БД default gen_random_uuid()
+
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    assigned_to = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    title = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+
+    status = Column(Text, nullable=False, server_default=sa_text("'new'"))
+    priority = Column(Text, nullable=False, server_default=sa_text("'normal'"))
+
+    due_at = Column(DateTime(timezone=True), nullable=True)
+
+    meta = Column(JSONB, nullable=False, server_default=sa_text("'{}'::jsonb"))
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    creator = relationship("User", foreign_keys=[created_by])
+    assignee = relationship("User", foreign_keys=[assigned_to])
+
+
+# =========================
+# SUPPORT
+# =========================
+
+class SupportStatus(str, enum.Enum):
+    # если в БД это enum support_status с lower-case — оставляем так
+    OPEN = "open"
+    IN_PROGRESS = "in_progress"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
+
+
+class SupportSenderRole(str, enum.Enum):
+    # IMPORTANT: у тебя в БД реально хранится FOREMAN/USER (uppercase),
+    # иначе ты бы не видел sender_role = 'FOREMAN' в support_messages.
+    USER = "USER"
+    CURATOR = "CURATOR"
+    FOREMAN = "FOREMAN"
+    SYSTEM = "SYSTEM"
+
+
+class SupportTicket(Base):
+    __tablename__ = "support_tickets"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    foreman_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    curator_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    title = Column(String, nullable=False)
+    category = Column(String, nullable=False)
+
+    # если в БД status TEXT — можно заменить на Column(String)
+    status = Column(
+        SAEnum(SupportStatus, name="support_status"),
+        nullable=False,
+        default=SupportStatus.OPEN,
+    )
+
+    meta = Column(JSONB, nullable=True)
+
+    user = relationship("User", foreign_keys=[user_id])
+    foreman = relationship("User", foreign_keys=[foreman_id])
+    curator = relationship("User", foreign_keys=[curator_id])
+
+    messages = relationship(
+        "SupportMessage",
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+    )
+
+
+class SupportMessage(Base):
+    __tablename__ = "support_messages"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    ticket_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("support_tickets.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    sender_role = Column(SAEnum(SupportSenderRole, name="support_sender_role"), nullable=False)
+    sender_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    text = Column(Text, nullable=False)
+    is_internal = Column(Boolean, nullable=False, server_default=sa_text("false"))
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    ticket = relationship("SupportTicket", back_populates="messages")
+    sender = relationship("User", foreign_keys=[sender_user_id])
+
+
+# =========================
+# READ STATUS (public.support_ticket_reads)
+# композитный PK как в SQL, без отдельного id
+# =========================
+
+class SupportTicketRead(Base):
+    __tablename__ = "support_ticket_reads"
+
+    ticket_id = Column(UUID(as_uuid=True), ForeignKey("support_tickets.id", ondelete="CASCADE"), primary_key=True)
+    reader_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+
+    last_read_message_id = Column(UUID(as_uuid=True), ForeignKey("support_messages.id", ondelete="SET NULL"), nullable=True)
+    last_read_at = Column(DateTime(timezone=True), nullable=True)
+
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    ticket = relationship("SupportTicket", lazy="joined")
+    reader = relationship("User", lazy="joined")
+
+
+# ============= Tools Module Models =============
+# Added: 2026-01-19
+
+from sqlalchemy import Enum as SQLEnum
+import enum
+
+
+class ToolStatus(str, enum.Enum):
+    """Статусы инструмента"""
+    available = "available"
+    issued = "issued"
+    lost = "lost"
+    repair = "repair"
+
+
+class TransactionStatus(str, enum.Enum):
+    """Статусы транзакции"""
+    issued = "issued"
+    returned = "returned"
+
+
+class Tool(Base):
+    """Модель инструмента"""
+    __tablename__ = "tools"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(200), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    serial_number = Column(String(100), nullable=True, index=True)
+    photo_url = Column(String(500), nullable=True)
+    foreman_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    status = Column(SQLEnum(ToolStatus), nullable=False, default=ToolStatus.available, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    foreman = relationship("User", foreign_keys=[foreman_id])
+    transactions = relationship("ToolTransaction", back_populates="tool")
+
+
+class ToolTransaction(Base):
+    """Модель транзакции инструмента"""
+    __tablename__ = "tool_transactions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tool_id = Column(UUID(as_uuid=True), ForeignKey("tools.id"), nullable=False, index=True)
+    installer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    issued_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    issued_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    issue_comment = Column(Text, nullable=True)
+    issue_photo_url = Column(String(500), nullable=True)
+    returned_at = Column(DateTime, nullable=True)
+    returned_to = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    return_condition = Column(String(50), nullable=True)
+    return_comment = Column(Text, nullable=True)
+    return_photo_url = Column(String(500), nullable=True)
+    status = Column(SQLEnum(TransactionStatus), nullable=False, default=TransactionStatus.issued, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    tool = relationship("Tool", back_populates="transactions")
+    installer = relationship("User", foreign_keys=[installer_id])
+    issued_by_user = relationship("User", foreign_keys=[issued_by])
+    returned_to_user = relationship("User", foreign_keys=[returned_to])
+
+
+
+
+# =========================
+# CHAT READ STATUS (public.support_chat_reads)
+# =========================
+
+class SupportChatRead(Base):
+    """Статус прочитанных сообщений в чате поддержки"""
+    __tablename__ = "support_chat_reads"
+
+    ticket_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("support_tickets.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+    reader_user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+
+    last_read_message_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("support_messages.id", ondelete="SET NULL"),
+        nullable=True
+    )
+    last_read_at = Column(DateTime(timezone=True), nullable=True)
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False
+    )
+
+    ticket = relationship("SupportTicket")
+    reader = relationship("User")

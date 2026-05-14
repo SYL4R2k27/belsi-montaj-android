@@ -84,6 +84,17 @@ interface ShiftApi {
      */
     @GET("shifts/{shift_id}/photos")
     suspend fun getShiftPhotos(@Path("shift_id") shiftId: String): Response<List<ShiftPhotoResponse>>
+
+    /**
+     * FIX(2026-05-12) build18 P2: bulk endpoint — все фото всех смен пользователя одним запросом.
+     * Раньше PhotoGalleryViewModel делала N+1 (до 100 запросов).
+     */
+    @GET("shifts/photos/all")
+    suspend fun getAllUserPhotos(
+        @retrofit2.http.Query("user_id") userId: String? = null,
+        @retrofit2.http.Query("limit") limit: Int = 200,
+        @retrofit2.http.Query("offset") offset: Int = 0,
+    ): Response<List<ShiftPhotoResponse>>
 }
 
 // Response DTOs

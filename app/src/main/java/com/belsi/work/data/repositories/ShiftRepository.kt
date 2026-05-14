@@ -38,6 +38,10 @@ interface ShiftRepository {
     suspend fun getShiftPhotos(shiftId: String): Result<List<ShiftPhotoData>>
     suspend fun syncPhotosFromServer(shiftId: String): Result<Unit>
 
+    // FIX(2026-05-12) build18 P2: bulk-выборка всех фото пользователя для PhotoGallery.
+    // Заменяет N+1 цикл (1 запрос вместо N×getShiftPhotos).
+    suspend fun getAllUserPhotos(userId: String? = null, limit: Int = 200): Result<List<ShiftPhotoData>>
+
     // Offline-first methods with Flow
     fun observeActiveShift(): Flow<ShiftData?>
     suspend fun syncPendingShifts(): Result<Unit>
@@ -49,7 +53,11 @@ interface ShiftRepository {
 data class ShiftData(
     val id: String,
     val startAt: String,
-    val status: String
+    val status: String,
+    // FIX(2026-05-12) build17 P1: добавлены поля для инициализации UI бригадира
+    // (currentObjectName при запуске app). Опционально — backend может не отдать.
+    val siteObjectId: String? = null,
+    val siteObjectName: String? = null,
 )
 
 /**
@@ -151,9 +159,44 @@ class ShiftRepositoryImpl @Inject constructor(
                 val errorMsg = parseErrorMessage(response.code())
                 Result.failure(Exception(errorMsg))
             }
+        } catch (e: java.net.SocketTimeoutException) {
+            android.util.Log.e("ShiftRepository", "❌ Timeout on startShift — saving offline", e)
+            saveStartOffline(siteObjectId)
+        } catch (e: java.net.UnknownHostException) {
+            android.util.Log.e("ShiftRepository", "❌ No network on startShift — saving offline", e)
+            saveStartOffline(siteObjectId)
+        } catch (e: java.io.IOException) {
+            android.util.Log.e("ShiftRepository", "❌ IO on startShift — saving offline", e)
+            saveStartOffline(siteObjectId)
         } catch (e: Exception) {
             Result.failure(Exception("Ошибка сети: ${e.message}", e))
         }
+    }
+
+    /**
+     * FIX(2026-05-11) BELSI 2.0.0 build8: симметричный offline-fallback для startShift.
+     * Раньше startShift падал с Exception при IOException — теперь создаём local-shift
+     * как было задумано в commit 09201b8 (foundation offline).
+     *
+     * SyncWorker.syncOfflineShiftStart подхватит и подменит id на серверный.
+     * PhotoUploadWorker увидит local-* и подождёт пока id обновится.
+     */
+    private suspend fun saveStartOffline(siteObjectId: String?): Result<ShiftData> {
+        val localId = "local-${System.currentTimeMillis()}"
+        val nowIso = java.time.OffsetDateTime.now()
+            .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        val entity = ShiftEntity(
+            userId = "current_user",
+            id = localId,
+            startAt = nowIso,
+            finishAt = null,
+            status = "active",
+            syncStatus = "pending",
+            lastSyncAt = System.currentTimeMillis(),
+        )
+        shiftDao.insertShift(entity)
+        android.util.Log.d("ShiftRepository", "📱 Start saved offline: $localId, will sync later")
+        return Result.success(ShiftData(id = localId, startAt = nowIso, status = "active"))
     }
 
     /**
@@ -526,6 +569,33 @@ class ShiftRepositoryImpl @Inject constructor(
             }
         } catch (e: Exception) {
             Result.failure(Exception("Ошибка загрузки фотографий: ${e.message}", e))
+        }
+    }
+
+    /**
+     * FIX(2026-05-12) build18 P2: bulk-выборка фото для PhotoGallery (N+1 → один запрос).
+     */
+    override suspend fun getAllUserPhotos(userId: String?, limit: Int): Result<List<ShiftPhotoData>> {
+        return try {
+            val response = shiftApi.getAllUserPhotos(userId = userId, limit = limit)
+            if (response.isSuccessful && response.body() != null) {
+                val photos = response.body()!!.map { photo ->
+                    ShiftPhotoData(
+                        id = photo.id,
+                        shiftId = photo.shift_id,
+                        hourLabel = photo.hour_label,
+                        status = photo.status,
+                        comment = photo.comment,
+                        photoUrl = photo.photo_url,
+                        createdAt = photo.created_at,
+                    )
+                }
+                Result.success(photos)
+            } else {
+                Result.failure(Exception(parseErrorMessage(response.code())))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Ошибка загрузки галереи фото: ${e.message}", e))
         }
     }
 

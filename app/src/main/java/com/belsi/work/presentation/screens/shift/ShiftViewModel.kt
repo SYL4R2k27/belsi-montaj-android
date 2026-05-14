@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.belsi.work.data.local.database.dao.PhotoDao
 import com.belsi.work.data.local.database.dao.ShiftDao
+import com.belsi.work.data.offline.OfflineQueuedException
 import com.belsi.work.data.remote.dto.objects.SiteObjectDto
+import com.belsi.work.data.repositories.BatchRepository
 import com.belsi.work.data.repositories.ObjectsRepository
 import com.belsi.work.data.repositories.PauseRepository
 import com.belsi.work.data.repositories.ShiftData
@@ -34,8 +36,26 @@ class ShiftViewModel @Inject constructor(
     private val pauseRepository: PauseRepository,
     private val userRepository: UserRepository,
     private val shiftDao: ShiftDao,
-    private val photoDao: PhotoDao
+    private val photoDao: PhotoDao,
+    // FIX(2026-05-11) BELSI 2.0.0 build9: подгружаем причины простоя с бэкенда
+    private val batchRepository: BatchRepository,
 ) : ViewModel() {
+
+    /**
+     * FIX(2026-05-11) build9: список причин простоя для монтажника (domain=installation).
+     * Источник правды — таблица shift_idle_reason_catalog. При недоступности API
+     * IdleReasonDialog использует hardcoded fallback (см. Composable).
+     */
+    private val _idleReasons = MutableStateFlow<List<String>>(emptyList())
+    val idleReasons: StateFlow<List<String>> = _idleReasons.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            batchRepository.getIdleReasons(domain = "installation")
+                .onSuccess { list -> _idleReasons.value = list.map { it.label } }
+                .onFailure { android.util.Log.w("ShiftViewModel", "getIdleReasons failed: ${it.message}") }
+        }
+    }
 
     private val _uiState = MutableStateFlow<ShiftUiState>(ShiftUiState.NoShift)
     val uiState: StateFlow<ShiftUiState> = _uiState.asStateFlow()
@@ -409,6 +429,16 @@ class ShiftViewModel @Inject constructor(
      * пауза/простой продолжали идти
      */
     private suspend fun restorePauseState(state: ShiftUiState.Active): ShiftUiState.Active {
+        // FIX(2026-05-13) BELSI 2.0.1: race-condition guard.
+        // Пока идёт user-action (pauseShift/resumeShift/startIdle/endIdle),
+        // НЕ перетираем state — иначе 60-sec polling может ответить раньше POST
+        // и self-heal перетрёт optimistic isPaused=true в false до того как
+        // POST commit-нулся в БД (баг с Tecno 15:49:38 — POST и GET в одной секунде).
+        if (isActionInProgress) {
+            android.util.Log.d("ShiftViewModel",
+                "restorePauseState: skipping — user action in progress (race-guard)")
+            return state
+        }
         return try {
             val result = pauseRepository.getCurrentPause()
             result.getOrNull()?.let { currentPause ->
@@ -798,24 +828,46 @@ class ShiftViewModel @Inject constructor(
 
                         val currentActiveState = _uiState.value
                         if (currentActiveState is ShiftUiState.Active) {
+                            // FIX(2026-05-13) BELSI 2.0.1: race-condition fix.
+                            // Явно ставим isPaused=true в onSuccess — если параллельный
+                            // 60-sec polling успел перетереть optimistic isPaused в false
+                            // (ответ GET pause/current пришёл раньше нашего POST commit-а),
+                            // здесь финально восстанавливаем правильный state.
                             _uiState.value = currentActiveState.copy(
-                                pauseStartTime = pauseStartMillis
+                                isPaused = true,
+                                isIdle = false,
+                                pauseStartTime = pauseStartMillis,
+                                idleStartTime = null,
+                                idleReason = null,
                             )
+                            // Перезапуск таймера паузы — на случай если был остановлен self-heal
+                            if (pauseTimerJob == null || pauseTimerJob?.isActive != true) {
+                                startPauseTimer()
+                            }
                         }
                     }
                     .onFailure { e ->
-                        android.util.Log.e("ShiftViewModel", "Failed to start pause on server, rolling back", e)
-                        // Откат оптимистичного обновления
-                        stopPauseTimer()
-                        val rollbackState = _uiState.value
-                        if (rollbackState is ShiftUiState.Active) {
-                            _uiState.value = rollbackState.copy(
-                                isPaused = false,
-                                pauseStartTime = null,
-                                pauseSeconds = 0
-                            )
+                        if (e is OfflineQueuedException) {
+                            // FIX(2026-05-11) BELSI 2.0.0 build8: оффлайн-пауза — действие
+                            // уже лежит в pending_actions, PendingSyncWorker отправит когда
+                            // появится сеть. UI оставляем в "на паузе" — не откатываем,
+                            // юзер видит мягкое сообщение, таймер продолжает идти локально.
+                            android.util.Log.i("ShiftViewModel", "Pause queued offline — keeping optimistic UI")
+                            setErrorWithAutoClear("📤 Пауза будет отправлена когда появится сеть")
+                        } else {
+                            android.util.Log.e("ShiftViewModel", "Failed to start pause on server, rolling back", e)
+                            // Откат оптимистичного обновления
+                            stopPauseTimer()
+                            val rollbackState = _uiState.value
+                            if (rollbackState is ShiftUiState.Active) {
+                                _uiState.value = rollbackState.copy(
+                                    isPaused = false,
+                                    pauseStartTime = null,
+                                    pauseSeconds = 0
+                                )
+                            }
+                            setErrorWithAutoClear("Ошибка запуска паузы: ${e.message}")
                         }
-                        setErrorWithAutoClear("Ошибка запуска паузы: ${e.message}")
                     }
             } finally {
                 isActionInProgress = false
@@ -875,25 +927,39 @@ class ShiftViewModel @Inject constructor(
                         val serverDuration = pauseResponse.durationSeconds?.toLong() ?: estimatedDuration
                         val currentActiveState = _uiState.value
                         if (currentActiveState is ShiftUiState.Active) {
+                            // FIX(2026-05-13) BELSI 2.0.1: race-condition fix.
+                            // Явно сбрасываем isPaused — параллельный polling мог
+                            // ответить раньше POST commit-а и оставить isPaused=true.
                             _uiState.value = currentActiveState.copy(
+                                isPaused = false,
+                                pauseStartTime = null,
+                                pauseSeconds = 0,
                                 totalPauseSeconds = currentState.totalPauseSeconds + serverDuration
                             )
+                            stopPauseTimer()
                         }
                     }
                     .onFailure { e ->
-                        android.util.Log.e("ShiftViewModel", "Failed to end pause on server, rolling back", e)
-                        // Откат оптимистичного обновления
-                        val rollbackState = _uiState.value
-                        if (rollbackState is ShiftUiState.Active) {
-                            _uiState.value = rollbackState.copy(
-                                isPaused = true,
-                                pauseStartTime = savedPauseStartTime,
-                                pauseSeconds = savedPauseSeconds,
-                                totalPauseSeconds = currentState.totalPauseSeconds
-                            )
-                            startPauseTimer()
+                        if (e is OfflineQueuedException) {
+                            // FIX(2026-05-11) build8: оффлайн-возобновление — оставляем UI
+                            // в "снято с паузы", action в очереди, сервер досчитает.
+                            android.util.Log.i("ShiftViewModel", "Resume queued offline — keeping optimistic UI")
+                            setErrorWithAutoClear("📤 Снятие паузы будет отправлено когда появится сеть")
+                        } else {
+                            android.util.Log.e("ShiftViewModel", "Failed to end pause on server, rolling back", e)
+                            // Откат оптимистичного обновления
+                            val rollbackState = _uiState.value
+                            if (rollbackState is ShiftUiState.Active) {
+                                _uiState.value = rollbackState.copy(
+                                    isPaused = true,
+                                    pauseStartTime = savedPauseStartTime,
+                                    pauseSeconds = savedPauseSeconds,
+                                    totalPauseSeconds = currentState.totalPauseSeconds
+                                )
+                                startPauseTimer()
+                            }
+                            setErrorWithAutoClear("Ошибка снятия паузы: ${e.message}")
                         }
-                        setErrorWithAutoClear("Ошибка снятия паузы: ${e.message}")
                     }
             } finally {
                 isActionInProgress = false
@@ -940,8 +1006,26 @@ class ShiftViewModel @Inject constructor(
                         }
                     }
                     .onFailure { e ->
-                        android.util.Log.e("ShiftViewModel", "Failed to start idle on server", e)
-                        setErrorWithAutoClear("Ошибка запуска простоя: ${e.message}")
+                        if (e is OfflineQueuedException) {
+                            // FIX(2026-05-11) build8: оффлайн-простой — переводим UI в idle
+                            // локально (как если бы сервер ответил OK), action в очереди.
+                            android.util.Log.i("ShiftViewModel", "Idle queued offline — applying optimistic UI")
+                            val now = System.currentTimeMillis()
+                            val st = _uiState.value
+                            if (st is ShiftUiState.Active) {
+                                _uiState.value = st.copy(
+                                    isIdle = true,
+                                    idleStartTime = now,
+                                    idleSeconds = 0,
+                                    idleReason = idleReason,
+                                )
+                                startIdleTimer()
+                            }
+                            setErrorWithAutoClear("📤 Простой «$idleReason» будет отправлен когда появится сеть")
+                        } else {
+                            android.util.Log.e("ShiftViewModel", "Failed to start idle on server", e)
+                            setErrorWithAutoClear("Ошибка запуска простоя: ${e.message}")
+                        }
                     }
             } finally {
                 isActionInProgress = false
@@ -983,8 +1067,26 @@ class ShiftViewModel @Inject constructor(
                         }
                     }
                     .onFailure { e ->
-                        android.util.Log.e("ShiftViewModel", "Failed to end idle on server", e)
-                        setErrorWithAutoClear("Ошибка снятия простоя: ${e.message}")
+                        if (e is OfflineQueuedException) {
+                            // FIX(2026-05-11) build8: оффлайн-выход из простоя — гасим idle
+                            // в UI, action в очереди, серверная длительность досчитается при синке.
+                            android.util.Log.i("ShiftViewModel", "EndIdle queued offline — applying optimistic UI")
+                            stopIdleTimer()
+                            val st = _uiState.value
+                            if (st is ShiftUiState.Active) {
+                                _uiState.value = st.copy(
+                                    isIdle = false,
+                                    idleStartTime = null,
+                                    idleSeconds = 0,
+                                    totalIdleSeconds = currentState.totalIdleSeconds + currentState.idleSeconds,
+                                    idleReason = null,
+                                )
+                            }
+                            setErrorWithAutoClear("📤 Снятие простоя будет отправлено когда появится сеть")
+                        } else {
+                            android.util.Log.e("ShiftViewModel", "Failed to end idle on server", e)
+                            setErrorWithAutoClear("Ошибка снятия простоя: ${e.message}")
+                        }
                     }
             } finally {
                 isActionInProgress = false

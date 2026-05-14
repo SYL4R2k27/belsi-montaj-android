@@ -1,5 +1,6 @@
 package com.belsi.work.data.firebase
 
+import com.belsi.work.BuildConfig
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -93,7 +94,7 @@ class BelsiFirebaseMessagingService : FirebaseMessagingService() {
         // Обрабатываем notification payload (если приложение в foreground)
         remoteMessage.notification?.let { notification ->
             showNotification(
-                title = notification.title ?: "Belsi.Монтаж",
+                title = notification.title ?: "BELSI.Команда",
                 body = notification.body ?: "",
                 channelId = CHANNEL_ID_GENERAL
             )
@@ -111,6 +112,7 @@ class BelsiFirebaseMessagingService : FirebaseMessagingService() {
             "shift_reminder" -> handleShiftReminder(data)
             "photo_reminder" -> handlePhotoReminder(data)
             "task_assigned" -> handleTaskAssigned(data)
+            "task_status_changed" -> handleTaskStatusChanged(data)
             "chat_message" -> handleChatMessage(data)
             "messenger_message" -> handleMessengerMessage(data)
             "support_reply" -> handleSupportReply(data)
@@ -118,6 +120,23 @@ class BelsiFirebaseMessagingService : FirebaseMessagingService() {
             "app_update" -> handleAppUpdate(data)
             // FIX(2026-05-05): preview-сборки (BELSI.Команда) — обрабатываются как app_update
             "preview_apk" -> handleAppUpdate(data)
+            // FIX(2026-05-12) build17 P1: production/logistics/installation push'и.
+            // Backend в build15-17 шлёт эти типы; раньше они проваливались в else
+            // и не показывали красивых уведомлений.
+            "batch_status_change" -> handleBatchStatusChange(data)
+            "batch_ready_to_ship" -> handleBatchStatusChange(data)
+            "batch_in_route" -> handleBatchStatusChange(data)
+            "batch_delivered" -> handleBatchStatusChange(data)
+            "batch_installed" -> handleBatchStatusChange(data)
+            "batch_cancelled" -> handleBatchStatusChange(data)
+            "driver_point_arrived" -> handleDriverEvent(data)
+            "delivery_complete" -> handleDriverEvent(data)
+            "photo_approved" -> handlePhotoReviewResult(data, approved = true)
+            "photo_rejected" -> handlePhotoReviewResult(data, approved = false)
+            "tool_issued" -> handleToolIssued(data)
+            "installer_reassigned" -> handleInstallerReassigned(data)
+            "coordinator_report_added" -> handleCoordinatorReportAdded(data)
+            "idle_alert" -> handleIdleAlert(data)
             else -> {
                 // FIX(2026-05-05): универсальный handler — если в data есть url,
                 // тап открывает браузер с этим URL. Работает для всех будущих push'ей
@@ -191,7 +210,15 @@ class BelsiFirebaseMessagingService : FirebaseMessagingService() {
         val otpCode = data["code"] ?: return
         val phone = data["phone"] ?: ""
 
-        Log.d(TAG, "Received OTP: $otpCode for phone: $phone")
+        // FIX(2026-05-11) BELSI 2.0.0 security: НЕ логируем OTP и номер.
+        // Раньше Log.d пробрасывал OTP-код + номер в logcat (видно через adb
+        // и на рутованных устройствах). В release-сборках Log.d не вырезается
+        // ProGuard'ом по умолчанию.
+        // В debug-сборке логируем только маску для отладки.
+        if (BuildConfig.DEBUG) {
+            val maskedPhone = if (phone.length > 4) "***${phone.takeLast(4)}" else "***"
+            Log.d(TAG, "OTP received for $maskedPhone (code length=${otpCode.length})")
+        }
 
         // Сохраняем OTP для автозаполнения
         saveOtpCode(otpCode)
@@ -653,5 +680,102 @@ class BelsiFirebaseMessagingService : FirebaseMessagingService() {
             .putLong("otp_timestamp", System.currentTimeMillis())
             .apply()
         Log.d(TAG, "OTP code saved for autofill")
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // FIX(2026-05-12) build17 P1: новые типы push для production/logistics/installation.
+    // Backend в build15-17 шлёт эти типы; раньше они проваливались в else.
+    // ─────────────────────────────────────────────────────────────────────
+
+    private fun handleBatchStatusChange(data: Map<String, String>) {
+        val toStatus = data["to_status"] ?: data["type"]?.removePrefix("batch_") ?: ""
+        val statusLabel = when (toStatus) {
+            "ready_to_ship" -> "готова к отгрузке"
+            "in_route" -> "в пути"
+            "delivered" -> "доставлена"
+            "installed" -> "смонтирована"
+            "cancelled" -> "отменена"
+            else -> toStatus
+        }
+        showNotification(
+            title = "📦 Партия: $statusLabel",
+            body = data["body"] ?: data["batch_title"] ?: "",
+            channelId = CHANNEL_ID_GENERAL,
+            notificationId = ("batch_${data["batch_id"] ?: ""}").hashCode(),
+        )
+    }
+
+    private fun handleDriverEvent(data: Map<String, String>) {
+        val type = data["type"] ?: "driver"
+        val title = when (type) {
+            "driver_point_arrived" -> "🚛 Машина прибыла"
+            "delivery_complete" -> "✅ Доставка завершена"
+            else -> "Доставка"
+        }
+        showNotification(
+            title = title,
+            body = data["body"] ?: data["address"] ?: "",
+            channelId = CHANNEL_ID_GENERAL,
+            notificationId = ("driver_${data["point_id"] ?: data["route_id"] ?: ""}").hashCode(),
+        )
+    }
+
+    private fun handlePhotoReviewResult(data: Map<String, String>, approved: Boolean) {
+        val title = if (approved) "✓ Фото одобрено" else "✗ Фото отклонено"
+        val body = data["body"] ?: if (approved) "Куратор/координатор одобрил ваше фото" else "Проверяющий вернул фото с замечаниями"
+        showNotification(
+            title = title,
+            body = body,
+            channelId = CHANNEL_ID_GENERAL,
+            notificationId = ("photo_${data["photo_id"] ?: ""}").hashCode(),
+        )
+    }
+
+    private fun handleToolIssued(data: Map<String, String>) {
+        showNotification(
+            title = "🔧 Выдан инструмент",
+            body = data["tool_name"] ?: data["body"] ?: "Бригадир передал инструмент",
+            channelId = CHANNEL_ID_GENERAL,
+            notificationId = ("tool_${data["transaction_id"] ?: ""}").hashCode(),
+        )
+    }
+
+    private fun handleInstallerReassigned(data: Map<String, String>) {
+        showNotification(
+            title = "📍 Перевод на объект",
+            body = data["site_name"]?.let { "Вы теперь работаете на: $it" } ?: "Бригадир перевёл вас на другой объект",
+            channelId = CHANNEL_ID_GENERAL,
+            notificationId = ("reassign_${data["shift_id"] ?: ""}").hashCode(),
+        )
+    }
+
+    private fun handleCoordinatorReportAdded(data: Map<String, String>) {
+        showNotification(
+            title = "📋 Новый отчёт координатора",
+            body = data["body"] ?: "Координатор добавил отчёт по объекту",
+            channelId = CHANNEL_ID_GENERAL,
+            notificationId = ("report_${data["report_id"] ?: ""}").hashCode(),
+        )
+    }
+
+    private fun handleIdleAlert(data: Map<String, String>) {
+        val actorName = data["actor_name"] ?: "Сотрудник"
+        showNotification(
+            title = "⚠️ Простой: $actorName",
+            body = data["body"] ?: data["reason"] ?: "",
+            channelId = CHANNEL_ID_GENERAL,
+            notificationId = ("idle_${data["actor_id"] ?: ""}").hashCode(),
+        )
+    }
+
+    private fun handleTaskStatusChanged(data: Map<String, String>) {
+        val newStatus = data["new_status"] ?: ""
+        val statusText = data["status_text"] ?: newStatus
+        showNotification(
+            title = "Задача: $statusText",
+            body = "${data["task_title"] ?: "Задача"} · изменил: ${data["changed_by"] ?: "—"}",
+            channelId = CHANNEL_ID_GENERAL,
+            notificationId = ("task_status_${data["task_title"] ?: ""}").hashCode(),
+        )
     }
 }

@@ -5,6 +5,7 @@ import com.belsi.work.data.models.BatchCreateRequest
 import com.belsi.work.data.models.BatchHistoryItem
 import com.belsi.work.data.models.BatchStatusChangeRequest
 import com.belsi.work.data.models.IdleReason
+import com.belsi.work.data.models.IncomingBatchDto
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -45,6 +46,18 @@ interface BatchApi {
     /** GET /production/batches/{id}/history — audit log. */
     @GET("production/batches/{batchId}/history")
     suspend fun getHistory(@Path("batchId") batchId: String): Response<List<BatchHistoryItem>>
+
+    // FIX(2026-05-12) BELSI 2.0.0 build15: Foreman/Coordinator endpoints
+    @GET("production/batches/incoming")
+    suspend fun getIncomingBatches(): Response<List<IncomingBatchDto>>
+
+    /** Бригадир/координатор отмечает партию принятой (in_route → delivered). */
+    @POST("production/batches/{batchId}/receive")
+    suspend fun receiveBatch(@Path("batchId") batchId: String): Response<Map<String, String>>
+
+    /** Закрытие монтажа (delivered → installed). */
+    @POST("production/batches/{batchId}/install")
+    suspend fun installBatch(@Path("batchId") batchId: String): Response<Map<String, String>>
 
     // ─── Перерывы ───
     @POST("shift/break/start")

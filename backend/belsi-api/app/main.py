@@ -53,6 +53,18 @@ from .profiles import router as profile_router
 from .tasks import router as tasks_router
 from .curator import router as curator_router
 from .coordinator import router as coordinator_router
+# FIX(2026-05-11) BELSI 2.0.0: driver/logistician domain
+from .driver_logist import driver_router as driver_router, logist_router as logist_router
+# FIX(2026-05-11) BELSI 2.0.0 build3: brand-core (multi-role + timeline + pipeline + idle reasons)
+from .brand_core import (
+    user_role_router as brand_user_role_router,
+    admin_role_router as brand_admin_role_router,
+    timeline_router as brand_timeline_router,
+    idle_router as brand_idle_router,
+    pipeline_router as brand_pipeline_router,
+)
+# FIX(2026-05-11) BELSI 2.0.0 build4: capability matrix как single source of truth
+from .capabilities import caps_router as brand_caps_router
 from .reports import router as reports_router
 from .shift_pauses import router as shift_pauses_router
 from .site_objects import router as site_objects_router
@@ -181,6 +193,17 @@ app.include_router(photos_feed_router)
 app.include_router(photo_review_router)
 app.include_router(curator_router)
 app.include_router(coordinator_router)
+# FIX(2026-05-11) BELSI 2.0.0: driver/logistician routers
+app.include_router(driver_router)
+app.include_router(logist_router)
+# FIX(2026-05-11) BELSI 2.0.0 build3: brand-core routers
+app.include_router(brand_user_role_router)
+app.include_router(brand_admin_role_router)
+app.include_router(brand_timeline_router)
+app.include_router(brand_idle_router)
+app.include_router(brand_pipeline_router)
+# FIX(2026-05-11) BELSI 2.0.0 build4: capability matrix
+app.include_router(brand_caps_router)
 app.include_router(reports_router)
 app.include_router(shift_pauses_router)
 app.include_router(site_objects_router)

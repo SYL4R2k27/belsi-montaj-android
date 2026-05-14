@@ -19,12 +19,14 @@ import androidx.compose.ui.unit.dp
  * Соответствует Material Design 3 Window Size Classes
  */
 enum class WindowWidthSizeClass {
-    /** Ширина < 600dp - телефон в портретной ориентации */
+    /** Ширина < 600dp — телефон в портретной ориентации, Z Fold closed */
     COMPACT,
-    /** Ширина 600-840dp - телефон в ландшафте, маленький планшет */
+    /** Ширина 600-839dp — телефон в ландшафте, Tab S6 Lite portrait, Z Fold open portrait */
     MEDIUM,
-    /** Ширина >= 840dp - планшет, складное устройство в развёрнутом виде */
-    EXPANDED
+    /** Ширина 840-1239dp — Z Fold open landscape, 11" tablets, Pixel Fold */
+    EXPANDED,
+    /** Ширина >= 1240dp — 13"+ планшеты (Tab S Ultra 14.6", MatePad Pro 13.2"), Huawei Mate XT */
+    XLARGE
 }
 
 /**
@@ -39,9 +41,19 @@ fun rememberWindowSizeClass(): WindowWidthSizeClass {
         when {
             screenWidthDp < 600 -> WindowWidthSizeClass.COMPACT
             screenWidthDp < 840 -> WindowWidthSizeClass.MEDIUM
-            else -> WindowWidthSizeClass.EXPANDED
+            screenWidthDp < 1240 -> WindowWidthSizeClass.EXPANDED
+            else -> WindowWidthSizeClass.XLARGE
         }
     }
+}
+
+/**
+ * FIX(2026-05-11) BELSI 2.0.0 build5: проверка XLarge экрана (13"+ планшеты).
+ * Брендбук foldable-tablet-design-guide раздел 02 (WSC table).
+ */
+@Composable
+fun isXLargeScreen(): Boolean {
+    return rememberWindowSizeClass() == WindowWidthSizeClass.XLARGE
 }
 
 /**
@@ -85,6 +97,7 @@ fun adaptiveHorizontalPadding(): Dp {
         WindowWidthSizeClass.COMPACT -> 16.dp
         WindowWidthSizeClass.MEDIUM -> 24.dp
         WindowWidthSizeClass.EXPANDED -> 32.dp
+        WindowWidthSizeClass.XLARGE -> 48.dp
     }
 }
 
@@ -97,6 +110,7 @@ fun adaptiveVerticalPadding(): Dp {
         WindowWidthSizeClass.COMPACT -> 16.dp
         WindowWidthSizeClass.MEDIUM -> 20.dp
         WindowWidthSizeClass.EXPANDED -> 24.dp
+        WindowWidthSizeClass.XLARGE -> 32.dp
     }
 }
 
@@ -119,6 +133,7 @@ fun adaptiveSpacing(): Dp {
         WindowWidthSizeClass.COMPACT -> 8.dp
         WindowWidthSizeClass.MEDIUM -> 12.dp
         WindowWidthSizeClass.EXPANDED -> 16.dp
+        WindowWidthSizeClass.XLARGE -> 20.dp
     }
 }
 
@@ -132,6 +147,7 @@ fun adaptiveMaxWidth(): Dp {
         WindowWidthSizeClass.COMPACT -> Dp.Infinity
         WindowWidthSizeClass.MEDIUM -> 720.dp
         WindowWidthSizeClass.EXPANDED -> 900.dp
+        WindowWidthSizeClass.XLARGE -> 1200.dp
     }
 }
 
@@ -144,6 +160,21 @@ fun adaptiveGridColumns(): Int {
         WindowWidthSizeClass.COMPACT -> 1
         WindowWidthSizeClass.MEDIUM -> 2
         WindowWidthSizeClass.EXPANDED -> 3
+        WindowWidthSizeClass.XLARGE -> 4
+    }
+}
+
+/**
+ * FIX(2026-05-11) BELSI 2.0.0 build5: количество колонок в photo-grid.
+ * Брендбук foldable-tablet раздел "PhotoGalleryScreen": «Грид 5-6 на expanded».
+ */
+@Composable
+fun photoGridColumns(): Int {
+    return when (rememberWindowSizeClass()) {
+        WindowWidthSizeClass.COMPACT -> 3
+        WindowWidthSizeClass.MEDIUM -> 4
+        WindowWidthSizeClass.EXPANDED -> 5
+        WindowWidthSizeClass.XLARGE -> 6
     }
 }
 
@@ -156,6 +187,7 @@ fun adaptiveGridCells(): GridCells {
         WindowWidthSizeClass.COMPACT -> GridCells.Fixed(1)
         WindowWidthSizeClass.MEDIUM -> GridCells.Fixed(2)
         WindowWidthSizeClass.EXPANDED -> GridCells.Adaptive(minSize = 300.dp)
+        WindowWidthSizeClass.XLARGE -> GridCells.Adaptive(minSize = 320.dp)
     }
 }
 
@@ -253,6 +285,7 @@ fun adaptiveImageHeight(): Dp {
         WindowWidthSizeClass.COMPACT -> 180.dp
         WindowWidthSizeClass.MEDIUM -> 220.dp
         WindowWidthSizeClass.EXPANDED -> 280.dp
+        WindowWidthSizeClass.XLARGE -> 320.dp
     }
 }
 
@@ -265,6 +298,7 @@ fun adaptiveIconSize(): Dp {
         WindowWidthSizeClass.COMPACT -> 24.dp
         WindowWidthSizeClass.MEDIUM -> 28.dp
         WindowWidthSizeClass.EXPANDED -> 32.dp
+        WindowWidthSizeClass.XLARGE -> 48.dp
     }
 }
 

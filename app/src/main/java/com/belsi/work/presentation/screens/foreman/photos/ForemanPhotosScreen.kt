@@ -207,6 +207,13 @@ private fun PhotoStatusFilterChips(
             label = { Text("Проверка (${photosCounts[PhotoFilterStatus.PENDING] ?: 0})") },
             leadingIcon = { Icon(Icons.Default.HourglassEmpty, null, Modifier.size(16.dp)) }
         )
+        // FIX(2026-05-12) build17 P2: добавлен chip REJECTED — empty-state его уже обрабатывает.
+        FilterChip(
+            selected = selectedFilter == PhotoFilterStatus.REJECTED,
+            onClick = { onFilterSelected(PhotoFilterStatus.REJECTED) },
+            label = { Text("Отклонено (${photosCounts[PhotoFilterStatus.REJECTED] ?: 0})") },
+            leadingIcon = { Icon(Icons.Default.Cancel, null, Modifier.size(16.dp)) }
+        )
     }
 }
 

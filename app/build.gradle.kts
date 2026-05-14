@@ -8,7 +8,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
-    kotlin("plugin.serialization") version "1.9.20"
+    kotlin("plugin.serialization") version "1.9.25"
 }
 
 // FIX(2026-04-30): Gradle НЕ парсит local.properties в project.properties по умолчанию.
@@ -43,12 +43,26 @@ android {
         minSdk = 26
         targetSdk = 34
         // FIX(2026-05-11): bump 1.3.0 → 2.0.0 — major релиз: интеграция XeroCode AI Office,
-        // 8 AI use cases (photo_quality, daily_summary, idle_verify, voice_input, triage,
-        // smart_reply, photo_search, predictive_low_stock), полный AI UI в Compose.
-        // versionCode монотонно растёт (для in-app force-update).
-        // Прод 1.2.5 (versionCode 11) остаётся минимально-поддерживаемым.
-        versionCode = 14
-        versionName = "2.0.0"
+        // 8 AI use cases, полный AI UI в Compose, driver/logistician backend wiring,
+        // 3 security fixes, Update Gate URL allowlist, role-switcher.
+        // build3 (versionCode 16): brand-core от брендбука — мульти-роль, объект как нить,
+        //   pipeline партии связки, timeline объекта, idle reasons по доменам, universal RoleSwitcher.
+        // build4 (versionCode 17): capability matrix, push routing, adaptive deps, auto bottom-sheet, role switch dialog.
+        // build5 (versionCode 18): полный adaptive UI-комплит из foldable-tablet-design-guide.
+        // build6 (versionCode 19): rename приложения «Belsi.Монтаж» → «BELSI.Команда».
+        //   Брендбук BELSI.Команда раздел 04: правильное написание — заглавные BELSI,
+        //   точка-разделитель, кириллическое «Команда» с заглавной К.
+        //   Обновлено: strings.xml app_name, AuthPhone/LoginScreen titles, AboutScreen,
+        //   ShiftWidget, BelsiFirebaseMessagingService fallback title.
+        // FIX(2026-05-13): release/2.0.1-internal — релизный пак без публикации.
+        // versionCode 20 (build7): bump для 2.0.1.
+        //   Включает: Tool Transfer pipeline, brand-core multi-role, Login redesign C2,
+        //   AI Dashboard «Проблемные монтажники» enriched, pause race-condition fix,
+        //   server-side guard /shift/pause/start, удалён debug-стек
+        //   (DevUserGuard, GlobalRoleSwitcherFab, RoleSwitchDialog, RoleSwitcherDialog,
+        //   RoleTestPlaygroundScreen, PlaygroundDestination).
+        versionCode = 20
+        versionName = "2.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -97,6 +111,16 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
         }
+        // FIX(2026-05-11) BELSI 2.0.0: side-by-side preview-сборка.
+        // Те же настройки что release (minify + shrink + release-signing),
+        // но с .preview applicationId — ставится ОТДЕЛЬНОЙ иконкой рядом с
+        // прод (com.belsi.work) и driver-test (com.belsi.work.debug).
+        // app_name переопределён в src/preview/res/values/strings.xml.
+        create("preview") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".preview"
+            versionNameSuffix = "-preview"
+        }
     }
 
     // FIX(2026-05-01): имя APK = versionName + minor-build-counter + buildType.
@@ -134,7 +158,9 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.4"
+        // FIX(2026-05-12) build19: 1.5.4 → 1.5.15. Compose BOM 2024.12.01 (Compose 1.7.x)
+        // требует compose-compiler ≥ 1.5.15. Совместим с Kotlin 1.9.25.
+        kotlinCompilerExtensionVersion = "1.5.15"
     }
 
     packaging {
@@ -153,12 +179,33 @@ android {
     }
 }
 
+// FIX(2026-05-11) BELSI 2.0.0: отключаем Crashlytics mapping-upload для preview-сборки.
+// Причина: .preview applicationId не зарегистрирован в Firebase Console (мы только
+// зеркалили запись `.debug` в google-services.json для прохождения проверки плагина).
+// Сам Crashlytics в APK будет работать, отключается ТОЛЬКО upload de-obfuscation map.
+// Это локальная диагностическая pre-grade-сборка для разработчика — символьные стектрейсы
+// можно собрать вручную из mappings/preview/mapping.txt при необходимости.
+afterEvaluate {
+    tasks.findByName("uploadCrashlyticsMappingFilePreview")?.enabled = false
+}
+
 dependencies {
     // Compose BOM
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material3:material3-adaptive-navigation-suite")
+    // FIX(2026-05-11) BELSI 2.0.0 build4: Material3 adaptive — list-detail pane scaffold
+    // для табов куратора (Tickets / Photos / People / Brigades / Objects / Tasks / Chat).
+    // Брендбук foldable-tablet-design-guide раздел 17.
+    implementation("androidx.compose.material3.adaptive:adaptive:1.0.0")
+    implementation("androidx.compose.material3.adaptive:adaptive-layout:1.0.0")
+    implementation("androidx.compose.material3.adaptive:adaptive-navigation:1.0.0")
+    // FIX(2026-05-11) BELSI 2.0.0 build5: androidx.window для FoldingFeature posture API.
+    // Используется в CameraScreen — при TableTop posture (Z Fold лежит как ноутбук
+    // 90°) разделяем экран на preview сверху + controls снизу.
+    // Брендбук foldable-tablet раздел 03 + 13.
+    implementation("androidx.window:window:1.3.0")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

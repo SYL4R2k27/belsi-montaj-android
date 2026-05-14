@@ -27,7 +27,8 @@ import com.belsi.work.presentation.theme.belsiColors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CuratorObjectsTab(
-    viewModel: CuratorObjectsViewModel = hiltViewModel()
+    navController: androidx.navigation.NavController? = null,
+    viewModel: CuratorObjectsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -202,7 +203,26 @@ fun CuratorObjectsTab(
             detail = uiState.selectedDetail!!,
             isLoading = uiState.isLoadingDetail,
             onDismiss = { viewModel.clearDetail() },
-            onArchive = { viewModel.archiveObject(uiState.selectedDetail!!.id) }
+            onArchive = { viewModel.archiveObject(uiState.selectedDetail!!.id) },
+            // FIX(2026-05-11) build7: history of object → во вкладку Инфо
+            timeline = uiState.timeline,
+            isLoadingTimeline = uiState.isLoadingTimeline,
+            timelineError = uiState.timelineError,
+            // FIX(2026-05-12) build18 P2: партии объекта + клики на фото/партии.
+            batches = uiState.batches,
+            isLoadingBatches = uiState.isLoadingBatches,
+            onBatchClick = navController?.let { nav ->
+                { batchId ->
+                    viewModel.clearDetail()
+                    nav.navigate(com.belsi.work.presentation.navigation.AppRoute.BatchDetail.createRoute(batchId))
+                }
+            },
+            onPhotoClick = navController?.let { nav ->
+                { photoId ->
+                    viewModel.clearDetail()
+                    nav.navigate(com.belsi.work.presentation.navigation.AppRoute.PhotoDetail.createRoute(photoId))
+                }
+            },
         )
     }
 }

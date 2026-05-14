@@ -122,7 +122,8 @@ fun SeniorWorkerMainScaffold(navController: NavController) {
     ) {
         when (tab) {
             SeniorWorkerTab.BRIGADE -> SeniorWorkerMainScreen(navController)
-            SeniorWorkerTab.IDLES -> FactoryIdleReasonsScreen(navController)
+            // FIX(2026-05-12) build14: вместо формы «свой простой» — вид простоев бригады
+            SeniorWorkerTab.IDLES -> SeniorWorkerIdleScreen(navController)
             SeniorWorkerTab.BATCHES -> BatchListScreen(navController)
             SeniorWorkerTab.CHAT -> ChatHubScreen(navController)
             SeniorWorkerTab.PROFILE -> ProfileScreen(navController)
@@ -160,7 +161,8 @@ fun ProductionChiefMainScaffold(navController: NavController) {
         when (tab) {
             ChiefTab.DASHBOARD -> ProductionChiefMainScreen(navController)
             ChiefTab.BATCHES -> BatchListScreen(navController)
-            ChiefTab.BRIGADES -> SeniorWorkerMainScreen(navController)
+            // FIX(2026-05-12) build14: реальный список ВСЕХ бригад (раньше — личная Старшего)
+            ChiefTab.BRIGADES -> ProductionChiefBrigadesScreen(navController)
             ChiefTab.CHAT -> ChatHubScreen(navController)
             ChiefTab.PROFILE -> ProfileScreen(navController)
         }
@@ -195,8 +197,9 @@ fun SupplierMainScaffold(navController: NavController) {
         }
     ) {
         when (tab) {
-            SupplierTab.REQUESTS -> SupplierMainScreen(navController)
-            SupplierTab.INVENTORY -> SupplierMainScreen(navController)
+            // FIX(2026-05-12) build14: внешний навбар → внутренний tab синхронизирован
+            SupplierTab.REQUESTS -> SupplierMainScreen(navController, initialTab = 0)
+            SupplierTab.INVENTORY -> SupplierMainScreen(navController, initialTab = 1)
             SupplierTab.BATCHES -> BatchListScreen(navController)
             SupplierTab.CHAT -> ChatHubScreen(navController)
             SupplierTab.PROFILE -> ProfileScreen(navController)
@@ -234,7 +237,8 @@ fun EngineerMainScaffold(navController: NavController) {
         when (tab) {
             EngineerTab.TASKS -> EngineerMainScreen(navController)
             EngineerTab.BATCHES -> BatchListScreen(navController)
-            EngineerTab.TOOLS -> EngineerMainScreen(navController)
+            // FIX(2026-05-12) build14: реальный tools catalog из БД (16 SKU seed)
+            EngineerTab.TOOLS -> EngineerToolsScreen(navController)
             EngineerTab.CHAT -> ChatHubScreen(navController)
             EngineerTab.PROFILE -> ProfileScreen(navController)
         }

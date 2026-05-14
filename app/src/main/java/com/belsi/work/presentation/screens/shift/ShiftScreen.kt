@@ -279,14 +279,16 @@ fun ShiftScreen(
     }
 
     // Диалог завершения смены
-    // Диалог выбора причины простоя
+    // Диалог выбора причины простоя — причины из бэкенда (build9)
+    val apiIdleReasons by viewModel.idleReasons.collectAsState()
     if (showIdleReasonDialog) {
         IdleReasonDialog(
             onDismiss = { showIdleReasonDialog = false },
             onReasonSelected = { reason ->
                 viewModel.startIdle(reason)
                 showIdleReasonDialog = false
-            }
+            },
+            apiReasons = apiIdleReasons,
         )
     }
 
@@ -1404,14 +1406,20 @@ private fun PhotoSlotCard(
 }
 
 /**
- * Диалог выбора причины простоя
+ * Диалог выбора причины простоя.
+ *
+ * FIX(2026-05-11) BELSI 2.0.0 build9: список причин теперь подгружается с бэкенда
+ * через GET /shift/idle-reasons?domain=installation (источник — таблица
+ * shift_idle_reason_catalog, единая после миграции). Hardcoded список оставлен
+ * как fallback если API недоступен (например, в полном офлайне без cache).
  */
 @Composable
 private fun IdleReasonDialog(
     onDismiss: () -> Unit,
-    onReasonSelected: (String) -> Unit
+    onReasonSelected: (String) -> Unit,
+    apiReasons: List<String> = emptyList(),
 ) {
-    val reasons = listOf(
+    val fallbackReasons = listOf(
         "Ожидание материалов",
         "Ожидание инструмента",
         "Технические проблемы",
@@ -1419,6 +1427,7 @@ private fun IdleReasonDialog(
         "Ожидание бригадира",
         "Другая причина"
     )
+    val reasons = if (apiReasons.isNotEmpty()) apiReasons + "Другая причина" else fallbackReasons
 
     var selectedReason by remember { mutableStateOf<String?>(null) }
     var customReason by remember { mutableStateOf("") }
