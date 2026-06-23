@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        FIX(2026-05-11) BELSI 2.0.0 build6: bump имя приложения с "Belsi.Монтаж" → "BELSI.Команда".
+        Брендбук BELSI.Команда раздел 04 (Имя):
+          - Правильное написание: BELSI.Команда (заглавные BELSI, точка-разделитель,
+            кириллическое "Команда" с заглавной К)
+          - Неправильно: Belsi.команда / belsi.команда / Belsi.Команда
+        Решение 2026-05-11: 1.2.5 был «Belsi.Монтаж» (узкий случай монтажа),
+        2.0.0 — экосистема всей цепочки (производство + логистика + монтаж),
+        новое имя по брендбуку.
+    -->
+    <string name="app_name">BELSI.Команда</string>
+    
+    <!-- Auth -->
+    <string name="enter_phone">Введите номер телефона</string>
+    <string name="get_code">Получить код</string>
+    <string name="enter_code">Введите код из SMS</string>
+    <string name="verify">Подтвердить</string>
+    <string name="resend_code">Отправить код повторно</string>
+    
+    <!-- Roles -->
+    <string name="select_role">Выберите роль</string>
+    <string name="role_installer">Монтажник</string>
+    <string name="role_foreman">Бригадир</string>
+    <string name="role_curator">Куратор</string>
+    
+    <!-- Shift -->
+    <string name="start_shift">Начать смену</string>
+    <string name="end_shift">Завершить смену</string>
+    <string name="pause_shift">Приостановить</string>
+    <string name="resume_shift">Продолжить</string>
+    <string name="shift_in_progress">Смена идёт</string>
+    <string name="shift_paused">Смена приостановлена</string>
+    
+    <!-- Photos -->
+    <string name="take_photo">Сделать фото</string>
+    <string name="photo_required">Требуется фото</string>
+    <string name="upload_photo">Загрузить фото</string>
+    <string name="photo_uploaded">Фото загружено</string>
+    
+    <!-- Common -->
+    <string name="ok">ОК</string>
+    <string name="cancel">Отмена</string>
+    <string name="save">Сохранить</string>
+    <string name="delete">Удалить</string>
+    <string name="edit">Редактировать</string>
+    <string name="back">Назад</string>
+    <string name="next">Далее</string>
+    <string name="loading">Загрузка...</string>
+    <string name="error">Ошибка</string>
+    <string name="success">Успешно</string>
+    
+    <!-- Errors -->
+    <string name="error_network">Ошибка сети</string>
+    <string name="error_unknown">Неизвестная ошибка</string>
+    <string name="error_invalid_phone">Неверный номер телефона</string>
+    <string name="error_invalid_code">Неверный код</string>
+</resources>

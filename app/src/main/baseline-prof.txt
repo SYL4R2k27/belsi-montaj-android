@@ -1,0 +1,41 @@
+# BELSI baseline profile — курируемый стартовый путь (cold-start ускорение).
+# profileinstaller бейкает это в APK и устанавливает ART-профиль на 1-м запуске,
+# ART AOT-компилит помеченные классы/методы в фоне (работает и для sideload-APK).
+#
+# Формат HRF: L<class>;  = класс в профиль (load+verify);
+#             HSPL<class>;-><method>(<args>)<ret>  = Hot/Startup/Post-startup метод (AOT).
+#             ** = wildcard. Курируем СВОЙ код стартового пути — генерируемый профиль
+#             (macrobenchmark) — идеальный апгрейд на будущее, даёт максимум.
+
+# --- Application + launcher Activity (самый старт) ---
+HSPLcom/belsi/work/BelsiWorkApp;-><init>()V
+HSPLcom/belsi/work/BelsiWorkApp;->onCreate()V
+HSPLcom/belsi/work/BelsiWorkApp;->**(**)**
+HSPLcom/belsi/work/MainActivity;-><init>()V
+HSPLcom/belsi/work/MainActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLcom/belsi/work/MainActivity;->**(**)**
+
+# --- Хранилища, читаемые ДО setContent (startDestination, токен, роль) ---
+HSPLcom/belsi/work/data/local/PrefsManager;->**(**)**
+HSPLcom/belsi/work/data/local/TokenManager;->**(**)**
+HSPLcom/belsi/work/data/local/ActiveRoleManager;->**(**)**
+
+# --- Навигация + тема (первый кадр) ---
+HSPLcom/belsi/work/presentation/navigation/**;->**(**)**
+HSPLcom/belsi/work/presentation/theme/**;->**(**)**
+
+# --- Стартовые экраны/компоненты (login / выбор роли / home) ---
+HSPLcom/belsi/work/presentation/screens/auth/**;->**(**)**
+HSPLcom/belsi/work/presentation/components/**;->**(**)**
+
+# --- Класс-правила: весь наш код (load+verify, не AOT-всё — ART решит по hot-методам) ---
+Lcom/belsi/work/MainActivity;
+Lcom/belsi/work/BelsiWorkApp;
+Lcom/belsi/work/data/local/**;
+Lcom/belsi/work/data/remote/**;
+Lcom/belsi/work/data/repositories/**;
+Lcom/belsi/work/presentation/navigation/**;
+Lcom/belsi/work/presentation/theme/**;
+Lcom/belsi/work/presentation/screens/auth/**;
+Lcom/belsi/work/presentation/components/**;
+Lcom/belsi/work/di/**;

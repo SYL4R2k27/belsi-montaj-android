@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FIX(2026-05-01): сетевая конфигурация для совместимости с VPN.
+
+  Проблема: пользователи с активным VPN (AmneziaVPN, Planet, v2Ray, корпоративные
+  TLS-inspect proxy) не могли подключиться к api.belsi.ru — система блокировала
+  user-installed CA certs (только system trust-anchors разрешены по умолчанию).
+
+  Решение: для домена api.belsi.ru разрешаем дополнительно user trust-anchors.
+  Это позволяет работать через корпоративные VPN с TLS-inspection. Для остальных
+  доменов оставляем строгий режим (system only) — без понижения безопасности.
+-->
+<network-security-config>
+    <!-- Глобально: только system CA, никакого cleartext -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- API: разрешаем user-installed CA (для VPN с TLS-inspection) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.belsi.ru</domain>
+        <domain includeSubdomains="true">bucket.api.belsi.ru</domain>
+        <domain includeSubdomains="true">s3.twcstorage.ru</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Debug: дополнительно разрешаем user-cert для отладки через Charles/mitmproxy -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

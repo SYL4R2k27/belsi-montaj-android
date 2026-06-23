@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        Belsi.Монтаж — App Themes (April 2026)
+
+        Two themes:
+          1. Theme.BelsiWork           — основная Compose тема (контейнер для Activity)
+          2. Theme.BelsiWork.Splash    — splash screen с брендовой иконкой
+
+        Edge-to-edge: status & navigation bar transparent (handled by Compose).
+    -->
+
+    <!-- Brand colors (mirror of Compose values) -->
+    <color name="belsi_indigo">#FF4F46E5</color>
+    <color name="belsi_steel_top">#FF5A7186</color>
+    <color name="belsi_steel_deep">#FF324859</color>
+    <color name="belsi_white">#FFFFFFFF</color>
+
+    <!-- ── Main app theme ─────────────────────────────────────── -->
+    <style name="Theme.BelsiWork" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
+    </style>
+
+    <!-- ── Splash screen theme (Android 12+ SplashScreen API) ──
+         Используем androidx.core:core-splashscreen для совместимости
+         с API 23+. Иконка адаптивная — анимируется системой. -->
+    <style name="Theme.BelsiWork.Splash" parent="Theme.SplashScreen">
+        <!-- Background = steel deep (#324859) -->
+        <item name="windowSplashScreenBackground">@color/belsi_steel_deep</item>
+
+        <!-- Brand mark — используем готовую mipmap-иконку (BS-знак на Steel-фоне) -->
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+
+        <!-- Длительность анимации (ms) — 1000 ms иконка задерживается перед dismiss -->
+        <item name="windowSplashScreenAnimationDuration">800</item>
+
+        <!-- После splash переходим в основную тему -->
+        <item name="postSplashScreenTheme">@style/Theme.BelsiWork</item>
+    </style>
+
+</resources>

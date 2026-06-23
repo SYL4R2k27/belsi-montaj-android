@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    FIX(2026-05-11) BELSI 2.0.0: app_name override для preview-варианта.
+    Чтобы на лаунчере было видно отличие от прод 1.2.5 (com.belsi.work)
+    и driver-debug (com.belsi.work.debug).
+-->
+<resources>
+    <string name="app_name">BELSI 2.0.0 preview</string>
+</resources>
